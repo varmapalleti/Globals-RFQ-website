@@ -1,0 +1,8 @@
+logging:
+  structured:
+    format:
+      console: ecs
+
+level:
+  root: WARN
+  com.globalrfq.identity: INFO
