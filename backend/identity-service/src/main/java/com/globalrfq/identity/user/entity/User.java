@@ -32,11 +32,17 @@ public class User {
     @Column(name="official_email", nullable = false, unique = true, length = 190)
     private String officialEmail;
 
+    @Column(name = "official_email_verified", nullable = false)
+    private boolean officialEmailVerified;
+
     @Column(name="official_email_verified_at")
     private Instant officialEmailVerifiedAt;
 
     @Column(name="personal_email", unique = true, length=190)
     private String personalEmail;
+
+    @Column(name = "personal_email_verified", nullable = false)
+    private boolean personalEmailVerified;
 
     @Column(name="personal_email_verified_at")
     private Instant personalEmailVerifiedAt;

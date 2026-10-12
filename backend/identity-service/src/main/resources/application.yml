@@ -35,7 +35,6 @@ management:
     health:
       show-details: never
 
-
 app:
   jwt:
     secret: ${JWT_SECRET}
@@ -49,10 +48,13 @@ app:
     otp-max-attempts: 3
     otp-max-requests-per-hour: 3
     verification-token-expiry-hours: 24
+    cookie-secure: ${COOKIE_SECURE:false}
+
   gateway:
     secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
     shared-secret: ${GATEWAY_SHARED_SECRET}
     header-name: X-Gateway-Secret
+
   bootstrap:
     super-admin-email: ${BOOTSTRAP_ADMIN_EMAIL}
     super-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD}
