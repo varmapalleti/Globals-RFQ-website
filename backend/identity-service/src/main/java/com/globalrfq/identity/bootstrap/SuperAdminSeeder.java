@@ -18,7 +18,8 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.globalrfq.identity.common.validation.PasswordPolicy;
+import java.util.List;
 import java.time.Instant;
 
 @Component
@@ -46,12 +47,20 @@ public class SuperAdminSeeder implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         String email = props.superAdminEmail();
+        String personalEmail = "ritesh@example.com";
         String password = props.superAdminPassword();
 
-        if (email == null || email.isBlank() || password == null || password.length() < 12) {
-            log.warn("Super admin seeding skipped: set BOOTSTRAP_ADMIN_EMAIL and a password of 12+ characters");
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            log.warn("Super admin seeding skipped: BOOTSTRAP_ADMIN_EMAIL or BOOTSTRAP_ADMIN_PASSWORD is not set");
             return;
         }
+
+        List<String> problems = PasswordPolicy.violations(password);
+        if (!problems.isEmpty()) {
+            log.warn("Super admin seeding skipped: bootstrap password does not meet the password policy: {}", problems);
+            return;
+        }
+
         if (userRepository.existsByOfficialEmailIgnoreCase(email)) {
             return;
         }
@@ -64,6 +73,9 @@ public class SuperAdminSeeder implements ApplicationRunner {
         admin.setOfficialEmail(email.trim().toLowerCase());
         admin.setOfficialEmailVerified(true);
         admin.setOfficialEmailVerifiedAt(Instant.now());
+        admin.setPersonalEmail(personalEmail.trim().toLowerCase());
+        admin.setPersonalEmailVerified(true);
+        admin.setPersonalEmailVerifiedAt(Instant.now());
         admin.setPasswordHash(passwordEncoder.encode(password));
         admin.setStatus(UserStatus.ACTIVE);
         admin.setMustChangePassword(true);

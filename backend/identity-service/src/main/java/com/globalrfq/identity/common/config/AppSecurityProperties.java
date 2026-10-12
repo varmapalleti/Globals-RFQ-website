@@ -9,7 +9,7 @@ public record AppSecurityProperties(
         int lockDurationMinutes,
         int otpExpiryMinutes,
         int otpMaxAttempts,
-        int otpMaxRequestPerHour,
+        int otpMaxRequestsPerHour,
         int verificationTokenExpiryHours,
         boolean cookieSecure
 ){

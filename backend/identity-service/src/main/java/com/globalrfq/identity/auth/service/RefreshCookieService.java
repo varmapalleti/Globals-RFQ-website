@@ -2,9 +2,12 @@ package com.globalrfq.identity.auth.service;
 
 import com.globalrfq.identity.common.config.AppSecurityProperties;
 import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
+
+@Service
 public class RefreshCookieService {
 
     public static final String COOKIE_NAME = "refresh_token";

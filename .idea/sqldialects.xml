@@ -3,5 +3,7 @@
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/backend/identity-service/src/main/resources/db/migration/V1__create_identity_schema.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/backend/identity-service/src/main/resources/db/migration/V3__create_user_roles_table.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/identity-service/src/main/resources/db/migration/V4__password_reset_flow_columns.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/backend/identity-service/src/main/resources/db/migration/V5__recreate_reset_and_verification_tables.sql" dialect="GenericSQL" />
   </component>
 </project>

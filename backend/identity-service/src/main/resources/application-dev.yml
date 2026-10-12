@@ -5,3 +5,6 @@ logging:
     root: INFO
     com.globalrfq.identity: DEBUG
 
+app:
+  notification:
+    log-sensitive-in-mock: true

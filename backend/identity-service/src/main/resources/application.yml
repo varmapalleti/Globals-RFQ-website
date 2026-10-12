@@ -36,6 +36,8 @@ management:
       show-details: never
 
 app:
+  cors:
+    allowed-origins: http://localhost:5173
   jwt:
     secret: ${JWT_SECRET}
     issuer: globalrfq-identity
@@ -60,8 +62,15 @@ app:
     super-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD}
     super-admin-name: ${BOOTSTRAP_ADMIN_NAME:System Administrator}
   notification:
-    provider: mock
-
+    email-provider: ${EMAIL_PROVIDER:mock}
+    sms-provider: ${SMS_PROVIDER:mock}
+    from-email: ${MAIL_FROM_ADDRESS:no-reply@globalrfq.com}
+    from-name: Global RFQ
+    ses-region: ${AWS_REGION:ap-southeast-1}
+    ses-configuration-set: ${SES_CONFIGURATION_SET:}
+    log-sensitive-in-mock: false
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
 
 
 
