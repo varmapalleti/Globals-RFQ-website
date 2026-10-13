@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" role="img" aria-label="Global Services Solution">
+  <defs>
+    <radialGradient id="gssGlobe" cx="36%" cy="28%" r="78%">
+      <stop offset="0%" stop-color="#3B5BE0"/>
+      <stop offset="55%" stop-color="#1B2FB0"/>
+      <stop offset="100%" stop-color="#101E7A"/>
+    </radialGradient>
+    <linearGradient id="gssRing" x1="0" y1="0" x2="1" y2="0.3">
+      <stop offset="0%" stop-color="#9E1015"/>
+      <stop offset="45%" stop-color="#E0242B"/>
+      <stop offset="100%" stop-color="#8E0F14"/>
+    </linearGradient>
+    <clipPath id="gssGlobeClip"><circle cx="320" cy="100" r="90"/></clipPath>
+    <clipPath id="gssFrontHalf"><rect x="0" y="100" width="640" height="200"/></clipPath>
+  </defs>
+
+  <!-- orbit ring behind the globe -->
+  <g transform="rotate(-20 320 100)">
+    <ellipse cx="320" cy="100" rx="152" ry="48" fill="none" stroke="url(#gssRing)" stroke-width="19"/>
+  </g>
+
+  <!-- globe -->
+  <circle cx="320" cy="100" r="90" fill="url(#gssGlobe)"/>
+  <g clip-path="url(#gssGlobeClip)">
+    <path fill="#EAF0FF" opacity="0.95" d="M232 72 C244 50 274 40 298 50 C318 58 322 76 308 88 C296 99 274 94 260 102 C244 112 228 96 232 72 Z"/>
+    <path fill="#EAF0FF" opacity="0.9" d="M292 116 C306 110 320 120 322 138 C326 160 314 180 300 188 C288 195 278 185 280 168 C282 148 276 130 292 116 Z"/>
+    <path fill="#DCE6FF" opacity="0.95" d="M334 58 C354 42 388 44 406 62 C422 78 412 99 392 105 C372 111 356 102 344 90 C334 80 324 70 334 58 Z"/>
+    <path fill="#EAF0FF" opacity="0.92" d="M338 116 C354 110 376 118 382 138 C388 158 370 178 352 176 C336 174 328 158 330 140 C331 128 330 120 338 116 Z"/>
+    <path fill="#DCE6FF" opacity="0.9" d="M392 120 C404 114 418 122 414 136 C410 150 396 154 388 144 C382 136 384 124 392 120 Z"/>
+  </g>
+
+  <!-- orbit ring sweeping in front of the globe -->
+  <g transform="rotate(-20 320 100)">
+    <g clip-path="url(#gssFrontHalf)">
+      <ellipse cx="320" cy="100" rx="152" ry="48" fill="none" stroke="url(#gssRing)" stroke-width="19"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="320" y="252" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700" fill="#D32027" letter-spacing="1.5">GLOBAL SERVICES</text>
+  <text x="320" y="293" dx="7" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" fill="#1B2A6B" letter-spacing="14">SOLUTION</text>
+</svg>
