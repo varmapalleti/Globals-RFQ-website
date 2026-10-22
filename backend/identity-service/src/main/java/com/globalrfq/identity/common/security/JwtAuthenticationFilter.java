@@ -2,6 +2,8 @@ package com.globalrfq.identity.common.security;
 
 
 import com.globalrfq.identity.common.exception.ErrorCode;
+import com.globalrfq.identity.user.entity.UserStatus;
+import com.globalrfq.identity.user.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -25,9 +27,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String BEARER = "Bearer ";
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService){
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository){
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
 
@@ -39,6 +43,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(BEARER.length()).trim();
             try{
                 AuthenticatedUser user = jwtService.toAuthenticatedUser(jwtService.parse(token));
+
+                if (userRepository.findStatusById(user.id()).filter(status -> status == UserStatus.ACTIVE).isEmpty()) {
+                    request.setAttribute(CustomAuthenticationEntryPoint.ATTR_AUTH_ERROR, ErrorCode.TOKEN_INVALID);
+                    chain.doFilter(request, response);
+                    return;
+                }
 
 
                 List<SimpleGrantedAuthority> authorities = user.roles().stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r)).toList();

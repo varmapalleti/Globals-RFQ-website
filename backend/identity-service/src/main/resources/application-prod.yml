@@ -1,12 +1,23 @@
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  gateway:
+    secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
+    shared-secret: ${GATEWAY_SHARED_SECRET}
+  security:
+    cookie-secure: true
+  notification:
+    outbox-encryption-key: ${OUTBOX_ENCRYPTION_KEY}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL}
+
 logging:
   structured:
     format:
       console: ecs
-
-level:
-  root: WARN
-  com.globalrfq.identity: INFO
-
-app:
-  security:
-    cookie-secure: true
+  level:
+    root: WARN
+    com.globalrfq.identity: INFO

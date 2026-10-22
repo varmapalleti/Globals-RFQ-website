@@ -1,6 +1,7 @@
 package com.globalrfq.identity.auth.controller;
 
 import com.globalrfq.identity.auth.dto.request.LoginRequest;
+import com.globalrfq.identity.auth.dto.request.ChangePasswordRequest;
 import com.globalrfq.identity.auth.dto.response.AuthResponse;
 import com.globalrfq.identity.auth.dto.response.AuthResult;
 import com.globalrfq.identity.auth.service.AuthService;
@@ -59,6 +60,15 @@ public class AuthController {
     @GetMapping("/me")
     public ApiResponse<UserSummary> me(@AuthenticationPrincipal AuthenticatedUser principal) {
         return ApiResponse.success("Current user", authService.currentUser(principal));
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(@AuthenticationPrincipal AuthenticatedUser principal,
+                                            @Valid @RequestBody ChangePasswordRequest request,
+                                            HttpServletResponse response) {
+        authService.changePassword(principal, request);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookieService.clear().toString());
+        return ApiResponse.success("Password changed successfully. Please sign in again");
     }
 
     private void setRefreshCookie(HttpServletResponse response, AuthResult result) {

@@ -1,0 +1,306 @@
+{
+  "info": {
+    "_postman_id": "625c15cb-a1b2-4d93-90d8-c7a96708ebd1",
+    "name": "Global RFQ - Identity Service (via API Gateway)",
+    "description": "Manual identity-service requests through the API Gateway. Never add X-Gateway-Secret to Postman. Set baseUrl to http://localhost:8080, run Login first, and use the Postman cookie jar for the HttpOnly refresh cookie. Redis is intentionally not required during the current local API-testing phase.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "origin", "value": "http://localhost:5173" },
+    { "key": "accessToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "officialEmail", "value": "admin@example.com" },
+    { "key": "personalEmail", "value": "user@example.com" },
+    { "key": "password", "value": "" },
+    { "key": "newPassword", "value": "" },
+    { "key": "otp", "value": "" },
+    { "key": "resetToken", "value": "" },
+    { "key": "verificationToken", "value": "" },
+    { "key": "inviteToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Authentication and account lifecycle",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"officialEmail\": \"{{officialEmail}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "On success, saves data.accessToken to the collection variable. Postman should retain the HttpOnly refresh cookie in its cookie jar."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                "  const body = pm.response.json();",
+                "  if (body && body.data && body.data.accessToken) {",
+                "    pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                "  }",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Refresh access token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Origin", "value": "{{origin}}" }],
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "description": "Uses the refresh cookie stored by Postman's cookie jar; do not send the refresh token in JSON."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                "  const body = pm.response.json();",
+                "  if (body && body.data && body.data.accessToken) {",
+                "    pm.collectionVariables.set('accessToken', body.data.accessToken);",
+                "  }",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Origin", "value": "{{origin}}" }],
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "Requires a valid access token and clears the refresh cookie."
+          }
+        },
+        {
+          "name": "Get current user",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\",\n  \"confirmPassword\": \"{{newPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/change-password"
+          }
+        },
+        {
+          "name": "Request password reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"emailType\": \"OFFICIAL\",\n  \"email\": \"{{officialEmail}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/forgot-password",
+            "description": "In dev mock-email mode, find the OTP in the identity-service console."
+          }
+        },
+        {
+          "name": "Verify password reset OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"emailType\": \"OFFICIAL\",\n  \"email\": \"{{officialEmail}}\",\n  \"otp\": \"{{otp}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/verify-reset-otp",
+            "description": "On success, saves data.resetToken to the collection variable."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                "  const body = pm.response.json();",
+                "  if (body && body.data && body.data.resetToken) {",
+                "    pm.collectionVariables.set('resetToken', body.data.resetToken);",
+                "  }",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"resetToken\": \"{{resetToken}}\",\n  \"newPassword\": \"{{newPassword}}\",\n  \"confirmPassword\": \"{{newPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/reset-password"
+          }
+        },
+        {
+          "name": "Verify email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/verify-email"
+          }
+        },
+        {
+          "name": "Resend email verification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"emailType\": \"OFFICIAL\",\n  \"email\": \"{{officialEmail}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/resend-verification"
+          }
+        },
+        {
+          "name": "Accept invitation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{inviteToken}}\",\n  \"newPassword\": \"{{newPassword}}\",\n  \"confirmPassword\": \"{{newPassword}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/auth/accept-invite",
+            "description": "In dev mock-email mode, find the invitation token in the identity-service console."
+          }
+        }
+      ]
+    },
+    {
+      "name": "User and role administration",
+      "item": [
+        {
+          "name": "List assignable roles",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/roles",
+            "description": "Requires SUPER_ADMIN or ADMIN."
+          }
+        },
+        {
+          "name": "Create user and send invitation",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"RFQ Reviewer\",\n  \"officialEmail\": \"reviewer@example.com\",\n  \"personalEmail\": \"reviewer.personal@example.com\",\n  \"phone\": \"+910000000000\",\n  \"roles\": [\"REVIEWER\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/users",
+            "description": "Requires SUPER_ADMIN or ADMIN. Creates a pending user and queues an invitation."
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "type": "text/javascript",
+              "exec": [
+                "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                "  const body = pm.response.json();",
+                "  if (body && body.data && body.data.id) {",
+                "    pm.collectionVariables.set('userId', body.data.id);",
+                "  }",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "List users",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users?page=0&size=20&sort=createdAt&direction=desc"
+          }
+        },
+        {
+          "name": "Get user by ID",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update user profile",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Updated Reviewer Name\",\n  \"phone\": \"+910000000000\",\n  \"personalEmail\": \"{{personalEmail}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Replace user roles",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"roles\": [\"REVIEWER\"]\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/users/{{userId}}/roles"
+          }
+        },
+        {
+          "name": "Freeze user (SUPER_ADMIN)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Testing account freeze workflow\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/api/users/{{userId}}/freeze"
+          }
+        },
+        {
+          "name": "Unfreeze user (SUPER_ADMIN)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{userId}}/unfreeze"
+          }
+        },
+        {
+          "name": "Unlock user",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{userId}}/unlock"
+          }
+        },
+        {
+          "name": "Resend user invitation",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{userId}}/resend-invite"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Search audit logs",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/audit-logs?from=2026-01-01T00:00:00Z&to=2026-12-31T23:59:59Z&eventType=LOGIN_SUCCESS&userId=1&page=0&size=20",
+            "description": "SUPER_ADMIN only. Remove any optional query parameter to search without that filter."
+          }
+        }
+      ]
+    }
+  ]
+}

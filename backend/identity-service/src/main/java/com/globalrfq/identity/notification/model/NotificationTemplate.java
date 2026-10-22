@@ -18,6 +18,22 @@ public enum NotificationTemplate {
             If you did not expect this email, you can ignore it.
             """),
 
+    USER_INVITE(
+            NotificationChannel.EMAIL,
+            "You are invited to Global RFQ",
+            """
+            <p>Hello {{fullName}},</p>
+            <p>An administrator invited you to join Global RFQ. Set your password using the secure link below. This link expires in {{expiryHours}} hours.</p>
+            <p><a href="{{verificationLink}}">Accept invitation</a></p>
+            <p>If you did not expect this invitation, contact your administrator.</p>
+            """,
+            """
+            Hello {{fullName}},
+            An administrator invited you to join Global RFQ. Set your password using the secure link below. It expires in {{expiryHours}} hours:
+            {{verificationLink}}
+            If you did not expect this invitation, contact your administrator.
+            """),
+
     PASSWORD_RESET_OTP(
             NotificationChannel.EMAIL,
             "Your password reset code - Global RFQ",

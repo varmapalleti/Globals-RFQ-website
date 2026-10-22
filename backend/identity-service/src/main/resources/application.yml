@@ -1,3 +1,6 @@
+server:
+  port: ${SERVER_PORT:8081}
+
 spring:
   application:
     name: identity-service
@@ -7,6 +10,8 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      connection-init-sql: SET time_zone = '+00:00'
   jpa:
     open-in-view: false
     hibernate:
@@ -18,31 +23,47 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-
   jackson:
     default-property-inclusion: non_null
     datatype:
       datetime:
         write-dates-as-timestamps: false
 
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA_SERVER_URL:http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@localhost:8761/eureka/}"
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${HOSTNAME:localhost}:${server.port}
+
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+        add-additional-paths: true
+      show-details: never
   endpoints:
     web:
       exposure:
         include: health,info
-  endpoint:
-    health:
-      show-details: never
 
 app:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins:
+      - http://localhost:5173
   jwt:
     secret: ${JWT_SECRET}
     issuer: globalrfq-identity
     access-token-expiry-minutes: 15
     refresh-token-expiry-days: 7
+
   security:
     max-failed-login-attempts: 5
     lock-duration-minutes: 15
@@ -54,23 +75,27 @@ app:
 
   gateway:
     secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
-    shared-secret: ${GATEWAY_SHARED_SECRET}
+    shared-secret: ${GATEWAY_SHARED_SECRET:}
     header-name: X-Gateway-Secret
 
   bootstrap:
-    super-admin-email: ${BOOTSTRAP_ADMIN_EMAIL}
-    super-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD}
+    super-admin-email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    super-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
     super-admin-name: ${BOOTSTRAP_ADMIN_NAME:System Administrator}
+
   notification:
     email-provider: ${EMAIL_PROVIDER:mock}
     sms-provider: ${SMS_PROVIDER:mock}
     from-email: ${MAIL_FROM_ADDRESS:no-reply@globalrfq.com}
-    from-name: Global RFQ
+    from-name: ${MAIL_FROM_NAME:Global RFQ}
     ses-region: ${AWS_REGION:ap-southeast-1}
     ses-configuration-set: ${SES_CONFIGURATION_SET:}
     log-sensitive-in-mock: false
+    outbox-encryption-key: ${OUTBOX_ENCRYPTION_KEY:}
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  cleanup:
+    audit-retention-days: ${AUDIT_RETENTION_DAYS:0}
 
 
 

@@ -1,4 +1,6 @@
-# Backend Review — Global RFQ Identity Service
+# Historical Backend Review — Global RFQ Identity Service
+
+> This document records an earlier review and is superseded by [the current identity-service implementation report](identity-service-report.md). Its endpoint gaps, port and configuration findings describe the earlier code state and are not the current contract.
 
 > Audited: `backend/identity-service` (Spring Boot 3.x, Java 21)
 > Reviewer: Senior Frontend Engineer (AI)

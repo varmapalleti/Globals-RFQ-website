@@ -31,12 +31,15 @@ public class NotificationOutbox {
     @Column(name = "template_code", nullable = false, length = 60)
     private String templateCode;
 
-    @Column(name = "recipient", nullable = false, length = 190)
+    @Column(name = "recipient", nullable = false, length = 512)
     private String recipient;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "variables_json", columnDefinition = "json")
     private Map<String, Object> variables;
+
+    @Column(name = "payload_encrypted", nullable = false)
+    private boolean payloadEncrypted;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)

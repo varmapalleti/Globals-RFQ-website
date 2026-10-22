@@ -1,0 +1,112 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+          httpclient:
+            connect-timeout: 2000
+            response-timeout: 10s
+          default-filters:
+            - RemoveResponseHeader=Server
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin, RETAIN_UNIQUE
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              "[/**]":
+                allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+                allowedMethods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+                allowedHeaders: Authorization,Content-Type,X-Correlation-Id
+                exposedHeaders: X-Correlation-Id
+                allowCredentials: true
+                maxAge: 1800
+          routes:
+            - id: identity-sensitive-auth
+              order: -10
+              uri: lb://identity-service
+              predicates:
+                - Path=/api/auth/login,/api/auth/refresh,/api/auth/forgot-password,/api/auth/verify-reset-otp,/api/auth/reset-password,/api/auth/verify-email,/api/auth/resend-verification,/api/auth/accept-invite
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: identityService
+                    fallbackUri: forward:/fallback/identity
+            - id: identity-api
+              order: 0
+              uri: lb://identity-service
+              predicates:
+                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/audit-logs/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: identityService
+                    fallbackUri: forward:/fallback/identity
+
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA_SERVER_URL:http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@localhost:8761/eureka/}"
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${HOSTNAME:localhost}:${server.port}
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9080}
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+app:
+  gateway:
+    secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
+    shared-secret: ${GATEWAY_SHARED_SECRET:}
+    header-name: X-Gateway-Secret
+    trusted-proxy-count: ${TRUSTED_PROXY_COUNT:0}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      identityService:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        slowCallRateThreshold: 80
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{correlationId:-}]"
+  level:
+    root: INFO
+    com.globalrfq.gateway: INFO

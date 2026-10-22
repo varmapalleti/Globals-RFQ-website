@@ -31,6 +31,11 @@ public class EmailVerificationToken {
     @Column(name = "email_type", nullable = false, length = 10)
     private EmailType emailType;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "purpose", nullable = false, length = 20)
+    private EmailTokenPurpose purpose = EmailTokenPurpose.VERIFICATION;
+
     @Column(name = "email", nullable = false, length = 190)
     private String email;
 

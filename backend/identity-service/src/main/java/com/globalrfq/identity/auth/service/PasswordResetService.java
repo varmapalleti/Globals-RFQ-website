@@ -36,6 +36,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -186,8 +187,10 @@ public class PasswordResetService {
 
     private void sendPasswordChangedNotice(User user, Instant when) {
         Map<String, String> vars = Map.of("fullName", user.getFullName(), "changedAt", TIME_FORMAT.format(when));
-        notificationService.send(NotificationRequest.email(
-                NotificationTemplate.PASSWORD_CHANGED, user.getOfficialEmail(), vars));
+        if (user.isOfficialEmailVerified()) {
+            notificationService.send(NotificationRequest.email(
+                    NotificationTemplate.PASSWORD_CHANGED, user.getOfficialEmail(), vars));
+        }
         if (user.getPersonalEmail() != null && user.isPersonalEmailVerified()) {
             notificationService.send(NotificationRequest.email(
                     NotificationTemplate.PASSWORD_CHANGED, user.getPersonalEmail(), vars));
@@ -208,7 +211,7 @@ public class PasswordResetService {
     }
 
     private String normalize(String email) {
-        return email.trim().toLowerCase();
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private BusinessException otpInvalid() {

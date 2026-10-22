@@ -23,6 +23,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY )
     private Long id;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @Column(name = "employee_code", unique = true, length = 30)
     private String employeeCode;
 
@@ -73,8 +77,27 @@ public class User {
     @Column(name="created_by")
     private Long createdBy;
 
-    @Column(name="created_at", insertable = false, updatable = false)
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
+    @Column(name = "status_changed_by")
+    private Long statusChangedBy;
+
+    @Column(name = "status_changed_at")
+    private Instant statusChangedAt;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "status_before_disabled", length = 25)
+    private UserStatus statusBeforeDisabled;
+
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
     private Instant updatedAt;
+
+
      @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",

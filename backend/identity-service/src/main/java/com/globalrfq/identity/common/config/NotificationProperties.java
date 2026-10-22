@@ -10,5 +10,6 @@ public record NotificationProperties(
         String fromName,
         String sesRegion,
         String sesConfigurationSet,
-        boolean logSensitiveInMock
+        boolean logSensitiveInMock,
+        String outboxEncryptionKey
 ) {}

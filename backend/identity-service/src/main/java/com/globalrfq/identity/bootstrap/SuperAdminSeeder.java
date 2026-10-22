@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.globalrfq.identity.common.validation.PasswordPolicy;
 import java.util.List;
 import java.time.Instant;
+import java.util.Locale;
 
 @Component
 public class SuperAdminSeeder implements ApplicationRunner {
@@ -47,7 +48,6 @@ public class SuperAdminSeeder implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         String email = props.superAdminEmail();
-        String personalEmail = "ritesh@example.com";
         String password = props.superAdminPassword();
 
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
@@ -70,12 +70,9 @@ public class SuperAdminSeeder implements ApplicationRunner {
 
         User admin = new User();
         admin.setFullName(props.superAdminName() == null ? "System Administrator" : props.superAdminName());
-        admin.setOfficialEmail(email.trim().toLowerCase());
+        admin.setOfficialEmail(email.trim().toLowerCase(Locale.ROOT));
         admin.setOfficialEmailVerified(true);
         admin.setOfficialEmailVerifiedAt(Instant.now());
-        admin.setPersonalEmail(personalEmail.trim().toLowerCase());
-        admin.setPersonalEmailVerified(true);
-        admin.setPersonalEmailVerifiedAt(Instant.now());
         admin.setPasswordHash(passwordEncoder.encode(password));
         admin.setStatus(UserStatus.ACTIVE);
         admin.setMustChangePassword(true);

@@ -45,11 +45,11 @@ public class OutboxNotificationService implements NotificationService {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    dispatcher.dispatch(outboxId, request);
+                    dispatcher.dispatch(outboxId);
                 }
             });
         } else {
-            dispatcher.dispatch(outboxId, request);
+            dispatcher.dispatch(outboxId);
         }
     }
 }

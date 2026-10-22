@@ -50,5 +50,4 @@ public class GatewaySecretFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
 
     }
-
 }

@@ -1,7 +1,6 @@
 package com.globalrfq.identity.notification.service;
 
 import com.globalrfq.identity.common.config.NotificationProperties;
-import com.globalrfq.identity.common.util.MaskingUtil;
 import com.globalrfq.identity.notification.model.NotificationChannel;
 import com.globalrfq.identity.notification.model.NotificationRequest;
 import com.globalrfq.identity.notification.model.NotificationStatus;
@@ -37,8 +36,10 @@ public class NotificationDispatcher {
     }
 
     @Async("notificationExecutor")
-    public void dispatch(Long outboxId, NotificationRequest request) {
+    public void dispatch(Long outboxId) {
         try {
+            if (!store.claim(outboxId)) return;
+            NotificationRequest request = store.loadRequest(outboxId);
             RenderedMessage rendered = renderer.render(request.template(), request.variables());
             boolean mock;
             if (request.channel() == NotificationChannel.EMAIL) {
@@ -52,9 +53,8 @@ public class NotificationDispatcher {
             }
             store.markResult(outboxId, mock ? NotificationStatus.MOCK_SENT : NotificationStatus.SENT, null);
         } catch (Exception ex) {
-            log.error("Notification {} to {} failed: {}", request.template(),
-                    MaskingUtil.maskEmail(request.recipient()), ex.getClass().getSimpleName());
-            store.markResult(outboxId, NotificationStatus.FAILED, ex.getClass().getSimpleName() + ": " + ex.getMessage());
+            log.error("Notification outbox id={} failed: {}", outboxId, ex.getClass().getSimpleName());
+            store.markResult(outboxId, NotificationStatus.FAILED, ex.getClass().getSimpleName());
         }
     }
 }

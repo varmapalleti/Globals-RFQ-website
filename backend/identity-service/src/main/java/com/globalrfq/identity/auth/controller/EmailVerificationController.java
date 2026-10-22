@@ -1,6 +1,7 @@
 package com.globalrfq.identity.auth.controller;
 
 import com.globalrfq.identity.auth.dto.request.ResendVerificationRequest;
+import com.globalrfq.identity.auth.dto.request.AcceptInviteRequest;
 import com.globalrfq.identity.auth.dto.request.VerifyEmailRequest;
 import com.globalrfq.identity.auth.service.EmailVerificationService;
 import com.globalrfq.identity.common.response.ApiResponse;
@@ -24,6 +25,12 @@ public class EmailVerificationController {
     public ApiResponse<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
         service.verify(request.token());
         return ApiResponse.success("Email verified successfully");
+    }
+
+    @PostMapping("/accept-invite")
+    public ApiResponse<Void> acceptInvite(@Valid @RequestBody AcceptInviteRequest request) {
+        service.acceptInvite(request);
+        return ApiResponse.success("Invitation accepted. You can now sign in");
     }
 
     @PostMapping("/resend-verification")

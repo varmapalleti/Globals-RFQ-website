@@ -3,7 +3,6 @@ package com.globalrfq.identity.common.exception;
 
 import com.globalrfq.identity.common.response.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintDeclarationException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +12,12 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import javax.naming.AuthenticationException;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestControllerAdvice
@@ -34,8 +34,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest req){
-        log.warn("Business error [{}]", ex.getErrorCode(), ex.getMessage());
+        log.warn("Business error [{}]: {}", ex.getErrorCode(), ex.getMessage());
         return build(ex.getErrorCode(), ex.getMessage(), req, null);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest req) {
+        log.warn("Data integrity conflict on {}", req.getRequestURI());
+        return build(ErrorCode.DUPLICATE_RESOURCE, "A record with one or more of these values already exists", req, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -45,7 +51,7 @@ public class GlobalExceptionHandler {
         return build(ErrorCode.VALIDATION_FAILED, "Validation failed", req, errors);
     }
 
-    @ExceptionHandler(ConstraintDeclarationException.class)
+    @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiErrorResponse> handleConstraint(ConstraintViolationException ex, HttpServletRequest req){
         List<ApiErrorResponse.FieldErrorDetail> errors = ex.getConstraintViolations().stream().map(v-> new ApiErrorResponse.FieldErrorDetail(v.getPropertyPath().toString(), v.getMessage())).toList();
         return build(ErrorCode.VALIDATION_FAILED, "Validation failed", req, errors);

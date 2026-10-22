@@ -5,6 +5,7 @@ import com.globalrfq.identity.audit.entity.AuditOutcome;
 import com.globalrfq.identity.audit.service.AuditEvent;
 import com.globalrfq.identity.audit.service.AuditService;
 import com.globalrfq.identity.auth.dto.request.LoginRequest;
+import com.globalrfq.identity.auth.dto.request.ChangePasswordRequest;
 import com.globalrfq.identity.auth.dto.response.AuthResponse;
 import com.globalrfq.identity.auth.dto.response.AuthResult;
 import com.globalrfq.identity.common.config.AppSecurityProperties;
@@ -16,7 +17,11 @@ import com.globalrfq.identity.common.security.AuthenticatedUser;
 import com.globalrfq.identity.common.security.JwtService;
 import com.globalrfq.identity.common.util.ClientInfo;
 import com.globalrfq.identity.common.util.HashUtil;
+import com.globalrfq.identity.common.util.MaskingUtil;
 import com.globalrfq.identity.common.util.TokenGenerator;
+import com.globalrfq.identity.notification.model.NotificationRequest;
+import com.globalrfq.identity.notification.model.NotificationTemplate;
+import com.globalrfq.identity.notification.service.NotificationService;
 import com.globalrfq.identity.role.entity.Role;
 import com.globalrfq.identity.token.entity.RefreshToken;
 import com.globalrfq.identity.token.repository.RefreshTokenRepository;
@@ -34,6 +39,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Locale;
 
 @Service
 public class AuthService {
@@ -47,6 +53,7 @@ public class AuthService {
     private final JwtProperties jwtProperties;
     private final AppSecurityProperties securityProperties;
     private final AuditService auditService;
+    private final NotificationService notificationService;
     private final String dummyHash;
 
     public AuthService(UserRepository userRepository,
@@ -55,7 +62,8 @@ public class AuthService {
                        JwtService jwtService,
                        JwtProperties jwtProperties,
                        AppSecurityProperties securityProperties,
-                       AuditService auditService) {
+                       AuditService auditService,
+                       NotificationService notificationService) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
@@ -63,27 +71,30 @@ public class AuthService {
         this.jwtProperties = jwtProperties;
         this.securityProperties = securityProperties;
         this.auditService = auditService;
+        this.notificationService = notificationService;
         this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
 
+    @Transactional(noRollbackFor = BusinessException.class)
     public AuthResult login(LoginRequest request, ClientInfo client) {
-        String email = request.officialEmail().trim().toLowerCase();
-        User user = userRepository.findByOfficialEmailIgnoreCase(email).orElse(null);
+        String email = request.officialEmail().trim().toLowerCase(Locale.ROOT);
+        User user = userRepository.findForLoginByOfficialEmail(email).orElse(null);
 
         if (user == null) {
-            passwordEncoder.matches(request.password(), dummyHash);
+            safePasswordMatches(request.password(), dummyHash);
             auditFailure(null, "USER_NOT_FOUND", email);
             throw invalidCredentials();
         }
 
         if (user.isLockedNow() || user.getStatus() == UserStatus.LOCKED) {
-            passwordEncoder.matches(request.password(), dummyHash);
+            safePasswordMatches(request.password(), dummyHash);
             auditFailure(user.getId(), "ACCOUNT_LOCKED", email);
             throw invalidCredentials();
         }
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+
+        if (!safePasswordMatches(request.password(), user.getPasswordHash())) {
             registerFailedAttempt(user, email);
             throw invalidCredentials();
         }
@@ -166,12 +177,50 @@ public class AuthService {
         return UserSummary.from(user);
     }
 
+    @Transactional
+    public void changePassword(AuthenticatedUser principal, ChangePasswordRequest request) {
+        User user = userRepository.findWithRolesById(principal.id())
+                .orElseThrow(() -> new ResourceNotFoundException("User", principal.id()));
+        if (user.getStatus() != UserStatus.ACTIVE
+                || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS, "Current password is incorrect");
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "New password must be different from your current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setMustChangePassword(false);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+        refreshTokenRepository.revokeAllByUserId(user.getId());
+        Map<String, String> variables = Map.of("fullName", user.getFullName(), "changedAt", Instant.now().toString());
+        if (user.isOfficialEmailVerified()) {
+            notificationService.send(NotificationRequest.email(NotificationTemplate.PASSWORD_CHANGED,
+                    user.getOfficialEmail(), variables));
+        }
+        if (user.isPersonalEmailVerified() && user.getPersonalEmail() != null) {
+            notificationService.send(NotificationRequest.email(NotificationTemplate.PASSWORD_CHANGED,
+                    user.getPersonalEmail(), variables));
+        }
+        auditService.record(AuditEvent.of(AuditEventType.PASSWORD_CHANGE_SUCCESS, AuditOutcome.SUCCESS,
+                "CHANGE_PASSWORD", user.getId(), user.getId(), null));
+    }
+
     private AuthResult buildAuthResult(User user, ClientInfo client) {
         String access = jwtService.generateAccessToken(user.getId(), user.getOfficialEmail(), roleNames(user));
         String refresh = createRefreshToken(user, client);
         return new AuthResult(
                 new AuthResponse(access, "Bearer", jwtService.accessTokenTtlSeconds(), UserSummary.from(user)),
                 refresh, refreshMaxAgeSeconds());
+    }
+
+    private boolean safePasswordMatches(String rawPassword, String encodedPassword) {
+        if (rawPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            passwordEncoder.matches(UUID.randomUUID().toString(), dummyHash);
+            return false;
+        }
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
     private String createRefreshToken(User user, ClientInfo client) {
@@ -208,7 +257,7 @@ public class AuthService {
 
     private void auditFailure(Long userId, String reason, String email) {
         auditService.record(AuditEvent.of(AuditEventType.LOGIN_FAILED, AuditOutcome.FAILURE,
-                "LOGIN", null, userId, Map.of("reason", reason, "email", email)));
+                "LOGIN", null, userId, Map.of("reason", reason, "email", MaskingUtil.maskEmail(email))));
     }
 
     private java.util.List<String> roleNames(User user) {

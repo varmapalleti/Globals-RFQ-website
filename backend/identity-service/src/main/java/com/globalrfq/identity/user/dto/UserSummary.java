@@ -10,6 +10,7 @@ public record UserSummary(
         String fullName,
         String officialEmail,
         boolean officialEmailVerified,
+        String personalEmail,
         boolean personalEmailVerified,
         String status,
         boolean mustChangePassword,
@@ -22,7 +23,7 @@ public record UserSummary(
                 .sorted()
                 .toList();
         return new UserSummary(user.getId(), user.getFullName(), user.getOfficialEmail(),
-                user.isOfficialEmailVerified(), user.isPersonalEmailVerified(),
+                user.isOfficialEmailVerified(),user.getPersonalEmail(), user.isPersonalEmailVerified(),
                 user.getStatus().name(), user.isMustChangePassword(), roles);
     }
 }

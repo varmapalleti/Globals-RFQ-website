@@ -17,40 +17,70 @@ import java.util.Map;
 @Service
 public class NotificationOutboxStore {
 
-    private static final String MASK = "***";
-
     private final NotificationOutboxRepository repository;
+    private final OutboxPayloadCipher cipher;
 
-    public NotificationOutboxStore(NotificationOutboxRepository repository) {
+    public NotificationOutboxStore(NotificationOutboxRepository repository, OutboxPayloadCipher cipher) {
         this.repository = repository;
+        this.cipher = cipher;
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public Long create(NotificationRequest request, String providerName) {
-        Map<String, Object> safeVariables = new LinkedHashMap<>();
-        request.variables().forEach((key, value) ->
-                safeVariables.put(key, request.sensitiveKeys().contains(key) ? MASK : value));
+        Map<String, Object> encryptedVariables = new LinkedHashMap<>();
+        request.variables().forEach((key, value) -> encryptedVariables.put(key, cipher.encrypt(value)));
 
         NotificationOutbox row = new NotificationOutbox();
         row.setChannel(request.channel());
         row.setTemplateCode(request.template().name());
-        row.setRecipient(request.recipient());
-        row.setVariables(safeVariables);
+        row.setRecipient(cipher.encrypt(request.recipient()));
+        row.setVariables(encryptedVariables);
+        row.setPayloadEncrypted(true);
         row.setProvider(providerName);
         row.setCorrelationId(MDC.get(CorrelationIdFilter.MDC_KEY));
         return repository.save(row).getId();
+    }
+
+    @Transactional(readOnly = true)
+    public NotificationRequest loadRequest(Long id) {
+        NotificationOutbox row = repository.findById(id).orElseThrow();
+        if (!row.isPayloadEncrypted()) throw new IllegalStateException("Notification payload was retired");
+        Map<String, String> variables = new LinkedHashMap<>();
+        row.getVariables().forEach((key, value) -> variables.put(key, cipher.decrypt(String.valueOf(value))));
+        return new NotificationRequest(row.getChannel(),
+                com.globalrfq.identity.notification.model.NotificationTemplate.valueOf(row.getTemplateCode()),
+                cipher.decrypt(row.getRecipient()), variables, java.util.Set.of());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean claim(Long id) {
+        Instant now = Instant.now();
+        return repository.claim(id, now, now.plusSeconds(600)) == 1;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failExhausted(Long id) {
+        repository.failExhausted(id, Instant.now());
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markResult(Long id, NotificationStatus status, String failureReason) {
         repository.findById(id).ifPresent(row -> {
             row.setStatus(status);
-            row.setAttemptCount(row.getAttemptCount() + 1);
             if (status == NotificationStatus.SENT || status == NotificationStatus.MOCK_SENT) {
                 row.setSentAt(Instant.now());
             }
             if (failureReason != null) {
                 row.setFailureReason(failureReason.length() > 500 ? failureReason.substring(0, 500) : failureReason);
+                if (row.getAttemptCount() >= 5) {
+                    row.setScheduledAt(null);
+                } else {
+                    long delaySeconds = Math.min(1800, 30L << Math.min(row.getAttemptCount(), 6));
+                    row.setScheduledAt(Instant.now().plusSeconds(delaySeconds));
+                }
+            } else {
+                row.setScheduledAt(null);
+                row.setFailureReason(null);
             }
         });
     }

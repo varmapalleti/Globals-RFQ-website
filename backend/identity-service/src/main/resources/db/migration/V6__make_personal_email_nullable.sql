@@ -1,0 +1,1 @@
+ALTER TABLE users MODIFY personal_email VARCHAR(150) NULL;

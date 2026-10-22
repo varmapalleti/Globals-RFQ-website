@@ -28,6 +28,9 @@ public class Role {
     @Column(name= "description")
     private String description;
 
+    @Column(name = "role_rank", nullable = false)
+    private int rank;
+
     @Column(name="created_at", insertable = false, updatable = false)
     private Instant createdAt;
 
