@@ -24,6 +24,7 @@ hs_err_pid*
 # ──────── Node / Frontend ────────
 node_modules/
 dist/
+.env
 .env.local
 .env.*.local
 *.tsbuildinfo

@@ -1,0 +1,166 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: globalrfq-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local_root_change_me}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/infrastructure/database/docker-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  eureka-server:
+    build:
+      context: ./backend/eureka-server
+    container_name: globalrfq-eureka
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8761
+      MANAGEMENT_PORT: 8762
+      EUREKA_HOSTNAME: eureka-server
+      EUREKA_USERNAME: ${EUREKA_USERNAME:-eureka}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:-local-eureka-password-change-me}
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8762/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 25s
+
+  identity-service:
+    build:
+      context: ./backend/identity-service
+    container_name: globalrfq-identity
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8081
+      DB_URL: jdbc:mysql://mysql:3306/globalrfq_identity?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-globalrfq_app}
+      DB_PASSWORD: ${DB_PASSWORD:-globalrfq_dev_password}
+      JWT_SECRET: ${JWT_SECRET:-c29tZS1sb25nLWRldi1vbmx5LWJhc2U2NC1qd3Qtc2VjcmV0LWZvci1sb2NhbC1kb2NrZXI=}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@globalrfq.local}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-System Administrator}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-ChangeMe@2026!}
+      GATEWAY_SECRET_ENABLED: "true"
+      GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-dev-gateway-shared-secret-minimum-32-chars!}
+      IDENTITY_INTERNAL_SHARED_SECRET: ${IDENTITY_INTERNAL_SHARED_SECRET:-dev-internal-identity-secret-min-32-chars!}
+      OUTBOX_ENCRYPTION_KEY: ${OUTBOX_ENCRYPTION_KEY:-dev-outbox-encryption-key-min-32-chars!!}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      EUREKA_INSTANCE_HOSTNAME: identity-service
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-eureka}:${EUREKA_PASSWORD:-local-eureka-password-change-me}@eureka-server:8761/eureka/
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 35s
+
+  rfq-service:
+    build:
+      context: ./backend/rfq-service
+    container_name: globalrfq-rfq
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8082
+      RFQ_DB_URL: jdbc:mysql://mysql:3306/global_rfq?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      RFQ_DB_USERNAME: ${RFQ_DB_USERNAME:-globalrfq_app}
+      RFQ_DB_PASSWORD: ${RFQ_DB_PASSWORD:-globalrfq_dev_password}
+      GATEWAY_SECRET_ENABLED: "true"
+      GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-dev-gateway-shared-secret-minimum-32-chars!}
+      IDENTITY_INTERNAL_SHARED_SECRET: ${IDENTITY_INTERNAL_SHARED_SECRET:-dev-internal-identity-secret-min-32-chars!}
+      RFQ_ATTACHMENT_SCANNER_TOKEN: ${RFQ_ATTACHMENT_SCANNER_TOKEN:-dev-scanner-token-minimum-32-characters!}
+      RFQ_STORAGE_PROVIDER: ${RFQ_STORAGE_PROVIDER:-local}
+      RFQ_STORAGE_DIR: /app/data/rfq-files
+      RFQ_DEFAULT_TIME_ZONE: ${RFQ_DEFAULT_TIME_ZONE:-Asia/Kolkata}
+      EUREKA_INSTANCE_HOSTNAME: rfq-service
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-eureka}:${EUREKA_PASSWORD:-local-eureka-password-change-me}@eureka-server:8761/eureka/
+    ports:
+      - "8082:8082"
+    volumes:
+      - rfq_files:/app/data/rfq-files
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 35s
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    container_name: globalrfq-gateway
+    restart: unless-stopped
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+      rfq-service:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8080
+      MANAGEMENT_PORT: 9080
+      GATEWAY_SECRET_ENABLED: "true"
+      GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-dev-gateway-shared-secret-minimum-32-chars!}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
+      EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-eureka}:${EUREKA_PASSWORD:-local-eureka-password-change-me}@eureka-server:8761/eureka/
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_DEMO_MODE: ${VITE_DEMO_MODE:-false}
+    container_name: globalrfq-frontend
+    restart: unless-stopped
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    ports:
+      - "5173:80"
+
+volumes:
+  mysql_data:
+  rfq_files:
