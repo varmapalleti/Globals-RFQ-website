@@ -307,7 +307,8 @@ public class RfqCommandService {
             return;
         }
         Set<RfqStatus> assignableStatuses = Set.of(RfqStatus.IMPORTED, RfqStatus.ASSIGNED_TO_QUOTATION_MANAGER,
-                RfqStatus.QUOTATION_IN_PROGRESS, RfqStatus.PENDING_REVIEW, RfqStatus.REVISION_IN_PROGRESS,
+                RfqStatus.QUOTATION_IN_PROGRESS, RfqStatus.PENDING_REVIEW, RfqStatus.REJECTED_BY_REVIEWER,
+                RfqStatus.AWAITING_REASSIGNMENT, RfqStatus.REVISION_IN_PROGRESS,
                 RfqStatus.REOPENED_FOR_REVISION, RfqStatus.ESCALATED);
         if (!assignableStatuses.contains(rfq.getStatus())) {
             throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION, "This RFQ is past its quotation and reviewer assignment stage");

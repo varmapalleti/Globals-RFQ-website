@@ -27,9 +27,9 @@ const stageGroups = [
   { label: 'Intake & assignment', statuses: ['IMPORTED', 'ASSIGNED_TO_QUOTATION_MANAGER'] },
   {
     label: 'Quotation preparation',
-    statuses: ['QUOTATION_IN_PROGRESS', 'REVISION_IN_PROGRESS', 'REOPENED_FOR_REVISION'],
+    statuses: ['QUOTATION_IN_PROGRESS', 'REJECTED_BY_REVIEWER', 'REVISION_IN_PROGRESS', 'REOPENED_FOR_REVISION'],
   },
-  { label: 'Internal review', statuses: ['PENDING_REVIEW', 'APPROVED_BY_REVIEWER', 'ESCALATED'] },
+  { label: 'Internal review', statuses: ['PENDING_REVIEW', 'APPROVED_BY_REVIEWER', 'AWAITING_REASSIGNMENT', 'ESCALATED'] },
   {
     label: 'Customer response',
     statuses: ['SENT_TO_CUSTOMER', 'CUSTOMER_APPROVED', 'CUSTOMER_REJECTED'],

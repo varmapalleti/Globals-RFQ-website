@@ -453,3 +453,123 @@ export async function downloadRfqReport(format: 'xlsx' | 'csv' = 'xlsx') {
     disposition: response.headers['content-disposition'] as string | undefined,
   }
 }
+
+
+// ─── Red Flags API ──────────────────────────────────────────────────────────
+export interface RedFlagDto {
+  id: number
+  rfqId: number
+  rfqPublicId: string
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  reason: string
+  status: 'OPEN' | 'RESOLVED' | 'DISMISSED'
+  raisedBy: number
+  assignedTo: number | null
+  resolutionNote: string | null
+  resolvedBy: number | null
+  resolvedAt: string | null
+  createdAt: string
+}
+export async function getRedFlags(
+  page = 0,
+  size = 20,
+  status?: 'OPEN' | 'RESOLVED' | 'DISMISSED',
+  severity?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+) {
+  const { data } = await http.get<ApiSuccessResponse<PageResponse<RedFlagDto>>>('/api/red-flags', {
+    params: { page, size, status: status || undefined, severity: severity || undefined },
+  })
+  return data.data
+}
+export async function createRedFlag(rfqPublicId: string, severity: string, reason: string, assignedTo?: number) {
+  const { data } = await http.post<ApiSuccessResponse<RedFlagDto>>('/api/red-flags', {
+    rfqPublicId, severity, reason, assignedTo,
+  })
+  return data.data
+}
+export async function resolveRedFlag(id: number, resolution: 'RESOLVE' | 'DISMISS', note: string) {
+  const { data } = await http.post<ApiSuccessResponse<RedFlagDto>>(`/api/red-flags/${id}/resolve`, {
+    resolution, note,
+  })
+  return data.data
+}
+export async function getRedFlagsSummary() {
+  const { data } = await http.get<ApiSuccessResponse<{ openCount: number }>>('/api/red-flags/summary')
+  return data.data
+}
+
+// ─── Purchase Orders API ────────────────────────────────────────────────────
+export interface PurchaseOrderDto {
+  id: number
+  orderId: string
+  rfqId: number
+  rfqPublicId: string
+  quotationVersionId: number | null
+  supplierName: string | null
+  status: 'PENDING' | 'ORDERED' | 'SHIPPED' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED'
+  assignedTo: number | null
+  orderDate: string | null
+  expectedDelivery: string | null
+  notes: string | null
+  createdBy: number
+  createdAt: string
+}
+export async function getPurchaseOrders(
+  page = 0,
+  size = 20,
+  status?: PurchaseOrderDto['status'],
+) {
+  const { data } = await http.get<ApiSuccessResponse<PageResponse<PurchaseOrderDto>>>('/api/purchases', {
+    params: { page, size, status: status || undefined },
+  })
+  return data.data
+}
+export async function createPurchaseOrder(
+  rfqPublicId: string,
+  quotationVersionId?: number,
+  supplierName?: string,
+  assignedTo?: number,
+  orderDate?: string,
+  expectedDelivery?: string,
+  notes?: string,
+) {
+  const { data } = await http.post<ApiSuccessResponse<PurchaseOrderDto>>('/api/purchases', {
+    rfqPublicId, quotationVersionId, supplierName, assignedTo, orderDate, expectedDelivery, notes,
+  })
+  return data.data
+}
+export async function updatePurchaseOrderStatus(id: number, status: PurchaseOrderDto['status']) {
+  const { data } = await http.patch<ApiSuccessResponse<PurchaseOrderDto>>(`/api/purchases/${id}/status`, { status })
+  return data.data
+}
+
+
+// ─── Notifications API ──────────────────────────────────────────────────────
+export interface NotificationDto {
+  id: number
+  type: string
+  title: string
+  message: string
+  rfqPublicId: string | null
+  read: boolean
+  createdAt: string
+  readAt: string | null
+}
+export async function getNotifications(page = 0, size = 20) {
+  const { data } = await http.get<ApiSuccessResponse<PageResponse<NotificationDto>>>('/api/notifications', {
+    params: { page, size },
+  })
+  return data.data
+}
+export async function getUnreadNotificationCount() {
+  const { data } = await http.get<ApiSuccessResponse<{ unreadCount: number }>>('/api/notifications/unread-count')
+  return data.data
+}
+export async function markNotificationRead(id: number) {
+  const { data } = await http.patch<ApiSuccessResponse<NotificationDto>>(`/api/notifications/${id}/read`)
+  return data.data
+}
+export async function markAllNotificationsRead() {
+  const { data } = await http.post<ApiSuccessResponse<{ markedRead: number }>>('/api/notifications/mark-all-read')
+  return data.data
+}

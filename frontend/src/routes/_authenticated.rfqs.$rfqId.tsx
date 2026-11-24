@@ -613,6 +613,8 @@ function ProgressStrip({ status }: { status: RfqRecord['status'] }) {
       label: 'Quotation',
       complete: [
         'PENDING_REVIEW',
+        'REJECTED_BY_REVIEWER',
+        'AWAITING_REASSIGNMENT',
         'REVISION_IN_PROGRESS',
         'APPROVED_BY_REVIEWER',
         'SENT_TO_CUSTOMER',
@@ -1145,6 +1147,7 @@ function QuotationPanel({
       [
         'ASSIGNED_TO_QUOTATION_MANAGER',
         'QUOTATION_IN_PROGRESS',
+        'REJECTED_BY_REVIEWER',
         'REVISION_IN_PROGRESS',
         'REOPENED_FOR_REVISION',
       ].includes(rfq.status),
@@ -1154,6 +1157,7 @@ function QuotationPanel({
     [
       'ASSIGNED_TO_QUOTATION_MANAGER',
       'QUOTATION_IN_PROGRESS',
+      'REJECTED_BY_REVIEWER',
       'REVISION_IN_PROGRESS',
       'REOPENED_FOR_REVISION',
     ].includes(rfq.status)

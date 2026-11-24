@@ -43,6 +43,10 @@ spring:
                   args:
                     name: identityService
                     fallbackUri: forward:/fallback/identity
+                - name: RequestRateLimiter
+                  args:
+                    deny-empty-key: true
+                    empty-key-status-code: 429
             - id: identity-api
               order: 0
               uri: lb://identity-service
@@ -57,7 +61,7 @@ spring:
               order: 0
               uri: lb://rfq-service
               predicates:
-                - Path=/api/rfqs/**,/api/quotations/**,/api/quotation-versions/**,/api/admin/rfq-rules/**,/api/reports/**
+                - Path=/api/rfqs/**,/api/quotations/**,/api/quotation-versions/**,/api/admin/rfq-rules/**,/api/reports/**,/api/red-flags/**,/api/purchases/**,/api/notifications/**
               filters:
                 - name: CircuitBreaker
                   args:

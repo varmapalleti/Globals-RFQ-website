@@ -114,6 +114,7 @@ export const useRfqDemoStore = create<RfqDemoState>((set) => ({
               ...rfq,
               status: [
                 'ASSIGNED_TO_QUOTATION_MANAGER',
+                'REJECTED_BY_REVIEWER',
                 'REVISION_IN_PROGRESS',
                 'REOPENED_FOR_REVISION',
               ].includes(rfq.status)
@@ -206,7 +207,7 @@ export const useRfqDemoStore = create<RfqDemoState>((set) => ({
         const rejectionCount = rfq.rejectionCount + 1
         return {
           ...rfq,
-          status: rejectionCount >= 3 ? 'ESCALATED' : 'REVISION_IN_PROGRESS',
+          status: rejectionCount >= 3 ? 'ESCALATED' : 'REJECTED_BY_REVIEWER',
           rejectionCount,
           quotationVersions,
           events: [

@@ -107,8 +107,8 @@ public class QuotationWorkflowService {
         }
         drafts.save(draft);
         RfqStatus from = rfq.getStatus();
-        if (from == RfqStatus.ASSIGNED_TO_QUOTATION_MANAGER || from == RfqStatus.REVISION_IN_PROGRESS
-                || from == RfqStatus.REOPENED_FOR_REVISION) {
+        if (from == RfqStatus.ASSIGNED_TO_QUOTATION_MANAGER || from == RfqStatus.REJECTED_BY_REVIEWER
+                || from == RfqStatus.REVISION_IN_PROGRESS || from == RfqStatus.REOPENED_FOR_REVISION) {
             rfq.setStatus(RfqStatus.QUOTATION_IN_PROGRESS);
             rfqs.save(rfq);
         }
@@ -214,7 +214,11 @@ public class QuotationWorkflowService {
         } else {
             long rejectionCount = reviews.countByQuotationVersionRfqIdAndDecision(rfq.getId(), "REJECTED");
             int limit = policies.findById((byte) 1).orElseThrow().getMaxFormalRejections();
-            rfq.setStatus(rejectionCount >= limit ? RfqStatus.ESCALATED : RfqStatus.REVISION_IN_PROGRESS);
+            if (rejectionCount >= limit) {
+                rfq.setStatus(RfqStatus.ESCALATED);
+            } else {
+                rfq.setStatus(RfqStatus.REJECTED_BY_REVIEWER);
+            }
         }
         rfqs.save(rfq);
         appendEvent(rfq, approved ? "QUOTATION_APPROVED_BY_REVIEWER" : "QUOTATION_REJECTED_BY_REVIEWER",
@@ -419,7 +423,8 @@ public class QuotationWorkflowService {
 
     private void ensureDraftable(Rfq rfq) {
         if (!Set.of(RfqStatus.ASSIGNED_TO_QUOTATION_MANAGER, RfqStatus.QUOTATION_IN_PROGRESS,
-                RfqStatus.REVISION_IN_PROGRESS, RfqStatus.REOPENED_FOR_REVISION).contains(rfq.getStatus())) {
+                RfqStatus.REJECTED_BY_REVIEWER, RfqStatus.REVISION_IN_PROGRESS,
+                RfqStatus.REOPENED_FOR_REVISION).contains(rfq.getStatus())) {
             throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION, "A quotation can only be edited before reviewer approval or while a revision is allowed");
         }
     }

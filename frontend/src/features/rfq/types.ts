@@ -5,6 +5,8 @@ export type RfqStatus =
   | 'ASSIGNED_TO_QUOTATION_MANAGER'
   | 'QUOTATION_IN_PROGRESS'
   | 'PENDING_REVIEW'
+  | 'REJECTED_BY_REVIEWER'
+  | 'AWAITING_REASSIGNMENT'
   | 'REVISION_IN_PROGRESS'
   | 'APPROVED_BY_REVIEWER'
   | 'SENT_TO_CUSTOMER'
@@ -135,6 +137,8 @@ export const statusLabels: Record<RfqStatus, string> = {
   ASSIGNED_TO_QUOTATION_MANAGER: 'Manager assigned',
   QUOTATION_IN_PROGRESS: 'Quotation in progress',
   PENDING_REVIEW: 'Pending review',
+  REJECTED_BY_REVIEWER: 'Rejected by reviewer',
+  AWAITING_REASSIGNMENT: 'Awaiting reassignment',
   REVISION_IN_PROGRESS: 'Revision in progress',
   APPROVED_BY_REVIEWER: 'Approved by reviewer',
   SENT_TO_CUSTOMER: 'Sent to customer',

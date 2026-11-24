@@ -7,6 +7,8 @@ const tones: Record<RfqStatus, string> = {
   ASSIGNED_TO_QUOTATION_MANAGER: 'border-blue-200 bg-blue-50 text-blue-800',
   QUOTATION_IN_PROGRESS: 'border-indigo-200 bg-indigo-50 text-indigo-800',
   PENDING_REVIEW: 'border-amber-200 bg-amber-50 text-amber-800',
+  REJECTED_BY_REVIEWER: 'border-rose-200 bg-rose-50 text-rose-800',
+  AWAITING_REASSIGNMENT: 'border-yellow-200 bg-yellow-50 text-yellow-800',
   REVISION_IN_PROGRESS: 'border-orange-200 bg-orange-50 text-orange-800',
   APPROVED_BY_REVIEWER: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   SENT_TO_CUSTOMER: 'border-cyan-200 bg-cyan-50 text-cyan-800',
