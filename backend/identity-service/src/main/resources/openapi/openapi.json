@@ -1,0 +1,53 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Global RFQ - Identity Service API",
+    "version": "1.0.0",
+    "description": "Authentication, session token refresh, RBAC user administration, eligibility validation, and audit logging."
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "API Gateway (Local)" },
+    { "url": "http://localhost:8081", "description": "Identity Service Direct (Local)" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/auth/login": { "post": { "tags": ["Auth"], "summary": "Authenticate user and set refresh cookie", "security": [] } },
+    "/api/auth/refresh": { "post": { "tags": ["Auth"], "summary": "Rotate refresh token cookie and issue new access JWT", "security": [] } },
+    "/api/auth/logout": { "post": { "tags": ["Auth"], "summary": "Revoke current session and clear refresh cookie" } },
+    "/api/auth/me": { "get": { "tags": ["Auth"], "summary": "Get authenticated user profile and roles" } },
+    "/api/auth/change-password": { "post": { "tags": ["Auth"], "summary": "Change password for current user" } },
+    "/api/auth/verify-email": { "post": { "tags": ["Auth"], "summary": "Verify email verification token", "security": [] } },
+    "/api/auth/accept-invite": { "post": { "tags": ["Auth"], "summary": "Accept admin invite and set initial password", "security": [] } },
+    "/api/auth/resend-verification": { "post": { "tags": ["Auth"], "summary": "Resend email verification message", "security": [] } },
+    "/api/auth/forgot-password": { "post": { "tags": ["Auth"], "summary": "Request password reset OTP", "security": [] } },
+    "/api/auth/verify-reset-otp": { "post": { "tags": ["Auth"], "summary": "Verify password reset OTP", "security": [] } },
+    "/api/auth/reset-password": { "post": { "tags": ["Auth"], "summary": "Complete password reset with verified token", "security": [] } },
+    "/api/users": {
+      "get": { "tags": ["Users"], "summary": "Search and list platform users (Admin)" },
+      "post": { "tags": ["Users"], "summary": "Create and invite a new user (Admin)" }
+    },
+    "/api/users/eligible": { "get": { "tags": ["Users"], "summary": "List active eligible users filtered by role" } },
+    "/api/users/{id}": {
+      "get": { "tags": ["Users"], "summary": "Get user details by ID" },
+      "patch": { "tags": ["Users"], "summary": "Update user details" }
+    },
+    "/api/users/{id}/roles": { "put": { "tags": ["Users"], "summary": "Assign or replace user roles" } },
+    "/api/users/{id}/freeze": { "post": { "tags": ["Users"], "summary": "Freeze user account" } },
+    "/api/users/{id}/unfreeze": { "post": { "tags": ["Users"], "summary": "Unfreeze user account" } },
+    "/api/users/{id}/unlock": { "post": { "tags": ["Users"], "summary": "Unlock temporarily locked account" } },
+    "/api/users/{id}/resend-invite": { "post": { "tags": ["Users"], "summary": "Resend invitation email" } },
+    "/api/roles": { "get": { "tags": ["Roles"], "summary": "List system roles and permissions" } },
+    "/api/audit-logs": { "get": { "tags": ["Audit"], "summary": "Query paginated identity audit logs" } },
+    "/internal/identity/validate": { "get": { "tags": ["Internal"], "summary": "Validate bearer token for service-to-service auth" } },
+    "/internal/identity/users/{userId}/eligibility": { "get": { "tags": ["Internal"], "summary": "Check user active status and role eligibility" } }
+  }
+}

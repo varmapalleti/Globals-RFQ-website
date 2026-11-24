@@ -10,6 +10,8 @@ public record PurchaseOrderResponse(
         String orderId,
         Long rfqId,
         String rfqPublicId,
+        String sourceRfqId,
+        String customerName,
         Long quotationVersionId,
         String supplierName,
         String status,
@@ -21,8 +23,13 @@ public record PurchaseOrderResponse(
         Instant createdAt
 ) {
     public static PurchaseOrderResponse from(PurchaseOrder order) {
+        return from(order, null, null);
+    }
+
+    public static PurchaseOrderResponse from(PurchaseOrder order, String sourceRfqId, String customerName) {
         return new PurchaseOrderResponse(
                 order.getId(), order.getOrderId(), order.getRfqId(), order.getRfqPublicId(),
+                sourceRfqId, customerName,
                 order.getQuotationVersionId(), order.getSupplierName(), order.getStatus().name(),
                 order.getAssignedTo(), order.getOrderDate(), order.getExpectedDelivery(),
                 order.getNotes(), order.getCreatedBy(), order.getCreatedAt()

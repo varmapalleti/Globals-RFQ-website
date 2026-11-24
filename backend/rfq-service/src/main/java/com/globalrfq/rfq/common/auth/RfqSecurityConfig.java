@@ -23,8 +23,9 @@ public class RfqSecurityConfig {
                                               IdentityAuthorizationClient identityClient,
                                               GatewayProperties gatewayProperties,
                                               AttachmentScannerProperties scannerProperties,
-                                              SecurityErrorWriter errorWriter) throws Exception {
-        RfqGatewaySecretFilter gatewayFilter = new RfqGatewaySecretFilter(gatewayProperties, errorWriter);
+                                              SecurityErrorWriter errorWriter,
+                                              @org.springframework.beans.factory.annotation.Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled) throws Exception {
+        RfqGatewaySecretFilter gatewayFilter = new RfqGatewaySecretFilter(gatewayProperties, errorWriter, swaggerEnabled);
         IdentityBearerAuthenticationFilter identityFilter = new IdentityBearerAuthenticationFilter(identityClient, errorWriter);
         AttachmentScannerTokenFilter scannerFilter = new AttachmentScannerTokenFilter(scannerProperties, errorWriter);
 
@@ -39,10 +40,14 @@ public class RfqSecurityConfig {
                         .accessDeniedHandler((request, response, exception) -> errorWriter.write(
                                 request, response, com.globalrfq.rfq.common.error.RfqErrorCode.ACCESS_DENIED,
                                 "You do not have permission to perform this action")))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/internal/attachment-scanner/**").hasRole("ATTACHMENT_SCANNER")
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                            .requestMatchers("/internal/attachment-scanner/**").hasRole("ATTACHMENT_SCANNER");
+                    if (swaggerEnabled) {
+                        auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                })
                 .addFilterBefore(identityFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(gatewayFilter, IdentityBearerAuthenticationFilter.class)
                 .addFilterBefore(scannerFilter, RfqGatewaySecretFilter.class);

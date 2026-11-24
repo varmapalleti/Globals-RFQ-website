@@ -1,0 +1,94 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Global RFQ - RFQ Workflow Service API",
+    "version": "1.0.0",
+    "description": "End-to-end RFQ lifecycle: intake/Excel import, assignments, quotation drafts & immutable versions, reviewer approvals/rejections, customer decisions, marketing handoff, red flags, purchase orders, notifications, reporting, and exports."
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "API Gateway (Local)" },
+    { "url": "http://localhost:8082", "description": "RFQ Service Direct (Local)" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/rfqs": {
+      "get": { "tags": ["RFQs"], "summary": "List and search RFQs scoped by caller role" },
+      "post": { "tags": ["RFQs"], "summary": "Create a new RFQ manually" }
+    },
+    "/api/rfqs/dashboard/summary": { "get": { "tags": ["RFQs"], "summary": "Get dashboard status breakdown counts" } },
+    "/api/rfqs/{publicId}": { "get": { "tags": ["RFQs"], "summary": "Get full RFQ details, line items, and active assignments" } },
+    "/api/rfqs/{publicId}/history": { "get": { "tags": ["RFQs"], "summary": "Get chronological workflow and audit events" } },
+    "/api/rfqs/{publicId}/assignments": { "post": { "tags": ["Assignments"], "summary": "Assign or reassign Quotation Manager, Reviewer, or Marketing Executive" } },
+    "/api/rfqs/{publicId}/reviewer-reassignment-requests": {
+      "get": { "tags": ["Assignments"], "summary": "List reviewer reassignment requests" },
+      "post": { "tags": ["Assignments"], "summary": "Request quotation manager reassignment (Reviewer)" }
+    },
+    "/api/rfqs/{publicId}/reviewer-reassignment-requests/{requestId}/resolve": { "post": { "tags": ["Assignments"], "summary": "Approve or decline reviewer reassignment request (Admin)" } },
+    "/api/rfqs/{publicId}/reviewer-assignment-delegation": {
+      "get": { "tags": ["Assignments"], "summary": "Get reviewer delegation flag for RFQ" },
+      "patch": { "tags": ["Assignments"], "summary": "Enable or disable quotation manager reviewer selection delegation" }
+    },
+    "/api/rfqs/imports/preview": { "post": { "tags": ["Imports"], "summary": "Upload Excel/PDF source file and preview normalized fields and column mappings" } },
+    "/api/rfqs/imports/confirm": { "post": { "tags": ["Imports"], "summary": "Confirm previewed import, attach original file, and create RFQ" } },
+    "/api/rfqs/{publicId}/quotation-draft": {
+      "get": { "tags": ["Quotations"], "summary": "Get current quotation draft" },
+      "put": { "tags": ["Quotations"], "summary": "Save or update quotation draft" }
+    },
+    "/api/rfqs/{publicId}/quotation-versions": {
+      "get": { "tags": ["Quotations"], "summary": "List permanent immutable quotation versions" },
+      "post": { "tags": ["Quotations"], "summary": "Submit quotation draft as permanent immutable version for review" }
+    },
+    "/api/rfqs/{publicId}/quotation-versions/{versionId}": { "get": { "tags": ["Quotations"], "summary": "Get specific quotation version snapshot" } },
+    "/api/rfqs/{publicId}/quotation-versions/{versionId}/review": { "post": { "tags": ["Quotations"], "summary": "Approve or reject a submitted quotation version (Reviewer)" } },
+    "/api/rfqs/{publicId}/customer-submissions": { "post": { "tags": ["Customer Lifecycle"], "summary": "Record that approved quotation was sent to customer in external system" } },
+    "/api/rfqs/{publicId}/customer-decision": { "post": { "tags": ["Customer Lifecycle"], "summary": "Record customer approval, rejection, or clarification decision" } },
+    "/api/rfqs/{publicId}/escalation-resolution": { "post": { "tags": ["Admin Decisions"], "summary": "Resolve escalated RFQ after max rejections (reopen revision or close)" } },
+    "/api/rfqs/{publicId}/customer-rejection-resolution": { "post": { "tags": ["Admin Decisions"], "summary": "Reopen or close an RFQ rejected by customer" } },
+    "/api/rfqs/{publicId}/ready-for-marketing": { "post": { "tags": ["Marketing"], "summary": "Transition customer-approved RFQ to READY_FOR_MARKETING" } },
+    "/api/rfqs/{publicId}/marketing-assignment": { "post": { "tags": ["Marketing"], "summary": "Assign RFQ to Marketing Executive" } },
+    "/api/rfqs/{publicId}/marketing-complete": { "post": { "tags": ["Marketing"], "summary": "Complete marketing execution and close RFQ" } },
+    "/api/rfqs/{publicId}/attachments": {
+      "get": { "tags": ["Attachments"], "summary": "List RFQ source and supporting attachments" },
+      "post": { "tags": ["Attachments"], "summary": "Upload source or supporting attachment" }
+    },
+    "/api/rfqs/{publicId}/attachments/{attachmentId}/download": { "get": { "tags": ["Attachments"], "summary": "Download attachment binary" } },
+    "/api/rfqs/{publicId}/export": { "get": { "tags": ["Exports"], "summary": "Export RFQ and quotation data in xlsx, pdf, or csv format" } },
+    "/api/admin/rfq-rules/mandatory-fields": {
+      "get": { "tags": ["Governance Rules"], "summary": "Get configured mandatory quotation fields" },
+      "put": { "tags": ["Governance Rules"], "summary": "Update mandatory quotation fields (Admin)" }
+    },
+    "/api/admin/rfq-rules/rejection-limit": {
+      "get": { "tags": ["Governance Rules"], "summary": "Get max reviewer rejection threshold" },
+      "patch": { "tags": ["Governance Rules"], "summary": "Update max reviewer rejection threshold (Admin)" }
+    },
+    "/api/admin/rfq-rules/audit": { "get": { "tags": ["Governance Rules"], "summary": "List admin governance audit events" } },
+    "/api/red-flags": {
+      "get": { "tags": ["Red Flags"], "summary": "List red flags with optional status and severity filters" },
+      "post": { "tags": ["Red Flags"], "summary": "Raise a red flag on an RFQ" }
+    },
+    "/api/red-flags/{id}": { "get": { "tags": ["Red Flags"], "summary": "Get red flag detail" } },
+    "/api/red-flags/{id}/resolve": { "post": { "tags": ["Red Flags"], "summary": "Resolve or dismiss an open red flag (Admin)" } },
+    "/api/red-flags/summary": { "get": { "tags": ["Red Flags"], "summary": "Count open red flags" } },
+    "/api/purchases": {
+      "get": { "tags": ["Purchase Orders"], "summary": "List purchase orders filtered by status" },
+      "post": { "tags": ["Purchase Orders"], "summary": "Create purchase order for approved RFQ" }
+    },
+    "/api/purchases/{id}": { "get": { "tags": ["Purchase Orders"], "summary": "Get purchase order detail" } },
+    "/api/purchases/{id}/status": { "patch": { "tags": ["Purchase Orders"], "summary": "Update purchase order fulfillment status" } },
+    "/api/notifications": { "get": { "tags": ["Notifications"], "summary": "List current user notifications" } },
+    "/api/notifications/unread-count": { "get": { "tags": ["Notifications"], "summary": "Count unread notifications for current user" } },
+    "/api/notifications/{id}/read": { "patch": { "tags": ["Notifications"], "summary": "Mark notification as read" } },
+    "/api/notifications/mark-all-read": { "post": { "tags": ["Notifications"], "summary": "Mark all notifications for current user as read" } },
+    "/api/reports/rfqs/summary": { "get": { "tags": ["Reports"], "summary": "Get RFQ workflow status and customer decision summary report" } },
+    "/api/reports/rfqs/export": { "get": { "tags": ["Reports"], "summary": "Export filtered RFQ summary report in xlsx or csv" } }
+  }
+}

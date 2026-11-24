@@ -44,10 +44,11 @@ public class SecurityConfig {
             CorsProperties corsProperties,
             SecurityErrorWriter errorWriter,
             CustomAuthenticationEntryPoint entryPoint,
-            CustomAccessDeniedHandler accessDeniedHandler
+            CustomAccessDeniedHandler accessDeniedHandler,
+            @org.springframework.beans.factory.annotation.Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled
     ) throws Exception{
         JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtService, userRepository);
-        GatewaySecretFilter gatewaySecretFilter = new GatewaySecretFilter(gatewayProperties, errorWriter);
+        GatewaySecretFilter gatewaySecretFilter = new GatewaySecretFilter(gatewayProperties, errorWriter, swaggerEnabled);
         InternalServiceTokenFilter internalServiceTokenFilter = new InternalServiceTokenFilter(internalServiceProperties, errorWriter);
         RefreshOriginFilter refreshOriginFilter = new RefreshOriginFilter(corsProperties, errorWriter);
 
@@ -60,11 +61,16 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e -> e.authenticationEntryPoint(entryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
-                .authorizeHttpRequests(a -> a.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
-                        .requestMatchers("/internal/identity/**").hasRole("RFQ_SERVICE")
-                        .requestMatchers(HttpMethod.POST, PUBLIC_POST).permitAll()
-                        .requestMatchers("/api/test/public/**").permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(a -> {
+                    a.requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+                            .requestMatchers("/internal/identity/**").hasRole("RFQ_SERVICE")
+                            .requestMatchers(HttpMethod.POST, PUBLIC_POST).permitAll()
+                            .requestMatchers("/api/test/public/**").permitAll();
+                    if (swaggerEnabled) {
+                        a.requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    }
+                    a.anyRequest().authenticated();
+                })
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(internalServiceTokenFilter, JwtAuthenticationFilter.class)
                 .addFilterBefore(refreshOriginFilter, JwtAuthenticationFilter.class)

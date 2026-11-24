@@ -44,6 +44,14 @@ public class UserController {
         return ApiResponse.success("Users", service.list(principal, search, role, status, page, size, sort, direction));
     }
 
+    @GetMapping("/eligible")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN', 'QUOTATION_MANAGER')")
+    public ApiResponse<java.util.List<EligibleUserOption>> eligible(
+            @AuthenticationPrincipal AuthenticatedUser principal,
+            @RequestParam RoleName role) {
+        return ApiResponse.success("Eligible users", service.listEligibleByRole(principal, role));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ApiResponse<UserDetailsResponse> get(@AuthenticationPrincipal AuthenticatedUser principal,

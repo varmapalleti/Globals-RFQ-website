@@ -11,6 +11,8 @@ import com.globalrfq.rfq.intake.entity.RfqStatus;
 import com.globalrfq.rfq.intake.repository.RfqAssignmentRepository;
 import com.globalrfq.rfq.intake.repository.RfqLineItemRepository;
 import com.globalrfq.rfq.intake.repository.RfqRepository;
+import com.globalrfq.rfq.notification.entity.NotificationType;
+import com.globalrfq.rfq.notification.service.InAppNotificationService;
 import com.globalrfq.rfq.quotation.dto.MandatoryFieldConfigRequest;
 import com.globalrfq.rfq.quotation.dto.AdminAuditResponse;
 import com.globalrfq.rfq.quotation.dto.QuotationDraftRequest;
@@ -70,6 +72,7 @@ public class QuotationWorkflowService {
     private final WorkflowPolicyRepository policies;
     private final RfqWorkflowEventRepository events;
     private final RfqAdminAuditEventRepository adminAudit;
+    private final InAppNotificationService notifications;
     private final ObjectMapper mapper;
 
     public QuotationWorkflowService(RfqRepository rfqs, RfqLineItemRepository lineItems,
@@ -77,6 +80,7 @@ public class QuotationWorkflowService {
                                    QuotationVersionRepository versions, QuotationReviewDecisionRepository reviews,
                                    MandatoryFieldConfigRepository mandatoryFields, WorkflowPolicyRepository policies,
                                    RfqWorkflowEventRepository events, RfqAdminAuditEventRepository adminAudit,
+                                   InAppNotificationService notifications,
                                    ObjectMapper mapper) {
         this.rfqs = rfqs;
         this.lineItems = lineItems;
@@ -88,6 +92,7 @@ public class QuotationWorkflowService {
         this.policies = policies;
         this.events = events;
         this.adminAudit = adminAudit;
+        this.notifications = notifications;
         this.mapper = mapper;
     }
 
@@ -166,6 +171,15 @@ public class QuotationWorkflowService {
         appendEvent(rfq, "QUOTATION_VERSION_SUBMITTED", actor, from, rfq.getStatus(), null,
                 Map.of("quotationVersionId", version.getId(), "versionNumber", number,
                         "mandatoryFieldsSnapshot", required, "missingMandatoryFields", missing));
+        var activeReviewer = assignments.findByRfqIdAndAssignmentRoleAndActiveTrue(rfq.getId(), AssignmentRole.REVIEWER).orElse(null);
+        Long targetId = activeReviewer != null ? activeReviewer.getAssignedUserId() : rfq.getCreatedBy();
+        if (targetId != null && !targetId.equals(actor.userId())) {
+            notifications.send(targetId, NotificationType.QUOTATION_SUBMITTED,
+                    "Quotation V" + number + " submitted for RFQ-" + rfq.getSourceRfqId(),
+                    "Quotation version V" + number + " for RFQ-" + rfq.getSourceRfqId()
+                            + " is ready for review.",
+                    rfq.getPublicId());
+        }
         return versionResponse(version);
     }
 
@@ -226,6 +240,38 @@ public class QuotationWorkflowService {
                 Map.of("quotationVersionId", versionId, "versionNumber", version.getVersionNumber(),
                         "rejectionCount", reviews.countByQuotationVersionRfqIdAndDecision(rfq.getId(), "REJECTED"),
                         "maxFormalRejections", policies.findById((byte) 1).orElseThrow().getMaxFormalRejections()));
+
+        var activeManager = assignments.findByRfqIdAndAssignmentRoleAndActiveTrue(rfq.getId(), AssignmentRole.QUOTATION_MANAGER).orElse(null);
+        if (approved) {
+            if (activeManager != null && !activeManager.getAssignedUserId().equals(actor.userId())) {
+                notifications.send(activeManager.getAssignedUserId(), NotificationType.QUOTATION_APPROVED,
+                        "Quotation approved for RFQ-" + rfq.getSourceRfqId(),
+                        "Reviewer approved quotation version V" + version.getVersionNumber() + " for RFQ-" + rfq.getSourceRfqId() + ".",
+                        rfq.getPublicId());
+            }
+            if (rfq.getCreatedBy() != null && !rfq.getCreatedBy().equals(actor.userId())
+                    && (activeManager == null || !rfq.getCreatedBy().equals(activeManager.getAssignedUserId()))) {
+                notifications.send(rfq.getCreatedBy(), NotificationType.QUOTATION_APPROVED,
+                        "RFQ-" + rfq.getSourceRfqId() + " ready to send to customer",
+                        "Reviewer approved quotation V" + version.getVersionNumber() + " for RFQ-" + rfq.getSourceRfqId() + ".",
+                        rfq.getPublicId());
+            }
+        } else {
+            boolean escalated = rfq.getStatus() == RfqStatus.ESCALATED;
+            if (activeManager != null && !activeManager.getAssignedUserId().equals(actor.userId())) {
+                notifications.send(activeManager.getAssignedUserId(),
+                        escalated ? NotificationType.QUOTATION_ESCALATED : NotificationType.QUOTATION_REJECTED,
+                        (escalated ? "Quotation escalated on RFQ-" : "Quotation rejected for RFQ-") + rfq.getSourceRfqId(),
+                        "V" + version.getVersionNumber() + " rejected: " + reason,
+                        rfq.getPublicId());
+            }
+            if (escalated && rfq.getCreatedBy() != null && !rfq.getCreatedBy().equals(actor.userId())) {
+                notifications.send(rfq.getCreatedBy(), NotificationType.QUOTATION_ESCALATED,
+                        "RFQ-" + rfq.getSourceRfqId() + " escalated to Admin",
+                        "Maximum reviewer rejections reached on RFQ-" + rfq.getSourceRfqId() + ". Admin resolution required.",
+                        rfq.getPublicId());
+            }
+        }
         return versionResponse(version);
     }
 

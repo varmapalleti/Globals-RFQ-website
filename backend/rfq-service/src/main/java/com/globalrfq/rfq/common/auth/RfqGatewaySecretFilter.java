@@ -15,10 +15,16 @@ import java.security.MessageDigest;
 public class RfqGatewaySecretFilter extends OncePerRequestFilter {
     private final GatewayProperties properties;
     private final SecurityErrorWriter errorWriter;
+    private final boolean swaggerEnabled;
 
     public RfqGatewaySecretFilter(GatewayProperties properties, SecurityErrorWriter errorWriter) {
+        this(properties, errorWriter, false);
+    }
+
+    public RfqGatewaySecretFilter(GatewayProperties properties, SecurityErrorWriter errorWriter, boolean swaggerEnabled) {
         this.properties = properties;
         this.errorWriter = errorWriter;
+        this.swaggerEnabled = swaggerEnabled;
         if (properties.secretEnabled() && (properties.sharedSecret() == null || properties.sharedSecret().length() < 32)) {
             throw new IllegalStateException("GATEWAY_SHARED_SECRET must contain at least 32 characters");
         }
@@ -26,8 +32,12 @@ public class RfqGatewaySecretFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !properties.secretEnabled() || request.getRequestURI().startsWith("/actuator/health")
-                || request.getRequestURI().startsWith("/internal/attachment-scanner/");
+        String uri = request.getRequestURI();
+        boolean isDocs = swaggerEnabled && (uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-ui") || "/swagger-ui.html".equals(uri));
+        return !properties.secretEnabled() || uri.startsWith("/actuator/health")
+                || uri.startsWith("/internal/attachment-scanner/")
+                || isDocs;
     }
 
     @Override

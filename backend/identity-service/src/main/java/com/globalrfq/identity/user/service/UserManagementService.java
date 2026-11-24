@@ -65,6 +65,21 @@ public class UserManagementService {
                 .map(RoleOption::from).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<EligibleUserOption> listEligibleByRole(AuthenticatedUser principal, RoleName roleName) {
+        User actor = policy.actor(principal);
+        int rank = policy.rank(actor);
+        boolean isAdmin = rank <= UserAccessPolicy.ADMIN_RANK;
+        boolean isManagerRequestingReviewer = roleName == RoleName.REVIEWER
+                && actor.getRoles().stream().anyMatch(role -> role.getName() == RoleName.QUOTATION_MANAGER);
+        if (!isAdmin && !isManagerRequestingReviewer) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "You do not have permission to list users for this role");
+        }
+        return users.findAllActiveByRoleName(UserStatus.ACTIVE, roleName).stream()
+                .map(EligibleUserOption::from)
+                .toList();
+    }
+
     @Transactional
     public UserDetailsResponse create(AuthenticatedUser principal, CreateUserRequest request) {
         User actor = policy.actor(principal);

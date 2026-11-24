@@ -9,6 +9,7 @@ import com.globalrfq.rfq.intake.dto.AdminWorkflowResolutionRequest;
 import com.globalrfq.rfq.intake.dto.CreateRfqRequest;
 import com.globalrfq.rfq.intake.dto.CustomerDecisionRequest;
 import com.globalrfq.rfq.intake.dto.CustomerSubmissionRequest;
+import com.globalrfq.rfq.intake.dto.MarketingActionRequest;
 import com.globalrfq.rfq.intake.dto.RfqResponse;
 import com.globalrfq.rfq.intake.entity.AssignmentRole;
 import com.globalrfq.rfq.intake.entity.CustomerDecision;
@@ -22,6 +23,8 @@ import com.globalrfq.rfq.intake.repository.RfqAssignmentRepository;
 import com.globalrfq.rfq.intake.repository.RfqCustomerDecisionRepository;
 import com.globalrfq.rfq.intake.repository.RfqCustomerSubmissionRepository;
 import com.globalrfq.rfq.intake.repository.RfqRepository;
+import com.globalrfq.rfq.notification.entity.NotificationType;
+import com.globalrfq.rfq.notification.service.InAppNotificationService;
 import com.globalrfq.rfq.quotation.entity.QuotationVersion;
 import com.globalrfq.rfq.quotation.repository.QuotationReviewDecisionRepository;
 import com.globalrfq.rfq.quotation.repository.QuotationVersionRepository;
@@ -48,6 +51,7 @@ public class RfqCommandService {
     private final QuotationVersionRepository quotationVersions;
     private final QuotationReviewDecisionRepository quotationReviews;
     private final RfqTimeProperties timeProperties;
+    private final InAppNotificationService notifications;
     private final ObjectMapper objectMapper;
 
     public RfqCommandService(RfqRepository rfqs, RfqAssignmentRepository assignments,
@@ -55,7 +59,9 @@ public class RfqCommandService {
                              RfqCustomerDecisionRepository decisions,
                              RfqWorkflowEventRepository events, QuotationVersionRepository quotationVersions,
                              QuotationReviewDecisionRepository quotationReviews,
-                             RfqTimeProperties timeProperties, ObjectMapper objectMapper) {
+                             RfqTimeProperties timeProperties,
+                             InAppNotificationService notifications,
+                             ObjectMapper objectMapper) {
         this.rfqs = rfqs;
         this.assignments = assignments;
         this.submissions = submissions;
@@ -64,6 +70,7 @@ public class RfqCommandService {
         this.quotationVersions = quotationVersions;
         this.quotationReviews = quotationReviews;
         this.timeProperties = timeProperties;
+        this.notifications = notifications;
         this.objectMapper = objectMapper;
     }
 
@@ -132,6 +139,23 @@ public class RfqCommandService {
                 Map.of("role", role.name(), "previousUserId", previousUserId == null ? "" : previousUserId,
                         "assignedUserId", request.assignedUserId()));
         rfqs.save(rfq);
+
+        String roleLabel = role.name().replace('_', ' ').toLowerCase();
+        NotificationType type = role == AssignmentRole.MARKETING_EXECUTIVE
+                ? NotificationType.MARKETING_ASSIGNED
+                : (previous == null ? NotificationType.RFQ_ASSIGNED : NotificationType.RFQ_REASSIGNED);
+        notifyUser(request.assignedUserId(), actor.userId(), type,
+                "Assigned to RFQ-" + rfq.getSourceRfqId(),
+                "You have been assigned as " + roleLabel + " on RFQ-" + rfq.getSourceRfqId()
+                        + " (" + rfq.getCustomerName() + ").",
+                rfq.getPublicId());
+        if (previousUserId != null) {
+            notifyUser(previousUserId, actor.userId(), NotificationType.RFQ_REASSIGNED,
+                    "Reassigned from RFQ-" + rfq.getSourceRfqId(),
+                    "Your " + roleLabel + " assignment on RFQ-" + rfq.getSourceRfqId()
+                            + " has been transferred to another user.",
+                    rfq.getPublicId());
+        }
         return response(rfq);
     }
 
@@ -206,6 +230,10 @@ public class RfqCommandService {
         appendEvent(rfq, "CUSTOMER_SUBMISSION_RECORDED", actor, from, rfq.getStatus(), request.notes(),
                 Map.of("quotationVersionId", request.quotationVersionId(),
                         "externalReference", request.externalReference() == null ? "" : request.externalReference()));
+        notifyActiveAssignee(rfq, AssignmentRole.QUOTATION_MANAGER, actor.userId(),
+                NotificationType.CUSTOMER_SUBMISSION_RECORDED,
+                "Quotation sent for RFQ-" + rfq.getSourceRfqId(),
+                "Admin recorded that the approved quotation for RFQ-" + rfq.getSourceRfqId() + " was sent to the customer.");
         return response(rfq);
     }
 
@@ -247,6 +275,15 @@ public class RfqCommandService {
         appendEvent(rfq, "CUSTOMER_DECISION_RECORDED", actor, from, rfq.getStatus(), request.notes(),
                 Map.of("decision", request.decision().name(), "quotationVersionId", request.quotationVersionId(),
                         "sourceReference", request.sourceReference() == null ? "" : request.sourceReference()));
+        String decisionText = request.decision().name().replace('_', ' ').toLowerCase();
+        notifyActiveAssignee(rfq, AssignmentRole.QUOTATION_MANAGER, actor.userId(),
+                NotificationType.CUSTOMER_DECISION_RECORDED,
+                "Customer decision on RFQ-" + rfq.getSourceRfqId(),
+                "Customer decision recorded as " + decisionText + " for RFQ-" + rfq.getSourceRfqId() + ".");
+        notifyActiveAssignee(rfq, AssignmentRole.REVIEWER, actor.userId(),
+                NotificationType.CUSTOMER_DECISION_RECORDED,
+                "Customer decision on RFQ-" + rfq.getSourceRfqId(),
+                "Customer decision recorded as " + decisionText + " for RFQ-" + rfq.getSourceRfqId() + ".");
         return response(rfq);
     }
 
@@ -269,6 +306,10 @@ public class RfqCommandService {
         rfqs.save(rfq);
         appendEvent(rfq, "ESCALATION_RESOLVED", actor, from, rfq.getStatus(), request.reason(),
                 Map.of("resolution", request.resolution()));
+        notifyActiveAssignee(rfq, AssignmentRole.QUOTATION_MANAGER, actor.userId(),
+                NotificationType.GENERAL,
+                "Escalation resolved on RFQ-" + rfq.getSourceRfqId(),
+                "Admin resolved the escalation on RFQ-" + rfq.getSourceRfqId() + " (" + request.resolution() + ").");
         return response(rfq);
     }
 
@@ -291,6 +332,60 @@ public class RfqCommandService {
         rfqs.save(rfq);
         appendEvent(rfq, "CUSTOMER_REJECTION_RESOLVED", actor, from, rfq.getStatus(), request.reason(),
                 Map.of("resolution", request.resolution()));
+        notifyActiveAssignee(rfq, AssignmentRole.QUOTATION_MANAGER, actor.userId(),
+                NotificationType.GENERAL,
+                "Customer rejection resolved on RFQ-" + rfq.getSourceRfqId(),
+                "Admin resolved the customer rejection on RFQ-" + rfq.getSourceRfqId() + " (" + request.resolution() + ").");
+        return response(rfq);
+    }
+
+    @Transactional
+    public RfqResponse markReadyForMarketing(String publicId, MarketingActionRequest request, IdentityPrincipal actor) {
+        requireRole(actor, "ADMIN", "SUPER_ADMIN");
+        Rfq rfq = lockRfq(publicId);
+        if (rfq.getStatus() != RfqStatus.CUSTOMER_APPROVED) {
+            throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION,
+                    "Only a customer-approved RFQ can be marked ready for marketing");
+        }
+        RfqStatus from = rfq.getStatus();
+        rfq.setStatus(RfqStatus.READY_FOR_MARKETING);
+        rfqs.save(rfq);
+        String notes = request == null ? null : normalizeOptional(request.notes());
+        appendEvent(rfq, "RFQ_READY_FOR_MARKETING", actor, from, rfq.getStatus(), notes,
+                Map.of("notes", notes == null ? "" : notes));
+        return response(rfq);
+    }
+
+    @Transactional
+    public RfqResponse completeMarketing(String publicId, MarketingActionRequest request, IdentityPrincipal actor) {
+        Rfq rfq = lockRfq(publicId);
+        boolean isAdmin = actor.roles().contains("ADMIN") || actor.roles().contains("SUPER_ADMIN");
+        if (!isAdmin) {
+            if (!actor.roles().contains("MARKETING_EXECUTIVE")) {
+                throw new RfqException(RfqErrorCode.ACCESS_DENIED, "Only an assigned Marketing Executive or Admin can complete marketing");
+            }
+            var assignedMarketing = assignments.findByRfqIdAndAssignmentRoleAndActiveTrue(rfq.getId(), AssignmentRole.MARKETING_EXECUTIVE)
+                    .orElse(null);
+            if (assignedMarketing == null || !assignedMarketing.getAssignedUserId().equals(actor.userId())) {
+                throw new RfqException(RfqErrorCode.ACCESS_DENIED, "You are not the assigned marketing executive for this RFQ");
+            }
+        }
+        if (rfq.getStatus() != RfqStatus.ASSIGNED_TO_MARKETING) {
+            throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION,
+                    "Marketing completion is only permitted while assigned to marketing");
+        }
+        RfqStatus from = rfq.getStatus();
+        rfq.setStatus(RfqStatus.CLOSED);
+        rfqs.save(rfq);
+        String outcome = request == null ? null : normalizeOptional(request.outcome());
+        String notes = request == null ? null : normalizeOptional(request.notes());
+        String detail = notes != null ? notes : (outcome != null ? outcome : "Marketing workflow completed");
+        appendEvent(rfq, "MARKETING_ACTIVITY_COMPLETED", actor, from, rfq.getStatus(), detail,
+                Map.of("outcome", outcome == null ? "" : outcome, "notes", notes == null ? "" : notes));
+        notifyUser(rfq.getCreatedBy(), actor.userId(), NotificationType.GENERAL,
+                "Marketing completed for RFQ-" + rfq.getSourceRfqId(),
+                "Marketing activities were completed and RFQ-" + rfq.getSourceRfqId() + " is now closed.",
+                rfq.getPublicId());
         return response(rfq);
     }
 
@@ -301,7 +396,8 @@ public class RfqCommandService {
 
     private void validateAssignmentStage(Rfq rfq, AssignmentRole role) {
         if (role == AssignmentRole.MARKETING_EXECUTIVE) {
-            if (rfq.getStatus() != RfqStatus.CUSTOMER_APPROVED) {
+            if (!Set.of(RfqStatus.CUSTOMER_APPROVED, RfqStatus.READY_FOR_MARKETING, RfqStatus.ASSIGNED_TO_MARKETING)
+                    .contains(rfq.getStatus())) {
                 throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION, "Marketing assignment is allowed only after customer approval");
             }
             return;
@@ -356,6 +452,21 @@ public class RfqCommandService {
     private RfqResponse response(Rfq rfq) {
         List<RfqAssignment> currentAssignments = assignments.findByRfqIdAndActiveTrueOrderByAssignedAtAsc(rfq.getId());
         return RfqResponse.from(rfq, currentAssignments);
+    }
+
+    private void notifyActiveAssignee(Rfq rfq, AssignmentRole role, Long actorUserId,
+                                      NotificationType type, String title, String message) {
+        assignments.findByRfqIdAndAssignmentRoleAndActiveTrue(rfq.getId(), role)
+                .ifPresent(assignment -> notifyUser(assignment.getAssignedUserId(), actorUserId,
+                        type, title, message, rfq.getPublicId()));
+    }
+
+    private void notifyUser(Long targetUserId, Long actorUserId, NotificationType type,
+                            String title, String message, String rfqPublicId) {
+        if (targetUserId == null || targetUserId.equals(actorUserId)) {
+            return;
+        }
+        notifications.send(targetUserId, type, title, message, rfqPublicId);
     }
 
     private String normalizeOptional(String value) {

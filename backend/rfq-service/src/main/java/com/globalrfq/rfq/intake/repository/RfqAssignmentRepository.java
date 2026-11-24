@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface RfqAssignmentRepository extends JpaRepository<RfqAssignment, Long> {
     Optional<RfqAssignment> findByRfqIdAndAssignmentRoleAndActiveTrue(Long rfqId, AssignmentRole role);
     List<RfqAssignment> findByRfqIdAndActiveTrueOrderByAssignedAtAsc(Long rfqId);
+    List<RfqAssignment> findByRfqIdInAndActiveTrueOrderByAssignedAtAsc(java.util.Collection<Long> rfqIds);
     List<RfqAssignment> findByRfqIdOrderByAssignedAtAsc(Long rfqId);
     boolean existsByRfqIdAndAssignedUserIdAndActiveTrue(Long rfqId, Long userId);
     boolean existsByRfqIdAndAssignedUserId(Long rfqId, Long userId);

@@ -9,6 +9,8 @@ import com.globalrfq.rfq.intake.dto.AdminWorkflowResolutionRequest;
 import com.globalrfq.rfq.intake.dto.CreateRfqRequest;
 import com.globalrfq.rfq.intake.dto.CustomerDecisionRequest;
 import com.globalrfq.rfq.intake.dto.CustomerSubmissionRequest;
+import com.globalrfq.rfq.intake.dto.MarketingActionRequest;
+import com.globalrfq.rfq.intake.dto.MarketingAssignmentRequest;
 import com.globalrfq.rfq.intake.dto.ReviewerReassignmentCreateRequest;
 import com.globalrfq.rfq.intake.dto.ReviewerReassignmentResolutionRequest;
 import com.globalrfq.rfq.quotation.dto.ReviewerDelegationRequest;
@@ -172,6 +174,34 @@ public class RfqController {
     public ApiResponse<RfqResponse> resolveCustomerRejection(@PathVariable @Pattern(regexp = "[0-9a-fA-F-]{36}") String publicId,
                                                               @Valid @RequestBody AdminWorkflowResolutionRequest request) {
         return ApiResponse.success("Customer rejection resolved", commands.resolveCustomerRejection(publicId, request, CurrentActor.require()), correlationId());
+    }
+
+    @PostMapping("/{publicId}/ready-for-marketing")
+    public ApiResponse<RfqResponse> markReadyForMarketing(
+            @PathVariable @Pattern(regexp = "[0-9a-fA-F-]{36}") String publicId,
+            @Valid @RequestBody(required = false) MarketingActionRequest request) {
+        return ApiResponse.success("RFQ marked ready for marketing",
+                commands.markReadyForMarketing(publicId, request, CurrentActor.require()), correlationId());
+    }
+
+    @PostMapping("/{publicId}/marketing-assignment")
+    public ApiResponse<RfqResponse> assignMarketing(
+            @PathVariable @Pattern(regexp = "[0-9a-fA-F-]{36}") String publicId,
+            @Valid @RequestBody MarketingAssignmentRequest request) {
+        return ApiResponse.success("RFQ assigned to marketing",
+                assignmentCoordinator.assign(publicId,
+                        new AssignmentRequest(com.globalrfq.rfq.intake.entity.AssignmentRole.MARKETING_EXECUTIVE,
+                                request.assignedUserId(), request.reason()),
+                        CurrentActor.require()),
+                correlationId());
+    }
+
+    @PostMapping("/{publicId}/marketing-complete")
+    public ApiResponse<RfqResponse> completeMarketing(
+            @PathVariable @Pattern(regexp = "[0-9a-fA-F-]{36}") String publicId,
+            @Valid @RequestBody(required = false) MarketingActionRequest request) {
+        return ApiResponse.success("Marketing activities completed",
+                commands.completeMarketing(publicId, request, CurrentActor.require()), correlationId());
     }
 
     private String correlationId() {

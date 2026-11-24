@@ -39,4 +39,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select u.status from User u where u.id = :id")
     java.util.Optional<com.globalrfq.identity.user.entity.UserStatus> findStatusById(@Param("id") Long id);
 
+    @Query("select distinct u from User u join u.roles r where u.status = :status and r.name = :roleName order by u.fullName asc")
+    java.util.List<User> findAllActiveByRoleName(@Param("status") com.globalrfq.identity.user.entity.UserStatus status,
+                                                 @Param("roleName") com.globalrfq.identity.role.entity.RoleName roleName);
+
 }

@@ -15,6 +15,8 @@ import com.globalrfq.rfq.intake.entity.RfqStatus;
 import com.globalrfq.rfq.intake.repository.RfqAssignmentRepository;
 import com.globalrfq.rfq.intake.repository.RfqRepository;
 import com.globalrfq.rfq.intake.repository.ReviewerReassignmentRequestRepository;
+import com.globalrfq.rfq.notification.entity.NotificationType;
+import com.globalrfq.rfq.notification.service.InAppNotificationService;
 import com.globalrfq.rfq.workflow.entity.RfqWorkflowEvent;
 import com.globalrfq.rfq.workflow.repository.RfqWorkflowEventRepository;
 import org.slf4j.MDC;
@@ -36,17 +38,21 @@ public class ReviewerReassignmentService {
     private final ReviewerReassignmentRequestRepository requests;
     private final RfqWorkflowEventRepository events;
     private final RfqAssignmentCoordinator assignmentCoordinator;
+    private final InAppNotificationService notifications;
     private final ObjectMapper objectMapper;
 
     public ReviewerReassignmentService(RfqRepository rfqs, RfqAssignmentRepository assignments,
                                        ReviewerReassignmentRequestRepository requests,
                                        RfqWorkflowEventRepository events,
-                                       RfqAssignmentCoordinator assignmentCoordinator, ObjectMapper objectMapper) {
+                                       RfqAssignmentCoordinator assignmentCoordinator,
+                                       InAppNotificationService notifications,
+                                       ObjectMapper objectMapper) {
         this.rfqs = rfqs;
         this.assignments = assignments;
         this.requests = requests;
         this.events = events;
         this.assignmentCoordinator = assignmentCoordinator;
+        this.notifications = notifications;
         this.objectMapper = objectMapper;
     }
 
@@ -71,7 +77,7 @@ public class ReviewerReassignmentService {
                 .map(assignment -> assignment.getAssignedUserId().equals(actor.userId())).orElse(false);
         if (!assignedReviewer) throw new RfqException(RfqErrorCode.ACCESS_DENIED, "Only the currently assigned Reviewer can request reassignment");
         if (!Set.of(RfqStatus.ASSIGNED_TO_QUOTATION_MANAGER, RfqStatus.QUOTATION_IN_PROGRESS, RfqStatus.PENDING_REVIEW,
-                RfqStatus.REVISION_IN_PROGRESS, RfqStatus.REOPENED_FOR_REVISION, RfqStatus.ESCALATED).contains(rfq.getStatus())) {
+                RfqStatus.REJECTED_BY_REVIEWER, RfqStatus.REVISION_IN_PROGRESS, RfqStatus.REOPENED_FOR_REVISION, RfqStatus.ESCALATED).contains(rfq.getStatus())) {
             throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION, "Reviewer reassignment can only be requested during the quotation and review workflow");
         }
         if (requests.existsByRfqIdAndStatus(rfq.getId(), ReviewerReassignmentStatus.PENDING)) {
@@ -81,6 +87,11 @@ public class ReviewerReassignmentService {
                 idempotencyKey, requestHash));
         appendEvent(rfq, "REVIEWER_REASSIGNMENT_REQUESTED", actor, reason,
                 Map.of("requestId", saved.getId(), "reviewerUserId", actor.userId()));
+        if (rfq.getCreatedBy() != null && !rfq.getCreatedBy().equals(actor.userId())) {
+            notifications.send(rfq.getCreatedBy(), NotificationType.REVIEWER_REASSIGNMENT_REQUESTED,
+                    "Reviewer reassignment requested on RFQ-" + rfq.getSourceRfqId(),
+                    reason, rfq.getPublicId());
+        }
         return ReviewerReassignmentResponse.from(rfq.getPublicId(), saved);
     }
 
@@ -137,6 +148,11 @@ public class ReviewerReassignmentService {
         appendEvent(rfq, "REVIEWER_REASSIGNMENT_RESOLVED", actor, resolution.reason().trim(),
                 Map.of("requestId", request.getId(), "decision", resolution.decision(),
                         "replacementReviewerId", replacementReviewerId == null ? "" : replacementReviewerId));
+        if (!request.getRequestedByReviewerId().equals(actor.userId())) {
+            notifications.send(request.getRequestedByReviewerId(), NotificationType.REVIEWER_REASSIGNMENT_RESOLVED,
+                    "Reviewer reassignment request " + status.name().toLowerCase() + " for RFQ-" + rfq.getSourceRfqId(),
+                    resolution.reason().trim(), rfq.getPublicId());
+        }
         return ReviewerReassignmentResponse.from(rfq.getPublicId(), request);
     }
 

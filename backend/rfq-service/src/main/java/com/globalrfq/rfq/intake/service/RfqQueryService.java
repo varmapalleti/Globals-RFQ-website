@@ -4,12 +4,15 @@ import com.globalrfq.rfq.common.auth.IdentityPrincipal;
 import com.globalrfq.rfq.common.error.RfqErrorCode;
 import com.globalrfq.rfq.common.error.RfqException;
 import com.globalrfq.rfq.intake.dto.PageResponse;
+import com.globalrfq.rfq.intake.dto.RfqDashboardSummaryResponse;
 import com.globalrfq.rfq.intake.dto.RfqResponse;
 import com.globalrfq.rfq.intake.dto.RfqSummaryResponse;
-import com.globalrfq.rfq.intake.dto.RfqDashboardSummaryResponse;
+import com.globalrfq.rfq.intake.entity.AssignmentRole;
 import com.globalrfq.rfq.intake.entity.Rfq;
+import com.globalrfq.rfq.intake.entity.RfqAssignment;
 import com.globalrfq.rfq.intake.entity.RfqStatus;
 import com.globalrfq.rfq.intake.repository.RfqAssignmentRepository;
+import com.globalrfq.rfq.intake.repository.RfqLineItemRepository;
 import com.globalrfq.rfq.intake.repository.RfqRepository;
 import com.globalrfq.rfq.workflow.dto.WorkflowEventResponse;
 import com.globalrfq.rfq.workflow.repository.RfqWorkflowEventRepository;
@@ -19,17 +22,23 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class RfqQueryService {
     private final RfqRepository rfqs;
     private final RfqAssignmentRepository assignments;
+    private final RfqLineItemRepository lineItems;
     private final RfqWorkflowEventRepository events;
 
-    public RfqQueryService(RfqRepository rfqs, RfqAssignmentRepository assignments, RfqWorkflowEventRepository events) {
+    public RfqQueryService(RfqRepository rfqs, RfqAssignmentRepository assignments,
+                           RfqLineItemRepository lineItems, RfqWorkflowEventRepository events) {
         this.rfqs = rfqs;
         this.assignments = assignments;
+        this.lineItems = lineItems;
         this.events = events;
     }
 
@@ -57,7 +66,39 @@ public class RfqQueryService {
                     ? rfqs.searchAll(normalizedSearch, status, pageable)
                     : rfqs.searchAssignedToUser(actor.userId(), normalizedSearch, status, pageable);
         }
-        return PageResponse.from(result.map(RfqSummaryResponse::from));
+
+        List<Long> rfqIds = result.getContent().stream().map(Rfq::getId).toList();
+        Map<Long, Long> lineCounts = new HashMap<>();
+        Map<Long, Map<AssignmentRole, RfqAssignment>> activeByRfq = new HashMap<>();
+        if (!rfqIds.isEmpty()) {
+            lineItems.countByRfqIdIn(rfqIds).forEach(row -> lineCounts.put(row.getRfqId(), row.getLineCount()));
+            assignments.findByRfqIdInAndActiveTrueOrderByAssignedAtAsc(rfqIds).forEach(a ->
+                    activeByRfq.computeIfAbsent(a.getRfq().getId(), k -> new EnumMap<>(AssignmentRole.class))
+                            .put(a.getAssignmentRole(), a));
+        }
+
+        return PageResponse.from(result.map(rfq -> {
+            long count = lineCounts.getOrDefault(rfq.getId(), 0L);
+            RfqAssignment primary = pickPrimaryAssignment(rfq.getStatus(), activeByRfq.get(rfq.getId()));
+            return RfqSummaryResponse.from(rfq, count,
+                    primary == null ? null : primary.getAssignedUserId(),
+                    primary == null ? null : primary.getAssignmentRole().name());
+        }));
+    }
+
+    private RfqAssignment pickPrimaryAssignment(RfqStatus status, Map<AssignmentRole, RfqAssignment> active) {
+        if (active == null || active.isEmpty()) return null;
+        if (status == RfqStatus.ASSIGNED_TO_MARKETING || status == RfqStatus.READY_FOR_MARKETING) {
+            RfqAssignment m = active.get(AssignmentRole.MARKETING_EXECUTIVE);
+            if (m != null) return m;
+        }
+        if (status == RfqStatus.PENDING_REVIEW) {
+            RfqAssignment r = active.get(AssignmentRole.REVIEWER);
+            if (r != null) return r;
+        }
+        RfqAssignment qm = active.get(AssignmentRole.QUOTATION_MANAGER);
+        if (qm != null) return qm;
+        return active.values().iterator().next();
     }
 
     @Transactional(readOnly = true)

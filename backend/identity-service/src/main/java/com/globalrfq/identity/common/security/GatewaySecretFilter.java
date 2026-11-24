@@ -21,10 +21,16 @@ public class GatewaySecretFilter extends OncePerRequestFilter {
 
     private final GatewayProperties props;
     private final SecurityErrorWriter writer;
+    private final boolean swaggerEnabled;
 
     public GatewaySecretFilter(GatewayProperties props, SecurityErrorWriter writer){
+        this(props, writer, false);
+    }
+
+    public GatewaySecretFilter(GatewayProperties props, SecurityErrorWriter writer, boolean swaggerEnabled){
         this.props = props;
         this.writer = writer;
+        this.swaggerEnabled = swaggerEnabled;
         if(props.secretEnabled() && (props.sharedSecret() == null || props.sharedSecret().length() < 32)){
             throw new IllegalStateException("GATEWAY_SHARED_SECRET must be at least 32 characters when the gateway secret check is enabled");
         }
@@ -33,9 +39,13 @@ public class GatewaySecretFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request){
+        String uri = request.getRequestURI();
+        boolean isDocs = swaggerEnabled && (uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-ui") || "/swagger-ui.html".equals(uri));
         return !props.secretEnabled()
-                || request.getRequestURI().startsWith("/actuator/health")
-                || request.getRequestURI().startsWith("/internal/identity/");
+                || uri.startsWith("/actuator/health")
+                || uri.startsWith("/internal/identity/")
+                || isDocs;
     }
 
     @Override
