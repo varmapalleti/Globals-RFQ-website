@@ -81,6 +81,7 @@ export interface RfqQuotationVersion {
 export interface RfqRecord {
   id: string
   sourceRfqId: string
+  sourceReference?: string
   customerName: string
   customerCompany: string
   buyerName: string
@@ -98,6 +99,7 @@ export interface RfqRecord {
   version: number
   rejectionCount: number
   currentQuotationVersion: number
+  lineItemCount?: number
   quotationVersions: RfqQuotationVersion[]
   assignments: RfqAssignment[]
   lineItems: RfqLineItem[]

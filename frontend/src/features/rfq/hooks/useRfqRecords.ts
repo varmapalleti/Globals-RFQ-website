@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getRfqs } from '../api/rfqApi'
 import { isDemoSession } from '@/features/auth/demoSession'
 import { useRfqDemoStore } from '../store/rfqDemoStore'
-import type { RfqRecord } from '../types'
-import type { RfqStatus } from '../types'
+import type { RfqRecord, RfqStatus } from '../types'
 
 interface RfqListOptions {
   page?: number
@@ -18,12 +17,13 @@ function fromSummary(row: Awaited<ReturnType<typeof getRfqs>>['content'][number]
   return {
     id: row.id,
     sourceRfqId: row.sourceRfqId,
+    sourceReference: row.sourceReference ?? undefined,
     customerName: row.customerName,
     customerCompany: row.customerName,
     buyerName: '',
     buyerEmail: '',
     requestTitle: row.requestTitle,
-    dueAt: '',
+    dueAt: row.dueAtLocal ?? '',
     dueTimeZone: '',
     requestedDeliveryDate: row.requestedDeliveryDate ?? '',
     shipToText: '',
@@ -35,8 +35,19 @@ function fromSummary(row: Awaited<ReturnType<typeof getRfqs>>['content'][number]
     version: 0,
     rejectionCount: 0,
     currentQuotationVersion: 0,
+    lineItemCount: row.lineItemCount,
     quotationVersions: [],
-    assignments: [],
+    assignments:
+      row.assigneeUserId && row.assigneeRole
+        ? [
+            {
+              role: row.assigneeRole,
+              userId: row.assigneeUserId,
+              userName: `User ${row.assigneeUserId}`,
+              assignedAt: row.createdAt,
+            },
+          ]
+        : [],
     lineItems: [],
     quoteDraft: {
       currency: 'USD',

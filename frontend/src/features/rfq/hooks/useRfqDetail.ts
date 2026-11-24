@@ -20,6 +20,7 @@ function toRecord(dto: RfqDetailDto): RfqRecord {
   return {
     id: dto.id,
     sourceRfqId: dto.sourceRfqId,
+    sourceReference: dto.sourceReference ?? undefined,
     customerName: dto.customerName,
     customerCompany: dto.customerCompany ?? '',
     buyerName: dto.buyerName ?? '',

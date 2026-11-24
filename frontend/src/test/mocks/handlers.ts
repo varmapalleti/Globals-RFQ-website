@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-const BASE = 'http://localhost:8081'
+const BASE = '*'
 
 const makeSuccess = <T>(message: string, data?: T) => ({
   success: true,

@@ -54,6 +54,19 @@ export interface CreateIdentityUserRequest {
   roles: RoleName[]
 }
 
+export interface EligibleIdentityUser {
+  id: number
+  fullName: string
+  officialEmail: string
+}
+
+export async function getEligibleUsers(role: RoleName) {
+  const { data } = await http.get<ApiSuccessResponse<EligibleIdentityUser[]>>('/api/users/eligible', {
+    params: { role },
+  })
+  return data.data
+}
+
 export async function getAssignableRoles() {
   const { data } = await http.get<ApiSuccessResponse<IdentityRoleOption[]>>('/api/roles')
   return data.data

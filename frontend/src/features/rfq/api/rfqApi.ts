@@ -18,6 +18,11 @@ export interface RfqSummaryDto {
   customerDecision: CustomerDecision
   requestedDeliveryDate: string | null
   createdAt: string
+  sourceReference?: string | null
+  dueAtLocal?: string | null
+  lineItemCount?: number
+  assigneeUserId?: number | null
+  assigneeRole?: RfqAssignmentRole | null
 }
 export interface RfqDetailDto extends RfqSummaryDto {
   sourceSystem: string
@@ -455,11 +460,36 @@ export async function downloadRfqReport(format: 'xlsx' | 'csv' = 'xlsx') {
 }
 
 
+// ─── Marketing Workflow API ─────────────────────────────────────────────────
+export async function markReadyForMarketing(publicId: string, notes?: string) {
+  const { data } = await http.post<ApiSuccessResponse<RfqDetailDto>>(
+    `/api/rfqs/${publicId}/ready-for-marketing`,
+    notes ? { notes } : {},
+  )
+  return data.data
+}
+export async function assignMarketing(publicId: string, assignedUserId: number, reason?: string) {
+  const { data } = await http.post<ApiSuccessResponse<RfqDetailDto>>(
+    `/api/rfqs/${publicId}/marketing-assignment`,
+    { assignedUserId, reason },
+  )
+  return data.data
+}
+export async function completeMarketing(publicId: string, payload?: { notes?: string; outcome?: string }) {
+  const { data } = await http.post<ApiSuccessResponse<RfqDetailDto>>(
+    `/api/rfqs/${publicId}/marketing-complete`,
+    payload ?? {},
+  )
+  return data.data
+}
+
 // ─── Red Flags API ──────────────────────────────────────────────────────────
 export interface RedFlagDto {
   id: number
   rfqId: number
   rfqPublicId: string
+  sourceRfqId: string | null
+  customerName: string | null
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
   reason: string
   status: 'OPEN' | 'RESOLVED' | 'DISMISSED'
@@ -504,6 +534,8 @@ export interface PurchaseOrderDto {
   orderId: string
   rfqId: number
   rfqPublicId: string
+  sourceRfqId: string | null
+  customerName: string | null
   quotationVersionId: number | null
   supplierName: string | null
   status: 'PENDING' | 'ORDERED' | 'SHIPPED' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED'

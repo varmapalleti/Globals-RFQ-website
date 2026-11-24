@@ -96,6 +96,7 @@ function DashboardPage() {
             [
               'ASSIGNED_TO_QUOTATION_MANAGER',
               'QUOTATION_IN_PROGRESS',
+              'REJECTED_BY_REVIEWER',
               'REVISION_IN_PROGRESS',
               'REOPENED_FOR_REVISION',
             ].includes(rfq.status),
@@ -160,6 +161,7 @@ function DashboardPage() {
             value:
               statusCount('ASSIGNED_TO_QUOTATION_MANAGER') +
               statusCount('QUOTATION_IN_PROGRESS') +
+              statusCount('REJECTED_BY_REVIEWER') +
               statusCount('REVISION_IN_PROGRESS') +
               statusCount('REOPENED_FOR_REVISION'),
             caption: 'Draft or revision in progress',

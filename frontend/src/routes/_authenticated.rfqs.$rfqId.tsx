@@ -13,13 +13,16 @@ import {
   Download,
   FilePlus2,
   FileText,
+  Flag,
   History,
   Loader2,
   MapPin,
+  Megaphone,
   Paperclip,
   RefreshCw,
   Send,
   ShieldCheck,
+  ShoppingCart,
   UploadCloud,
   UserRound,
   XCircle,
@@ -34,13 +37,18 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { isDemoSession } from '@/features/auth/demoSession'
+import { getEligibleUsers } from '@/features/auth/api/userAdminApi'
 import {
+  completeMarketing,
+  createPurchaseOrder,
+  createRedFlag,
   downloadAttachment,
   exportRfq,
   getAttachments,
   getHistory,
   getQuotationDraft,
   getQuotationVersions,
+  markReadyForMarketing,
   recordCustomerDecision,
   recordCustomerSubmission,
   getReviewerReassignmentRequests,
@@ -237,8 +245,13 @@ function RfqDetailPage() {
     (assignment) => assignment.role === 'QUOTATION_MANAGER',
   )
   const currentReviewer = rfq.assignments.find((assignment) => assignment.role === 'REVIEWER')
+  const currentMarketing = rfq.assignments.find(
+    (assignment) => assignment.role === 'MARKETING_EXECUTIVE',
+  )
   const isAssignedManager = role === 'QUOTATION_MANAGER' && currentManager?.userId === user?.id
   const isAssignedReviewer = role === 'REVIEWER' && currentReviewer?.userId === user?.id
+  const isAssignedMarketing =
+    role === 'MARKETING_EXECUTIVE' && currentMarketing?.userId === user?.id
   const versionRows = versionsQuery.data ?? []
   const currentVersion = demo ? rfq.currentQuotationVersion : versionRows.at(0)?.id
   const readText = (value: unknown, fallback = ''): string =>
@@ -395,6 +408,22 @@ function RfqDetailPage() {
               invalidate={invalidate}
             />
           )}
+          <MarketingWorkflowPanel
+            rfq={rfq}
+            demo={demo}
+            isAdmin={isAdmin}
+            isAssignedMarketing={isAssignedMarketing}
+            userName={user?.fullName ?? 'User'}
+            invalidate={invalidate}
+          />
+          <RfqGovernanceQuickPanel
+            rfq={rfq}
+            demo={demo}
+            latestVersionId={currentVersion}
+            isAdmin={isAdmin}
+            userId={user?.id ?? 1}
+            invalidate={invalidate}
+          />
           <Card className="border-slate-200 p-4 shadow-none">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <ShieldCheck className="size-4 text-emerald-600" />
@@ -836,11 +865,18 @@ function AssignmentPanel({
   const setDelegation = useRfqDemoStore((state) => state.setReviewerDelegation)
   const [assignmentRole, setAssignmentRole] = React.useState<RfqAssignmentRole>('QUOTATION_MANAGER')
   const [assignedUserId, setAssignedUserId] = React.useState('')
+  const [manualUserIdEntry, setManualUserIdEntry] = React.useState(false)
   const [reason, setReason] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [delegationReason, setDelegationReason] = React.useState(
     'Client delegation approved for this RFQ',
   )
+  const eligibleUsersQuery = useQuery({
+    queryKey: ['identity', 'eligible-users', assignmentRole],
+    queryFn: () => getEligibleUsers(assignmentRole),
+    enabled: !demo,
+    staleTime: 60_000,
+  })
   const current = rfq.assignments.find((assignment) => assignment.role === assignmentRole)
   const canAssignReviewer = isAdmin || (isAssignedManager && rfq.quotationManagerCanAssignReviewer)
 
@@ -923,7 +959,11 @@ function AssignmentPanel({
     ? [
         'QUOTATION_MANAGER',
         'REVIEWER',
-        ...(rfq.customerDecision === 'APPROVED' ? ['MARKETING_EXECUTIVE' as const] : []),
+        ...(rfq.customerDecision === 'APPROVED' ||
+        rfq.status === 'READY_FOR_MARKETING' ||
+        rfq.status === 'ASSIGNED_TO_MARKETING'
+          ? ['MARKETING_EXECUTIVE' as const]
+          : []),
       ]
     : ['REVIEWER']
   const availableUsers =
@@ -996,12 +1036,30 @@ function AssignmentPanel({
               ))}
             </select>
           </label>
-        ) : (
-          <label htmlFor="identity-user-id" className="block text-xs font-medium text-slate-700">
-            User ID
+        ) : manualUserIdEntry ||
+          eligibleUsersQuery.isError ||
+          (eligibleUsersQuery.data && eligibleUsersQuery.data.length === 0) ? (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="identity-user-id" className="text-xs font-medium text-slate-700">
+                User ID
+              </label>
+              {eligibleUsersQuery.data && eligibleUsersQuery.data.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualUserIdEntry(false)
+                    setAssignedUserId('')
+                  }}
+                  className="text-[11px] font-medium text-blue-700 hover:underline"
+                >
+                  Choose from directory
+                </button>
+              )}
+            </div>
             <Input
               id="identity-user-id"
-              className="mt-1.5 h-9"
+              className="h-9"
               type="number"
               min="1"
               value={assignedUserId}
@@ -1009,7 +1067,44 @@ function AssignmentPanel({
               placeholder="Enter identity user ID"
               required
             />
-          </label>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="eligible-assignee-select" className="text-xs font-medium text-slate-700">
+                Assign to
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualUserIdEntry(true)
+                  setAssignedUserId('')
+                }}
+                className="text-[11px] font-medium text-blue-700 hover:underline"
+              >
+                Enter ID manually
+              </button>
+            </div>
+            <select
+              id="eligible-assignee-select"
+              required
+              disabled={eligibleUsersQuery.isLoading}
+              value={assignedUserId}
+              onChange={(event) => setAssignedUserId(event.target.value)}
+              className="h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm"
+            >
+              <option value="">
+                {eligibleUsersQuery.isLoading
+                  ? 'Loading eligible users…'
+                  : 'Choose an active user'}
+              </option>
+              {(eligibleUsersQuery.data ?? []).map((candidate) => (
+                <option key={candidate.id} value={candidate.id}>
+                  {candidate.fullName} ({candidate.officialEmail})
+                </option>
+              ))}
+            </select>
+          </div>
         )}
         {current && (
           <label className="block text-xs font-medium text-slate-700">
@@ -2252,5 +2347,343 @@ function HistoryPanel({ events }: { events: WorkflowEvent[] }) {
         )}
       </div>
     </div>
+  )
+}
+
+function MarketingWorkflowPanel({
+  rfq,
+  demo,
+  isAdmin,
+  isAssignedMarketing,
+  userName,
+  invalidate,
+}: {
+  rfq: RfqRecord
+  demo: boolean
+  isAdmin: boolean
+  isAssignedMarketing: boolean
+  userName: string
+  invalidate: () => Promise<void>
+}) {
+  const markReadyDemo = useRfqDemoStore((state) => state.markReadyForMarketing)
+  const completeDemo = useRfqDemoStore((state) => state.completeMarketing)
+  const [notes, setNotes] = React.useState('')
+  const [outcome, setOutcome] = React.useState('CAMPAIGN_LAUNCHED')
+  const [busy, setBusy] = React.useState(false)
+
+  const canMarkReady = isAdmin && rfq.status === 'CUSTOMER_APPROVED'
+  const awaitMarketingAssignment = rfq.status === 'READY_FOR_MARKETING'
+  const canComplete = (isAdmin || isAssignedMarketing) && rfq.status === 'ASSIGNED_TO_MARKETING'
+  const marketingDone = rfq.status === 'CLOSED' && rfq.customerDecision === 'APPROVED'
+
+  if (!canMarkReady && !awaitMarketingAssignment && !canComplete && !marketingDone) {
+    return null
+  }
+
+  async function handleMarkReady() {
+    setBusy(true)
+    try {
+      if (demo) markReadyDemo(rfq.id, notes.trim() || 'Ready for marketing intake', userName)
+      else await markReadyForMarketing(rfq.id, notes.trim() || undefined)
+      toast.success('RFQ marked ready for marketing handoff.')
+      setNotes('')
+      await invalidate()
+    } catch (error) {
+      toast.error(unexpectedErrorMessage(normalizeError(error)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleCompleteMarketing(event: React.FormEvent) {
+    event.preventDefault()
+    setBusy(true)
+    try {
+      if (demo)
+        completeDemo(
+          rfq.id,
+          `${outcome}${notes.trim() ? `: ${notes.trim()}` : ''}`,
+          userName,
+        )
+      else await completeMarketing(rfq.id, { outcome, notes: notes.trim() || undefined })
+      toast.success('Marketing execution marked complete.')
+      setNotes('')
+      await invalidate()
+    } catch (error) {
+      toast.error(unexpectedErrorMessage(normalizeError(error)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card className="border-slate-200 p-4 shadow-none">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">Marketing handoff</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Post-approval marketing routing and campaign completion.
+          </p>
+        </div>
+        <Megaphone className="size-4 text-blue-600" />
+      </div>
+
+      {marketingDone ? (
+        <div className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+          Marketing execution is complete for this RFQ.
+        </div>
+      ) : canMarkReady ? (
+        <div className="mt-3 space-y-2.5">
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={2}
+            placeholder="Optional handoff note for marketing…"
+            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+          />
+          <Button
+            type="button"
+            size="sm"
+            className="w-full"
+            disabled={busy}
+            onClick={() => void handleMarkReady()}
+          >
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            Mark Ready for Marketing
+          </Button>
+        </div>
+      ) : canComplete ? (
+        <form onSubmit={handleCompleteMarketing} className="mt-3 space-y-2.5">
+          <label className="block text-xs font-medium text-slate-700">
+            Outcome
+            <select
+              value={outcome}
+              onChange={(event) => setOutcome(event.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs"
+            >
+              <option value="CAMPAIGN_LAUNCHED">Campaign launched</option>
+              <option value="CUSTOMER_ONBOARDED">Customer onboarded</option>
+              <option value="HANDOFF_CLOSED">Handoff completed</option>
+            </select>
+          </label>
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={2}
+            placeholder="Summary of marketing follow-up…"
+            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+          />
+          <Button type="submit" size="sm" className="w-full" disabled={busy}>
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            Complete Marketing Handoff
+          </Button>
+        </form>
+      ) : awaitMarketingAssignment ? (
+        <div className="mt-3 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          Ready for marketing — assign a Marketing Executive in Assignments above to enable
+          handoff completion.
+        </div>
+      ) : null}
+    </Card>
+  )
+}
+
+function RfqGovernanceQuickPanel({
+  rfq,
+  demo,
+  latestVersionId,
+  isAdmin,
+  userId,
+  invalidate,
+}: {
+  rfq: RfqRecord
+  demo: boolean
+  latestVersionId?: number
+  isAdmin: boolean
+  userId: number
+  invalidate: () => Promise<void>
+}) {
+  const createDemoRedFlag = useRfqDemoStore((state) => state.createRedFlag)
+  const createDemoPO = useRfqDemoStore((state) => state.createPurchaseOrder)
+  const [showFlagForm, setShowFlagForm] = React.useState(false)
+  const [severity, setSeverity] = React.useState<'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'>('HIGH')
+  const [flagReason, setFlagReason] = React.useState('')
+  const [showPoForm, setShowPoForm] = React.useState(false)
+  const [supplierName, setSupplierName] = React.useState('')
+  const [expectedDelivery, setExpectedDelivery] = React.useState('')
+  const [poNotes, setPoNotes] = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+
+  const canCreatePo =
+    isAdmin &&
+    (['CUSTOMER_APPROVED', 'READY_FOR_MARKETING', 'ASSIGNED_TO_MARKETING'].includes(rfq.status) ||
+      (rfq.status === 'CLOSED' && rfq.customerDecision === 'APPROVED'))
+
+  async function handleRaiseFlag(event: React.FormEvent) {
+    event.preventDefault()
+    if (flagReason.trim().length < 5) {
+      toast.error('Provide a reason (at least 5 characters).')
+      return
+    }
+    setBusy(true)
+    try {
+      if (demo) {
+        createDemoRedFlag(rfq.id, severity, flagReason.trim(), userId)
+      } else {
+        await createRedFlag(rfq.id, severity, flagReason.trim())
+      }
+      toast.success('Red flag raised for this RFQ.')
+      setFlagReason('')
+      setShowFlagForm(false)
+      await invalidate()
+    } catch (error) {
+      toast.error(unexpectedErrorMessage(normalizeError(error)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleCreatePo(event: React.FormEvent) {
+    event.preventDefault()
+    if (!supplierName.trim()) {
+      toast.error('Enter a supplier name.')
+      return
+    }
+    setBusy(true)
+    try {
+      if (demo) {
+        createDemoPO({
+          rfqPublicId: rfq.id,
+          supplierName: supplierName.trim(),
+          expectedDelivery: expectedDelivery || undefined,
+          notes: poNotes.trim() || undefined,
+          createdBy: userId,
+        })
+      } else {
+        await createPurchaseOrder(
+          rfq.id,
+          latestVersionId,
+          supplierName.trim(),
+          undefined,
+          undefined,
+          expectedDelivery || undefined,
+          poNotes.trim() || undefined,
+        )
+      }
+      toast.success('Purchase order created.')
+      setSupplierName('')
+      setExpectedDelivery('')
+      setPoNotes('')
+      setShowPoForm(false)
+      await invalidate()
+    } catch (error) {
+      toast.error(unexpectedErrorMessage(normalizeError(error)))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card className="border-slate-200 p-4 shadow-none">
+      <h2 className="text-sm font-semibold text-slate-900">Escalation &amp; Procurement</h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setShowFlagForm((prev) => !prev)}
+        >
+          <Flag className="size-3.5 text-red-600" />
+          Raise Red Flag
+        </Button>
+        {canCreatePo && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setShowPoForm((prev) => !prev)}
+          >
+            <ShoppingCart className="size-3.5 text-blue-600" />
+            Create Purchase Order
+          </Button>
+        )}
+      </div>
+
+      {showFlagForm && (
+        <form onSubmit={handleRaiseFlag} className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
+          <select
+            value={severity}
+            onChange={(event) =>
+              setSeverity(event.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')
+            }
+            className="h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs"
+          >
+            <option value="LOW">Low severity</option>
+            <option value="MEDIUM">Medium severity</option>
+            <option value="HIGH">High severity</option>
+            <option value="CRITICAL">Critical severity</option>
+          </select>
+          <textarea
+            required
+            rows={2}
+            value={flagReason}
+            onChange={(event) => setFlagReason(event.target.value)}
+            placeholder="Describe the blocker, pricing risk, or compliance issue…"
+            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" size="sm" variant="ghost" onClick={() => setShowFlagForm(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" variant="destructive" disabled={busy}>
+              Submit Flag
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {showPoForm && (
+        <form onSubmit={handleCreatePo} className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
+          <Input
+            required
+            placeholder="Supplier name"
+            value={supplierName}
+            onChange={(event) => setSupplierName(event.target.value)}
+            className="h-9 text-xs"
+          />
+          <Input
+            type="date"
+            aria-label="Expected delivery date"
+            value={expectedDelivery}
+            onChange={(event) => setExpectedDelivery(event.target.value)}
+            className="h-9 text-xs"
+          />
+          <textarea
+            rows={2}
+            placeholder="PO notes (optional)"
+            value={poNotes}
+            onChange={(event) => setPoNotes(event.target.value)}
+            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+          />
+          <div className="flex justify-end gap-2">
+            <Button type="button" size="sm" variant="ghost" onClick={() => setShowPoForm(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" disabled={busy}>
+              Create PO
+            </Button>
+          </div>
+        </form>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-3 border-t border-slate-100 pt-2.5 text-xs">
+        <Link to="/red-flags" className="font-medium text-blue-700 hover:underline">
+          View all Red Flags →
+        </Link>
+        <Link to="/purchases" className="font-medium text-blue-700 hover:underline">
+          View Purchases →
+        </Link>
+      </div>
+    </Card>
   )
 }

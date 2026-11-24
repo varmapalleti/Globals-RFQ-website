@@ -2,18 +2,20 @@ import * as React from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   BarChart3,
-  Bell,
   ChevronDown,
+  ClipboardList,
   FileText,
+  Flag,
   LayoutDashboard,
   LogOut,
   Menu,
-  ClipboardList,
   Settings2,
+  ShoppingCart,
   Users,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { NotificationBell } from './NotificationBell'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useLogout } from '@/features/auth/hooks/useAuthMutations'
 import { changeDemoRole, isDemoSession } from '@/features/auth/demoSession'
@@ -26,7 +28,15 @@ interface AppShellProps {
 }
 interface NavItem {
   label: string
-  to: '/dashboard' | '/rfqs' | '/reports' | '/users' | '/rfq-settings' | '/audit-logs'
+  to:
+    | '/dashboard'
+    | '/rfqs'
+    | '/red-flags'
+    | '/purchases'
+    | '/reports'
+    | '/users'
+    | '/rfq-settings'
+    | '/audit-logs'
   icon: typeof LayoutDashboard
   roles: RoleName[]
 }
@@ -58,9 +68,27 @@ const navItems: NavItem[] = [
       'VIEWER',
     ],
   },
-  { label: 'Users & roles', to: '/users', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { label: 'RFQ settings', to: '/rfq-settings', icon: Settings2, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { label: 'Audit logs', to: '/audit-logs', icon: ClipboardList, roles: ['SUPER_ADMIN'] },
+  {
+    label: 'Red Flags',
+    to: '/red-flags',
+    icon: Flag,
+    roles: [
+      'SUPER_ADMIN',
+      'ADMIN',
+      'QUOTATION_MANAGER',
+      'REVIEWER',
+      'MARKETING_EXECUTIVE',
+    ],
+  },
+  {
+    label: 'Purchases',
+    to: '/purchases',
+    icon: ShoppingCart,
+    roles: ['SUPER_ADMIN', 'ADMIN', 'MARKETING_EXECUTIVE'],
+  },
+  { label: 'Users', to: '/users', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { label: 'RFQ Rules', to: '/rfq-settings', icon: Settings2, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { label: 'Audit Logs', to: '/audit-logs', icon: ClipboardList, roles: ['SUPER_ADMIN'] },
   {
     label: 'Reports',
     to: '/reports',
@@ -93,7 +121,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-dvh bg-[#fafafa] text-slate-900">
       <div className="flex min-h-dvh">
         <aside
-          className={`${mobileNavOpen ? 'fixed inset-y-0 left-0 z-50 block w-72 shadow-xl' : 'hidden'} border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:block lg:h-dvh lg:w-[260px] lg:shrink-0`}
+          className={`${mobileNavOpen ? 'fixed inset-y-0 left-0 z-50 block w-72 shadow-xl' : 'hidden'} border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:block lg:h-dvh lg:w-[240px] lg:shrink-0`}
           aria-label="Primary navigation"
         >
           <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
@@ -181,17 +209,7 @@ export function AppShell({ children }: AppShellProps) {
               )}
             </div>
             <div className="flex items-center gap-3 sm:gap-5">
-              <span title="Notifications are not connected yet" className="inline-flex">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Notifications are not connected yet"
-                  disabled
-                  className="text-slate-700"
-                >
-                  <Bell className="size-5" aria-hidden="true" />
-                </Button>
-              </span>
+              <NotificationBell />
               <div className="flex items-center gap-2.5">
                 <span className="flex size-9 items-center justify-center rounded-full bg-blue-700 text-sm font-medium text-white">
                   {initials}

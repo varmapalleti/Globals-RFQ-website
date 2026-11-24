@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   AlertTriangle,
@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Trash2,
   UploadCloud,
+  XCircle,
 } from 'lucide-react'
 import * as React from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
@@ -171,12 +172,14 @@ function ImportRfqPage() {
     getValues,
     setError,
     setValue,
+    watch,
     control,
     formState: { errors },
   } = useForm<ImportFormValues>({
     resolver: zodResolver(importSchema),
     defaultValues: demo ? defaultValues : liveDefaultValues,
   })
+  const watchedValues = watch()
   const {
     fields: lineFields,
     append,
@@ -564,16 +567,55 @@ function ImportRfqPage() {
           <ArrowLeft className="size-4" aria-hidden="true" /> Back to RFQs
         </Button>
       </div>
-      <div className="mb-6">
-        <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
-          Customer request intake
-        </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Create or import a customer RFQ</h1>
-        <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
-          Choose a spreadsheet/PDF import or enter the customer request yourself. You can attach the
-          source document in either workflow.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+            Customer request intake
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight">Import RFQs</h1>
+          <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
+            Upload an Excel (.xlsx/.xls), CSV, or PDF request file to detect fields and validate
+            missing columns before creating the RFQ.
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/rfqs/create">
+            <FileText className="size-4" aria-hidden="true" /> Create RFQ manually
+          </Link>
+        </Button>
       </div>
+      <nav aria-label="Import progress" className="mb-6 rounded-xl border border-slate-200 bg-white px-5 py-3.5">
+        <ol className="flex flex-wrap items-center gap-3 text-xs font-medium sm:gap-5">
+          <li className="flex items-center gap-2 text-slate-900">
+            <span
+              className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
+                !previewed ? 'bg-blue-700 text-white' : 'bg-emerald-600 text-white'
+              }`}
+            >
+              1
+            </span>
+            Upload File
+          </li>
+          <span className="hidden h-px flex-1 bg-slate-200 sm:block" />
+          <li className={`flex items-center gap-2 ${previewed ? 'text-slate-900' : 'text-slate-400'}`}>
+            <span
+              className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
+                previewed ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-600'
+              }`}
+            >
+              2
+            </span>
+            Preview &amp; Validate Fields
+          </li>
+          <span className="hidden h-px flex-1 bg-slate-200 sm:block" />
+          <li className="flex items-center gap-2 text-slate-400">
+            <span className="flex size-6 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
+              3
+            </span>
+            Confirm &amp; Create
+          </li>
+        </ol>
+      </nav>
       <div className="mb-5 grid gap-3 sm:grid-cols-2" aria-label="Choose RFQ intake method">
         <button
           type="button"
@@ -700,6 +742,11 @@ function ImportRfqPage() {
 
           {previewed && (
             <>
+              <ExcelFieldDetectionCard
+                values={watchedValues}
+                preview={preview}
+                manualIntake={manualIntake}
+              />
               <Card className="overflow-hidden border-slate-200 shadow-none">
                 <div className="border-b border-slate-100 px-5 py-4">
                   <h2 className="font-semibold">2. Verify request details</h2>
@@ -1014,5 +1061,187 @@ function Field({
         </span>
       )}
     </label>
+  )
+}
+
+function ExcelFieldDetectionCard({
+  values,
+  preview,
+  manualIntake,
+}: {
+  values: ImportFormValues
+  preview: ImportPreviewDto | null
+  manualIntake: boolean
+}) {
+  const hasText = (v?: string) => Boolean(v && v.trim().length > 0)
+  const requiredChecks = [
+    { label: 'PR / Source RFQ #', present: hasText(values.sourceRfqId) },
+    { label: 'Customer Name', present: hasText(values.customerName) },
+    { label: 'Request Title', present: hasText(values.requestTitle) },
+    { label: 'Source System', present: hasText(values.sourceSystem) },
+    {
+      label: 'Line Items (>= 1 with description & qty)',
+      present:
+        values.lineItems.length > 0 &&
+        values.lineItems.some((item) => hasText(item.description) && item.requestedQuantity > 0),
+    },
+  ]
+  const optionalChecks = [
+    { label: 'Customer Company', present: hasText(values.customerCompany) },
+    { label: 'PR / Source Reference', present: hasText(values.sourceReference) },
+    { label: 'Source Manager', present: hasText(values.sourceQuotationManagerName) },
+    { label: 'Buyer Name', present: hasText(values.buyerName) },
+    { label: 'Buyer Email', present: hasText(values.buyerEmail) },
+    { label: 'Due Date / Time', present: hasText(values.dueAtLocal) },
+    { label: 'Delivery Date', present: hasText(values.requestedDeliveryDate) },
+    { label: 'Ship-To Address', present: hasText(values.shipToText) },
+    { label: 'Terms & Conditions', present: hasText(values.termsAndConditions) },
+  ]
+  const lineCount = values.lineItems.length || 1
+  const lineCoverage = [
+    {
+      label: 'Description',
+      count: values.lineItems.filter((item) => hasText(item.description)).length,
+    },
+    {
+      label: 'Quantity > 0',
+      count: values.lineItems.filter((item) => item.requestedQuantity > 0).length,
+    },
+    { label: 'UOM', count: values.lineItems.filter((item) => hasText(item.unitOfMeasure)).length },
+    {
+      label: 'Part #',
+      count: values.lineItems.filter((item) => hasText(item.requestedPartNumber)).length,
+    },
+    {
+      label: 'Manufacturer',
+      count: values.lineItems.filter((item) => hasText(item.requestedManufacturer)).length,
+    },
+    {
+      label: 'Category',
+      count: values.lineItems.filter((item) => hasText(item.procurementCategory)).length,
+    },
+  ]
+
+  const missingRequired = requiredChecks.filter((c) => !c.present)
+  const missingOptional = optionalChecks.filter((c) => !c.present)
+  const mappings = preview?.fieldMappings ? Object.entries(preview.fieldMappings) : []
+
+  return (
+    <Card className="overflow-hidden border-slate-200 shadow-none">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/70 px-5 py-3.5">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900">
+            Excel / Source Field Detection &amp; Validation
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            {manualIntake
+              ? 'Live field completeness check before creating the RFQ.'
+              : `Format: ${preview?.detectedFormat ?? 'Spreadsheet'} · Verified ${requiredChecks.length - missingRequired.length}/${requiredChecks.length} required header checks`}
+          </p>
+        </div>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+            missingRequired.length === 0
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-amber-50 text-amber-800'
+          }`}
+        >
+          {missingRequired.length === 0 ? (
+            <>
+              <CheckCircle2 className="size-3.5" /> Ready to confirm
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="size-3.5" /> {missingRequired.length} required field
+              {missingRequired.length > 1 ? 's' : ''} missing
+            </>
+          )}
+        </span>
+      </div>
+
+      <div className="grid gap-4 p-5 md:grid-cols-2">
+        <div>
+          <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            Required fields ({requiredChecks.length - missingRequired.length}/
+            {requiredChecks.length})
+          </h3>
+          <ul className="mt-2 space-y-1.5">
+            {requiredChecks.map((check) => (
+              <li key={check.label} className="flex items-center gap-2 text-xs">
+                {check.present ? (
+                  <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600" />
+                ) : (
+                  <XCircle className="size-3.5 shrink-0 text-red-600" />
+                )}
+                <span className={check.present ? 'text-slate-700' : 'font-medium text-red-700'}>
+                  {check.label} — {check.present ? 'Detected' : 'Missing'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            Recommended metadata ({optionalChecks.length - missingOptional.length}/
+            {optionalChecks.length})
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {optionalChecks.map((check) => (
+              <span
+                key={check.label}
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                  check.present
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                {check.present ? '✓' : '—'} {check.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100 bg-slate-50/40 px-5 py-3">
+        <p className="text-xs font-semibold text-slate-600">
+          Line-item column detection ({values.lineItems.length} item
+          {values.lineItems.length === 1 ? '' : 's'})
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {lineCoverage.map((col) => (
+            <span
+              key={col.label}
+              className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${
+                col.count === lineCount && values.lineItems.length > 0
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : col.count > 0
+                    ? 'border-amber-200 bg-amber-50 text-amber-800'
+                    : 'border-slate-200 bg-white text-slate-500'
+              }`}
+            >
+              {col.label}: {col.count}/{values.lineItems.length}
+            </span>
+          ))}
+        </div>
+        {mappings.length > 0 && (
+          <div className="mt-3 border-t border-slate-200/70 pt-2.5">
+            <p className="text-[11px] font-semibold text-slate-500">
+              Mapped Excel columns ({mappings.length})
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {mappings.map(([target, source]) => (
+                <span
+                  key={target}
+                  className="rounded bg-blue-50 px-2 py-0.5 text-[11px] text-blue-800"
+                >
+                  {source} → {target}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   )
 }

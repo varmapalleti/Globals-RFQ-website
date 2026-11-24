@@ -5,7 +5,7 @@ import { server } from './mocks/server'
 // We test the single-flight logic in isolation:
 // When multiple 401 responses arrive concurrently, only ONE refresh call is made.
 
-const BASE = 'http://localhost:8081'
+const BASE = '*'
 let refreshCallCount = 0
 
 describe('single-flight refresh logic', () => {
