@@ -7,6 +7,7 @@ import type {
   ResetTokenResponse,
   UserSummary,
 } from '@/types/api'
+import { coordinateRefresh } from './refreshCoordinator'
 
 // ── Request type aliases ────────────────────────────────────────────────────
 
@@ -41,22 +42,27 @@ interface ResendVerificationRequest {
   email: string
 }
 
-// ── TODO: Backend endpoint missing ─────────────────────────────────────────
-// Change Password — required when user.mustChangePassword=true after login.
-// Endpoint: POST /api/auth/change-password (does not exist yet)
-// Request: { currentPassword, newPassword, confirmPassword }
-// Response: ApiVoidResponse
-// When backend implements this, replace this stub with actual call.
 export interface ChangePasswordRequest {
   currentPassword: string
   newPassword: string
   confirmPassword: string
 }
 
-export function changePasswordStub(_data: ChangePasswordRequest): Promise<never> {
-  throw new Error('TODO: Backend endpoint POST /api/auth/change-password is not implemented yet.')
+export interface AcceptInviteRequest {
+  token: string
+  newPassword: string
+  confirmPassword: string
 }
-// ── End TODO ────────────────────────────────────────────────────────────────
+
+export async function changePassword(data: ChangePasswordRequest): Promise<ApiVoidResponse> {
+  const res = await http.post<ApiVoidResponse>('/api/auth/change-password', data)
+  return res.data
+}
+
+export async function acceptInvite(data: AcceptInviteRequest): Promise<ApiVoidResponse> {
+  const res = await http.post<ApiVoidResponse>('/api/auth/accept-invite', data)
+  return res.data
+}
 
 // ── API calls ───────────────────────────────────────────────────────────────
 
@@ -66,8 +72,10 @@ export async function login(data: LoginRequest): Promise<ApiSuccessResponse<Auth
 }
 
 export async function refresh(): Promise<ApiSuccessResponse<AuthResponse>> {
-  const res = await http.post<ApiSuccessResponse<AuthResponse>>('/api/auth/refresh')
-  return res.data
+  return coordinateRefresh(async () => {
+    const res = await http.post<ApiSuccessResponse<AuthResponse>>('/api/auth/refresh')
+    return res.data
+  })
 }
 
 export async function logout(): Promise<void> {

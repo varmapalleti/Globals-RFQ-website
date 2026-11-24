@@ -1,0 +1,94 @@
+server:
+  port: ${SERVER_PORT:8082}
+  shutdown: graceful
+  error:
+    include-message: never
+
+spring:
+  application:
+    name: rfq-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: ${RFQ_DB_URL}
+    username: ${RFQ_DB_USERNAME}
+    password: ${RFQ_DB_PASSWORD}
+    hikari:
+      connection-init-sql: SET time_zone = '+00:00'
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: ${RFQ_MAX_FILE_SIZE:25MB}
+      max-request-size: ${RFQ_MAX_REQUEST_SIZE:30MB}
+  jackson:
+    default-property-inclusion: non_null
+    datatype:
+      datetime:
+        write-dates-as-timestamps: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: "${EUREKA_SERVER_URL:http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@localhost:8761/eureka/}"
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${HOSTNAME:localhost}:${server.port}
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+app:
+  gateway:
+    secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
+    shared-secret: ${GATEWAY_SHARED_SECRET:}
+    header-name: X-Gateway-Secret
+  identity:
+    internal-service-token: ${IDENTITY_INTERNAL_SHARED_SECRET:}
+    service-name: identity-service
+  rfq:
+    storage-provider: ${RFQ_STORAGE_PROVIDER:local}
+    storage-directory: ${RFQ_STORAGE_DIR:./data/rfq-files}
+    s3-bucket: ${RFQ_S3_BUCKET:}
+    s3-prefix: ${RFQ_S3_PREFIX:global-rfq}
+    aws-region: ${AWS_REGION:}
+    default-time-zone: ${RFQ_DEFAULT_TIME_ZONE:Asia/Kolkata}
+    max-attachment-size-bytes: ${RFQ_MAX_ATTACHMENT_SIZE_BYTES:26214400}
+    allowed-attachment-types: ${RFQ_ALLOWED_ATTACHMENT_TYPES:pdf,doc,docx,xls,xlsx,csv,txt,png,jpg,jpeg}
+    preview-ttl-minutes: ${RFQ_IMPORT_PREVIEW_TTL_MINUTES:30}
+  attachment-scanner:
+    shared-token: ${RFQ_ATTACHMENT_SCANNER_TOKEN:}
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name},%X{correlationId:-}]"
+  level:
+    root: INFO
+    com.globalrfq.rfq: INFO

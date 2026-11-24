@@ -4,6 +4,8 @@ import { useAuthStore } from '@/features/auth/store/authStore'
 import { ROUTES } from '@/lib/constants'
 import { queryClient } from '@/lib/query-client'
 import type { ApiSuccessResponse, AuthResponse } from '@/types/api'
+import { coordinateRefresh } from '@/features/auth/api/refreshCoordinator'
+import { normalizeError } from '@/lib/errors'
 
 /** Paths that must NEVER trigger the refresh interceptor. */
 const AUTH_PATHS = new Set([
@@ -23,9 +25,6 @@ let refreshPromise: Promise<string | null> | null = null
 export const http = axios.create({
   baseURL: env.VITE_API_BASE_URL,
   withCredentials: true, // sends refresh_token HttpOnly cookie on every request
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // ── Request interceptor: attach access token from memory ──────────────────
@@ -48,7 +47,7 @@ http.interceptors.response.use(
       error.response?.status !== 401 ||
       original._retry ||
       !original.url ||
-      AUTH_PATHS.has(original.url.replace(env.VITE_API_BASE_URL, '').split('?')[0] ?? '')
+      AUTH_PATHS.has(new URL(original.url, env.VITE_API_BASE_URL).pathname)
     ) {
       return Promise.reject(error)
     }
@@ -80,24 +79,28 @@ http.interceptors.response.use(
 /**
  * Call /api/auth/refresh and update the in-memory store.
  * Returns the new access token, or null if refresh failed.
- * On failure: clears session, clears query cache, redirects to login.
+ * An expired refresh cookie clears the session. Transient errors preserve it.
  */
 async function performRefresh(): Promise<string | null> {
   try {
-    const res = await http.post<ApiSuccessResponse<AuthResponse>>('/api/auth/refresh')
-    const { accessToken, expiresInSeconds, user } = res.data.data
+    const res = await coordinateRefresh(async () => {
+      const response = await http.post<ApiSuccessResponse<AuthResponse>>('/api/auth/refresh')
+      return response.data
+    })
+    const { accessToken, expiresInSeconds, user } = res.data
 
     useAuthStore.getState().setSession(accessToken, expiresInSeconds, user)
 
     return accessToken
-  } catch {
-    // Clear session and redirect
-    useAuthStore.getState().clearSession()
-    queryClient.clear()
-
-    // Use replace so the user can't navigate back to the protected page
-    window.location.replace(`${ROUTES.LOGIN}?reason=session_expired`)
-
+  } catch (error) {
+    const apiError = normalizeError(error)
+    // A rejected/expired refresh cookie means the session is over. Network,
+    // gateway, or origin errors are temporary and must not destroy the session.
+    if (apiError.httpStatus === 401) {
+      useAuthStore.getState().clearSession()
+      queryClient.clear()
+      window.location.replace(`${ROUTES.LOGIN}?reason=session_expired`)
+    }
     return null
   }
 }

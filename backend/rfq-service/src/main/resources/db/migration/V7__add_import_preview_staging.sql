@@ -1,0 +1,21 @@
+CREATE TABLE rfq_import_previews (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    preview_token CHAR(36) NOT NULL,
+    created_by_user_id BIGINT NOT NULL,
+    source_file_name VARCHAR(255) NOT NULL,
+    stored_object_key CHAR(36) NOT NULL,
+    file_sha256 CHAR(64) NOT NULL,
+    parsed_rfq_json JSON NOT NULL,
+    field_mappings_json JSON NOT NULL,
+    warnings_json JSON NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'READY',
+    consumed_rfq_public_id CHAR(36) NULL,
+    expires_at TIMESTAMP(6) NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    version BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT uq_rfq_import_preview_token UNIQUE (preview_token),
+    CONSTRAINT uq_rfq_import_preview_storage UNIQUE (stored_object_key),
+    CONSTRAINT chk_rfq_import_preview_status CHECK (status IN ('READY','CONSUMED','EXPIRED')),
+    CONSTRAINT fk_import_preview_consumed_rfq FOREIGN KEY (consumed_rfq_public_id) REFERENCES rfqs(public_id) ON DELETE RESTRICT,
+    INDEX idx_rfq_import_preview_expiry (status, expires_at)
+) ENGINE=InnoDB;

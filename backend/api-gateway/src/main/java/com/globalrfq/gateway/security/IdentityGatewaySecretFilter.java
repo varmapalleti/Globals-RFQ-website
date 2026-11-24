@@ -23,7 +23,7 @@ public class IdentityGatewaySecretFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
-        if (route == null || !route.getId().startsWith("identity-")) {
+        if (route == null || !(route.getId().startsWith("identity-") || route.getId().startsWith("rfq-"))) {
             return chain.filter(exchange);
         }
 

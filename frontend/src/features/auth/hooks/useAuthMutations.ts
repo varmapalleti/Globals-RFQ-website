@@ -7,6 +7,7 @@ import { queryClient } from '@/lib/query-client'
 import { normalizeError, unexpectedErrorMessage } from '@/lib/errors'
 import { ROUTES } from '@/lib/constants'
 import type { LoginFormValues } from '@/features/auth/schemas/authSchemas'
+import { clearDemoSession, isDemoSession } from '@/features/auth/demoSession'
 
 export function useLogin() {
   const setSession = useAuthStore((s) => s.setSession)
@@ -23,9 +24,7 @@ export function useLogin() {
       // User must change password before accessing anything else
       if (user.mustChangePassword) {
         toast.info('Please set a new password before continuing.')
-        // TODO: navigate to /change-password when backend endpoint exists
-        // For now: show informational dashboard with a notice
-        void navigate({ to: ROUTES.DASHBOARD })
+        void navigate({ to: ROUTES.CHANGE_PASSWORD })
         return
       }
 
@@ -52,7 +51,13 @@ export function useLogout() {
   const navigate = useNavigate()
 
   return useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: async () => {
+      if (isDemoSession()) {
+        clearDemoSession()
+        return
+      }
+      await authApi.logout()
+    },
     onSettled: () => {
       // Always clear memory and cache, even if the API call fails
       clearSession()

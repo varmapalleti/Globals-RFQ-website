@@ -28,7 +28,7 @@ spring:
               "[/**]":
                 allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
                 allowedMethods: GET,POST,PUT,PATCH,DELETE,OPTIONS
-                allowedHeaders: Authorization,Content-Type,X-Correlation-Id
+                allowedHeaders: Authorization,Content-Type,Idempotency-Key,X-Correlation-Id
                 exposedHeaders: X-Correlation-Id
                 allowCredentials: true
                 maxAge: 1800
@@ -53,6 +53,16 @@ spring:
                   args:
                     name: identityService
                     fallbackUri: forward:/fallback/identity
+            - id: rfq-api
+              order: 0
+              uri: lb://rfq-service
+              predicates:
+                - Path=/api/rfqs/**,/api/quotations/**,/api/quotation-versions/**,/api/admin/rfq-rules/**,/api/reports/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: rfqService
+                    fallbackUri: forward:/fallback/rfq
 
 eureka:
   client:
@@ -94,6 +104,16 @@ resilience4j:
   circuitbreaker:
     instances:
       identityService:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        slowCallRateThreshold: 80
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      rfqService:
         registerHealthIndicator: true
         slidingWindowType: COUNT_BASED
         slidingWindowSize: 20

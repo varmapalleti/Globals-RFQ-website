@@ -6,6 +6,7 @@ export const ROUTES = {
   VERIFY_EMAIL: '/verify-email',
   DASHBOARD: '/dashboard',
   CHANGE_PASSWORD: '/change-password',
+  ACCEPT_INVITE: '/accept-invite',
 } as const
 
 export const QUERY_KEYS = {

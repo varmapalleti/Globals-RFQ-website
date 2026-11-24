@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Globals-RFQ-website.iml" filepath="$PROJECT_DIR$/.idea/Globals-RFQ-website.iml" />
+      <module fileurl="file://$PROJECT_DIR$/backend/api-gateway/api-gateway.iml" filepath="$PROJECT_DIR$/backend/api-gateway/api-gateway.iml" />
     </modules>
   </component>
 </project>

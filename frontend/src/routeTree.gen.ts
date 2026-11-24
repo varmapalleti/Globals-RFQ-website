@@ -12,10 +12,19 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as GuestRouteImport } from './routes/_guest'
+import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated.audit-logs'
+import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated.change-password'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated.reports'
+import { Route as AuthenticatedRfqSettingsRouteImport } from './routes/_authenticated.rfq-settings'
+import { Route as AuthenticatedRfqsRouteImport } from './routes/_authenticated.rfqs'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated.users'
+import { Route as GuestAcceptInviteRouteImport } from './routes/_guest.accept-invite'
 import { Route as GuestForgotPasswordRouteImport } from './routes/_guest/forgot-password'
 import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as GuestVerifyEmailRouteImport } from './routes/_guest/verify-email'
+import { Route as AuthenticatedRfqsRfqIdRouteImport } from './routes/_authenticated.rfqs.$rfqId'
+import { Route as AuthenticatedRfqsImportRouteImport } from './routes/_authenticated.rfqs.import'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -30,10 +39,47 @@ const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAuditLogsRoute = AuthenticatedAuditLogsRouteImport.update({
+  id: '/audit-logs',
+  path: '/audit-logs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedChangePasswordRoute =
+  AuthenticatedChangePasswordRouteImport.update({
+    id: '/change-password',
+    path: '/change-password',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedRfqSettingsRoute =
+  AuthenticatedRfqSettingsRouteImport.update({
+    id: '/rfq-settings',
+    path: '/rfq-settings',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRfqsRoute = AuthenticatedRfqsRouteImport.update({
+  id: '/rfqs',
+  path: '/rfqs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const GuestAcceptInviteRoute = GuestAcceptInviteRouteImport.update({
+  id: '/accept-invite',
+  path: '/accept-invite',
+  getParentRoute: () => GuestRoute,
 } as any)
 const GuestForgotPasswordRoute = GuestForgotPasswordRouteImport.update({
   id: '/forgot-password',
@@ -50,46 +96,119 @@ const GuestVerifyEmailRoute = GuestVerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => GuestRoute,
 } as any)
+const AuthenticatedRfqsRfqIdRoute = AuthenticatedRfqsRfqIdRouteImport.update({
+  id: '/$rfqId',
+  path: '/$rfqId',
+  getParentRoute: () => AuthenticatedRfqsRoute,
+} as any)
+const AuthenticatedRfqsImportRoute = AuthenticatedRfqsImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => AuthenticatedRfqsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/rfq-settings': typeof AuthenticatedRfqSettingsRoute
+  '/rfqs': typeof AuthenticatedRfqsRouteWithChildren
+  '/users': typeof AuthenticatedUsersRoute
+  '/accept-invite': typeof GuestAcceptInviteRoute
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/login': typeof GuestLoginRoute
   '/verify-email': typeof GuestVerifyEmailRoute
+  '/rfqs/$rfqId': typeof AuthenticatedRfqsRfqIdRoute
+  '/rfqs/import': typeof AuthenticatedRfqsImportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/rfq-settings': typeof AuthenticatedRfqSettingsRoute
+  '/rfqs': typeof AuthenticatedRfqsRouteWithChildren
+  '/users': typeof AuthenticatedUsersRoute
+  '/accept-invite': typeof GuestAcceptInviteRoute
   '/forgot-password': typeof GuestForgotPasswordRoute
   '/login': typeof GuestLoginRoute
   '/verify-email': typeof GuestVerifyEmailRoute
+  '/rfqs/$rfqId': typeof AuthenticatedRfqsRfqIdRoute
+  '/rfqs/import': typeof AuthenticatedRfqsImportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_guest': typeof GuestRouteWithChildren
+  '/_authenticated/audit-logs': typeof AuthenticatedAuditLogsRoute
+  '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/rfq-settings': typeof AuthenticatedRfqSettingsRoute
+  '/_authenticated/rfqs': typeof AuthenticatedRfqsRouteWithChildren
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
+  '/_guest/accept-invite': typeof GuestAcceptInviteRoute
   '/_guest/forgot-password': typeof GuestForgotPasswordRoute
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/verify-email': typeof GuestVerifyEmailRoute
+  '/_authenticated/rfqs/$rfqId': typeof AuthenticatedRfqsRfqIdRoute
+  '/_authenticated/rfqs/import': typeof AuthenticatedRfqsImportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/dashboard' | '/forgot-password' | '/login' | '/verify-email'
+    | '/'
+    | '/audit-logs'
+    | '/change-password'
+    | '/dashboard'
+    | '/reports'
+    | '/rfq-settings'
+    | '/rfqs'
+    | '/users'
+    | '/accept-invite'
+    | '/forgot-password'
+    | '/login'
+    | '/verify-email'
+    | '/rfqs/$rfqId'
+    | '/rfqs/import'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/forgot-password' | '/login' | '/verify-email'
+  to:
+    | '/'
+    | '/audit-logs'
+    | '/change-password'
+    | '/dashboard'
+    | '/reports'
+    | '/rfq-settings'
+    | '/rfqs'
+    | '/users'
+    | '/accept-invite'
+    | '/forgot-password'
+    | '/login'
+    | '/verify-email'
+    | '/rfqs/$rfqId'
+    | '/rfqs/import'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_guest'
+    | '/_authenticated/audit-logs'
+    | '/_authenticated/change-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/reports'
+    | '/_authenticated/rfq-settings'
+    | '/_authenticated/rfqs'
+    | '/_authenticated/users'
+    | '/_guest/accept-invite'
     | '/_guest/forgot-password'
     | '/_guest/login'
     | '/_guest/verify-email'
+    | '/_authenticated/rfqs/$rfqId'
+    | '/_authenticated/rfqs/import'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -121,12 +240,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/audit-logs': {
+      id: '/_authenticated/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/audit-logs'
+      preLoaderRoute: typeof AuthenticatedAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/change-password': {
+      id: '/_authenticated/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rfq-settings': {
+      id: '/_authenticated/rfq-settings'
+      path: '/rfq-settings'
+      fullPath: '/rfq-settings'
+      preLoaderRoute: typeof AuthenticatedRfqSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/rfqs': {
+      id: '/_authenticated/rfqs'
+      path: '/rfqs'
+      fullPath: '/rfqs'
+      preLoaderRoute: typeof AuthenticatedRfqsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_guest/accept-invite': {
+      id: '/_guest/accept-invite'
+      path: '/accept-invite'
+      fullPath: '/accept-invite'
+      preLoaderRoute: typeof GuestAcceptInviteRouteImport
+      parentRoute: typeof GuestRoute
     }
     '/_guest/forgot-password': {
       id: '/_guest/forgot-password'
@@ -149,15 +317,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestVerifyEmailRouteImport
       parentRoute: typeof GuestRoute
     }
+    '/_authenticated/rfqs/$rfqId': {
+      id: '/_authenticated/rfqs/$rfqId'
+      path: '/$rfqId'
+      fullPath: '/rfqs/$rfqId'
+      preLoaderRoute: typeof AuthenticatedRfqsRfqIdRouteImport
+      parentRoute: typeof AuthenticatedRfqsRoute
+    }
+    '/_authenticated/rfqs/import': {
+      id: '/_authenticated/rfqs/import'
+      path: '/import'
+      fullPath: '/rfqs/import'
+      preLoaderRoute: typeof AuthenticatedRfqsImportRouteImport
+      parentRoute: typeof AuthenticatedRfqsRoute
+    }
   }
 }
 
+interface AuthenticatedRfqsRouteChildren {
+  AuthenticatedRfqsRfqIdRoute: typeof AuthenticatedRfqsRfqIdRoute
+  AuthenticatedRfqsImportRoute: typeof AuthenticatedRfqsImportRoute
+}
+
+const AuthenticatedRfqsRouteChildren: AuthenticatedRfqsRouteChildren = {
+  AuthenticatedRfqsRfqIdRoute: AuthenticatedRfqsRfqIdRoute,
+  AuthenticatedRfqsImportRoute: AuthenticatedRfqsImportRoute,
+}
+
+const AuthenticatedRfqsRouteWithChildren =
+  AuthenticatedRfqsRoute._addFileChildren(AuthenticatedRfqsRouteChildren)
+
 interface AuthenticatedRouteChildren {
+  AuthenticatedAuditLogsRoute: typeof AuthenticatedAuditLogsRoute
+  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedRfqSettingsRoute: typeof AuthenticatedRfqSettingsRoute
+  AuthenticatedRfqsRoute: typeof AuthenticatedRfqsRouteWithChildren
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAuditLogsRoute: AuthenticatedAuditLogsRoute,
+  AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedRfqSettingsRoute: AuthenticatedRfqSettingsRoute,
+  AuthenticatedRfqsRoute: AuthenticatedRfqsRouteWithChildren,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -165,12 +372,14 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface GuestRouteChildren {
+  GuestAcceptInviteRoute: typeof GuestAcceptInviteRoute
   GuestForgotPasswordRoute: typeof GuestForgotPasswordRoute
   GuestLoginRoute: typeof GuestLoginRoute
   GuestVerifyEmailRoute: typeof GuestVerifyEmailRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
+  GuestAcceptInviteRoute: GuestAcceptInviteRoute,
   GuestForgotPasswordRoute: GuestForgotPasswordRoute,
   GuestLoginRoute: GuestLoginRoute,
   GuestVerifyEmailRoute: GuestVerifyEmailRoute,

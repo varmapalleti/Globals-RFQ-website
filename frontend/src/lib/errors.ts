@@ -2,10 +2,12 @@ import type { AxiosError } from 'axios'
 
 /** Shape of the backend's error envelope (ApiErrorResponse). */
 export interface BackendErrorBody {
-  success: false
-  status: number
-  errorCode: string
-  message: string
+  success?: false
+  status?: number
+  errorCode?: string
+  /** Gateway circuit-breaker fallbacks use `code`. */
+  code?: string
+  message?: string
   path?: string
   fieldErrors?: Array<{ field: string; message: string }>
   timestamp?: string
@@ -17,76 +19,68 @@ export interface ApiError {
   message: string
   errorCode: string
   status: number
-  /** Grouped by field name — multiple messages per field are possible (password rules). */
+  /** Grouped by field name — multiple messages per field are possible. */
   fieldErrors: Record<string, string[]>
   correlationId: string | null
   /** Raw HTTP status */
   httpStatus: number
 }
 
-/** Guard: is this an Axios error with a backend error body? */
-function isBackendError(err: unknown): err is AxiosError<BackendErrorBody> {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'isAxiosError' in err &&
-    (err as AxiosError).isAxiosError === true &&
-    (err as AxiosError<BackendErrorBody>).response?.data?.success === false
-  )
-}
-
 /**
- * Normalise any error into an `ApiError`.
- * - Backend API errors: extract envelope fields.
- * - Network errors (no response): mark as NETWORK_ERROR.
- * - Anything else: mark as UNKNOWN_ERROR.
+ * Normalize service, gateway-fallback, and transport errors to one shape.
+ * RFQ and Identity use `errorCode`; gateway circuit-breaker responses use `code`.
  */
 export function normalizeError(err: unknown): ApiError {
-  if (isBackendError(err)) {
-    const res = err.response!
-    const body = res.data
-
-    // Collect fieldErrors — multiple messages per field (e.g. password violations)
-    const fieldErrors: Record<string, string[]> = {}
-    for (const fe of body.fieldErrors ?? []) {
-      const existing = fieldErrors[fe.field]
-      if (existing) {
-        existing.push(fe.message)
-      } else {
-        fieldErrors[fe.field] = [fe.message]
-      }
-    }
-
-    // Read correlation ID from header first (may differ from body when errors
-    // are written by security filters that bypass GlobalExceptionHandler)
-    const headers = err.response?.headers as Record<string, unknown> | undefined
-    const rawHeader = headers?.['x-correlation-id']
-    const correlationId = typeof rawHeader === 'string' ? rawHeader : (body.correlationId ?? null)
-
-    return {
-      message: body.message ?? 'An error occurred',
-      errorCode: body.errorCode ?? 'UNKNOWN',
-      status: body.status ?? res.status,
-      fieldErrors,
-      correlationId,
-      httpStatus: res.status,
-    }
-  }
-
   if (
     typeof err === 'object' &&
     err !== null &&
     'isAxiosError' in err &&
-    (err as AxiosError).isAxiosError &&
-    !(err as AxiosError).response
+    (err as AxiosError).isAxiosError
   ) {
+    const axiosError = err as AxiosError<BackendErrorBody>
+    const response = axiosError.response
+    if (!response) {
+      return {
+        message: 'Network error — please check your connection and try again.',
+        errorCode: 'NETWORK_ERROR',
+        status: 0,
+        fieldErrors: {},
+        correlationId: null,
+        httpStatus: 0,
+      }
+    }
+
+    const body =
+      typeof response.data === 'object' && response.data !== null ? response.data : undefined
+    const fieldErrors: Record<string, string[]> = {}
+    for (const fieldError of body?.fieldErrors ?? []) {
+      const messages = fieldErrors[fieldError.field] ?? []
+      messages.push(fieldError.message)
+      fieldErrors[fieldError.field] = messages
+    }
+
+    // Prefer the response header because security filters and gateway errors
+    // can bypass the service's normal JSON exception envelope.
+    const headers = response.headers as Record<string, unknown> | undefined
+    const headerCorrelationId = headers?.['x-correlation-id']
     return {
-      message: 'Network error — please check your connection and try again.',
-      errorCode: 'NETWORK_ERROR',
-      status: 0,
-      fieldErrors: {},
-      correlationId: null,
-      httpStatus: 0,
+      message:
+        typeof body?.message === 'string'
+          ? body.message
+          : `Request failed with HTTP ${response.status}.`,
+      errorCode:
+        typeof body?.errorCode === 'string'
+          ? body.errorCode
+          : typeof body?.code === 'string'
+            ? body.code
+            : 'HTTP_ERROR',
+      status: typeof body?.status === 'number' ? body.status : response.status,
+      fieldErrors,
+      correlationId:
+        typeof headerCorrelationId === 'string'
+          ? headerCorrelationId
+          : (body?.correlationId ?? null),
+      httpStatus: response.status,
     }
   }
 
@@ -100,10 +94,7 @@ export function normalizeError(err: unknown): ApiError {
   }
 }
 
-/** Return a user-facing message for an unexpected error that includes its correlation ID. */
+/** Return only the user-facing message. Correlation IDs stay in diagnostics/logs. */
 export function unexpectedErrorMessage(err: ApiError): string {
-  if (err.correlationId) {
-    return `${err.message} (Ref: ${err.correlationId})`
-  }
   return err.message
 }

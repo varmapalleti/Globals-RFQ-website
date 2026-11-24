@@ -77,6 +77,8 @@ app:
     secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
     shared-secret: ${GATEWAY_SHARED_SECRET:}
     header-name: X-Gateway-Secret
+  internal-service:
+    rfq-service-token: ${IDENTITY_INTERNAL_SHARED_SECRET:}
 
   bootstrap:
     super-admin-email: ${BOOTSTRAP_ADMIN_EMAIL:}

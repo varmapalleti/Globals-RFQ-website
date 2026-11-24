@@ -33,7 +33,9 @@ public class GatewaySecretFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request){
-        return !props.secretEnabled() || request.getRequestURI().startsWith("/actuator/health");
+        return !props.secretEnabled()
+                || request.getRequestURI().startsWith("/actuator/health")
+                || request.getRequestURI().startsWith("/internal/identity/");
     }
 
     @Override

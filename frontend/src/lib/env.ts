@@ -23,3 +23,9 @@ function parseEnv() {
 }
 
 export const env = parseEnv()
+
+/**
+ * Demo data is available only in Vite's development server. Even when a demo
+ * mode file is passed to a production build, this evaluates to false.
+ */
+export const isDemoMode = import.meta.env.DEV && import.meta.env['VITE_DEMO_MODE'] === 'true'

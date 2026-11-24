@@ -4,6 +4,8 @@ app:
   gateway:
     secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
     shared-secret: ${GATEWAY_SHARED_SECRET}
+  internal-service:
+    rfq-service-token: ${IDENTITY_INTERNAL_SHARED_SECRET}
   security:
     cookie-secure: true
   notification:
