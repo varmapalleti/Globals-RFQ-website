@@ -24,8 +24,24 @@ export const Route = createFileRoute('/_authenticated/rfqs/create')({
 const createRfqSchema = z.object({
   sourceSystem: z.string().trim().min(2, 'Enter the source system.').max(80),
   sourceRfqId: z.string().trim().min(1, 'PR / RFQ Number is required.').max(120),
+  sourceQuotationManagerName: z.string().trim().max(190).optional(),
   requestTitle: z.string().trim().max(255).optional(),
   dueDate: z.string().optional(),
+  dueTime: z.string().optional(),
+  dueTimeZone: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .refine((value) => {
+      if (!value) return true
+      try {
+        new Intl.DateTimeFormat('en', { timeZone: value })
+        return true
+      } catch {
+        return false
+      }
+    }, 'Enter a valid IANA timezone, e.g. Asia/Kolkata.'),
   requestedDeliveryDate: z.string().optional(),
   customerName: z.string().trim().min(2, 'Customer name is required.').max(190),
   customerCompany: z.string().trim().max(190).optional(),
@@ -40,6 +56,9 @@ const createRfqSchema = z.object({
   shipState: z.string().trim().max(120).optional(),
   shipZip: z.string().trim().max(40).optional(),
   shipCountry: z.string().trim().max(120).optional(),
+  sourceUrl: z
+    .union([z.literal(''), z.string().url('Enter a valid bid/source URL.').max(1000)])
+    .optional(),
   termsAndConditions: z.string().max(100000).optional(),
   lineItems: z
     .array(
@@ -47,9 +66,11 @@ const createRfqSchema = z.object({
         lineNumber: z.number().int().positive(),
         requestedQuantity: z.number().finite().positive('Qty must be greater than zero.'),
         unitOfMeasure: z.string().trim().max(40).optional(),
+        customerPartNumber: z.string().trim().max(255).optional(),
         requestedPartNumber: z.string().trim().max(255).optional(),
         requestedManufacturer: z.string().trim().max(255).optional(),
         procurementCategory: z.string().trim().max(120).optional(),
+        technicalSpecifications: z.string().max(20000).optional(),
         taaRequired: z.boolean(),
         description: z.string().trim().min(2, 'Description is required.').max(20000),
       }),
@@ -59,7 +80,7 @@ const createRfqSchema = z.object({
 
 type CreateRfqFormValues = z.infer<typeof createRfqSchema>
 
-function CreateRfqPage() {
+export function CreateRfqPage() {
   const navigate = useNavigate()
   const { user, hasAnyRole } = useAuth()
   const importRfq = useRfqDemoStore((state) => state.importRfq)
@@ -76,8 +97,11 @@ function CreateRfqPage() {
     defaultValues: {
       sourceSystem: 'CUSTOMER_SOFTWARE',
       sourceRfqId: '',
+      sourceQuotationManagerName: '',
       requestTitle: '',
       dueDate: '',
+      dueTime: '17:00',
+      dueTimeZone: 'Asia/Kolkata',
       requestedDeliveryDate: '',
       customerName: '',
       customerCompany: '',
@@ -90,15 +114,18 @@ function CreateRfqPage() {
       shipState: '',
       shipZip: '',
       shipCountry: '',
+      sourceUrl: '',
       termsAndConditions: '',
       lineItems: [
         {
           lineNumber: 1,
           requestedQuantity: 1,
           unitOfMeasure: 'EA',
+          customerPartNumber: '',
           requestedPartNumber: '',
           requestedManufacturer: '',
           procurementCategory: '',
+          technicalSpecifications: '',
           taaRequired: false,
           description: '',
         },
@@ -137,7 +164,9 @@ function CreateRfqPage() {
     const shipToText = shipLines.join('\n')
     const resolvedTitle =
       values.requestTitle?.trim() || `Request for Quote ${values.sourceRfqId.trim()}`
-    const dueAtLocal = values.dueDate ? `${values.dueDate}T17:00:00` : null
+    const resolvedDueTime = values.dueTime?.trim() ? `${values.dueTime.trim()}:00`.slice(0, 8) : '17:00:00'
+    const dueAtLocal = values.dueDate ? `${values.dueDate}T${resolvedDueTime}` : null
+    const resolvedTimeZone = values.dueTimeZone?.trim() || 'Asia/Kolkata'
 
     try {
       let rfqId: string
@@ -156,7 +185,7 @@ function CreateRfqPage() {
           buyerEmail: values.buyerEmail?.trim() ?? '',
           requestTitle: resolvedTitle,
           dueAt: dueAtLocal ?? '',
-          dueTimeZone: 'Asia/Kolkata',
+          dueTimeZone: resolvedTimeZone,
           requestedDeliveryDate: values.requestedDeliveryDate ?? '',
           shipToText,
           sourceSystem: values.sourceSystem.trim(),
@@ -176,11 +205,12 @@ function CreateRfqPage() {
             description: line.description.trim(),
             requestedQuantity: line.requestedQuantity,
             unitOfMeasure: line.unitOfMeasure?.trim() || 'EA',
+            customerPartNumber: line.customerPartNumber?.trim() ?? '',
             requestedManufacturer: line.requestedManufacturer?.trim() ?? '',
             requestedPartNumber: line.requestedPartNumber?.trim() ?? '',
             procurementCategory: line.procurementCategory?.trim() ?? '',
             taaRequired: line.taaRequired,
-            technicalSpecifications: '',
+            technicalSpecifications: line.technicalSpecifications?.trim() ?? '',
           })),
           quoteDraft: {
             currency: 'USD',
@@ -213,6 +243,7 @@ function CreateRfqPage() {
           sourceSystem: values.sourceSystem.trim(),
           sourceRfqId: values.sourceRfqId.trim(),
           sourceReference: values.sourceRfqId.trim(),
+          sourceQuotationManagerName: values.sourceQuotationManagerName?.trim() || null,
           customerName: values.customerName.trim(),
           customerCompany: values.customerCompany?.trim() || null,
           buyerName: values.buyerName?.trim() || null,
@@ -220,9 +251,10 @@ function CreateRfqPage() {
           buyerPhone: values.buyerPhone?.trim() || null,
           requestTitle: resolvedTitle,
           dueAtLocal,
-          dueTimeZone: dueAtLocal ? 'Asia/Kolkata' : null,
+          dueTimeZone: dueAtLocal ? resolvedTimeZone : null,
           requestedDeliveryDate: values.requestedDeliveryDate || null,
           shipToText: shipToText || null,
+          sourceUrl: values.sourceUrl?.trim() || null,
           termsAndConditions: values.termsAndConditions?.trim() || null,
           sourceData: {
             intakeMethod: 'MANUAL_STANDALONE',
@@ -236,12 +268,12 @@ function CreateRfqPage() {
             description: line.description.trim(),
             requestedQuantity: line.requestedQuantity,
             unitOfMeasure: line.unitOfMeasure?.trim() || 'EA',
-            customerPartNumber: null,
+            customerPartNumber: line.customerPartNumber?.trim() || null,
             requestedManufacturer: line.requestedManufacturer?.trim() || null,
             requestedPartNumber: line.requestedPartNumber?.trim() || null,
             procurementCategory: line.procurementCategory?.trim() || null,
             taaRequired: line.taaRequired,
-            technicalSpecifications: null,
+            technicalSpecifications: line.technicalSpecifications?.trim() || null,
             sourceData: {},
           })),
         })
@@ -278,7 +310,7 @@ function CreateRfqPage() {
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
         <Card className="border-slate-200 p-5 shadow-xs">
           <h2 className="text-base font-semibold text-slate-900">RFQ Information</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="mt-4 grid gap-4 md:grid-cols-4">
             <Field label="PR Number *" error={errors.sourceRfqId?.message}>
               <Input
                 {...register('sourceRfqId')}
@@ -289,11 +321,14 @@ function CreateRfqPage() {
             <Field label="Due Date" error={errors.dueDate?.message}>
               <Input type="date" {...register('dueDate')} />
             </Field>
+            <Field label="Due Time" error={errors.dueTime?.message}>
+              <Input type="time" {...register('dueTime')} />
+            </Field>
             <Field label="Requested Delivery Date" error={errors.requestedDeliveryDate?.message}>
               <Input type="date" {...register('requestedDeliveryDate')} />
             </Field>
           </div>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Field label="Request Title (optional)">
               <Input
                 {...register('requestTitle')}
@@ -302,6 +337,29 @@ function CreateRfqPage() {
             </Field>
             <Field label="Source System *" error={errors.sourceSystem?.message}>
               <Input {...register('sourceSystem')} aria-invalid={!!errors.sourceSystem} />
+            </Field>
+            <Field label="Due Timezone" error={errors.dueTimeZone?.message}>
+              <Input
+                {...register('dueTimeZone')}
+                placeholder="Asia/Kolkata"
+                aria-invalid={!!errors.dueTimeZone}
+              />
+            </Field>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <Field label="Client Contact / Quotation Hint (optional)">
+              <Input
+                {...register('sourceQuotationManagerName')}
+                placeholder="e.g. VANESSA K BENTON"
+              />
+            </Field>
+            <Field label="Bid / Source URL (optional)" error={errors.sourceUrl?.message}>
+              <Input
+                type="url"
+                {...register('sourceUrl')}
+                placeholder="https://..."
+                aria-invalid={!!errors.sourceUrl}
+              />
             </Field>
           </div>
         </Card>
@@ -381,9 +439,11 @@ function CreateRfqPage() {
                   lineNumber: fields.length + 1,
                   requestedQuantity: 1,
                   unitOfMeasure: 'EA',
+                  customerPartNumber: '',
                   requestedPartNumber: '',
                   requestedManufacturer: '',
                   procurementCategory: '',
+                  technicalSpecifications: '',
                   taaRequired: false,
                   description: '',
                 })
@@ -405,7 +465,7 @@ function CreateRfqPage() {
                 key={field.id}
                 className="rounded-lg border border-slate-200 bg-slate-50/40 p-4"
               >
-                <div className="grid items-start gap-3 md:grid-cols-[80px_110px_110px_1fr_1.6fr_auto]">
+                <div className="grid items-start gap-3 md:grid-cols-[70px_95px_85px_1fr_1fr_1.5fr_auto]">
                   <Field label="Item #">
                     <Input
                       type="number"
@@ -428,6 +488,12 @@ function CreateRfqPage() {
                   </Field>
                   <Field label="UOI">
                     <Input {...register(`lineItems.${index}.unitOfMeasure`)} placeholder="UOI" />
+                  </Field>
+                  <Field label="Customer / V2X part #">
+                    <Input
+                      {...register(`lineItems.${index}.customerPartNumber`)}
+                      placeholder="V2X part #"
+                    />
                   </Field>
                   <Field label="Part #">
                     <Input
@@ -459,7 +525,7 @@ function CreateRfqPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="mt-3 grid gap-3 sm:grid-cols-4">
                   <Input
                     {...register(`lineItems.${index}.requestedManufacturer`)}
                     placeholder="Manufacturer (optional)"
@@ -468,6 +534,11 @@ function CreateRfqPage() {
                   <Input
                     {...register(`lineItems.${index}.procurementCategory`)}
                     placeholder="Category (Tools, Consumables…)"
+                    className="h-8 text-xs"
+                  />
+                  <Input
+                    {...register(`lineItems.${index}.technicalSpecifications`)}
+                    placeholder="Technical specs (optional)"
                     className="h-8 text-xs"
                   />
                   <label className="flex items-center gap-2 text-xs text-slate-600">
@@ -481,6 +552,24 @@ function CreateRfqPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </Card>
+
+        <Card className="border-slate-200 p-5 shadow-xs">
+          <h2 className="text-base font-semibold text-slate-900">Terms &amp; Commercial Notes</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Include payment terms (e.g. NET 60), DFARS/compliance clauses, or bid instructions.
+          </p>
+          <div className="mt-3">
+            <Field label="Terms and Conditions (optional)">
+              <textarea
+                {...register('termsAndConditions')}
+                rows={4}
+                maxLength={100000}
+                placeholder="e.g. TERMS OF PAYMENT: NET 60. Firm Fixed Price (FFP). No manufacturer substitutions without prior written approval."
+                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Field>
           </div>
         </Card>
 

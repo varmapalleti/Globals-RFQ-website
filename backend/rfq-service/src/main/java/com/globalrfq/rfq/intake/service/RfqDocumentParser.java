@@ -34,9 +34,14 @@ import java.util.regex.Pattern;
 
 @Component
 public class RfqDocumentParser {
-    private static final Pattern PR_NUMBER = Pattern.compile("(?i)PR\\s*#\\s*:?\\s*([A-Za-z0-9._/-]+)");
+    private static final Pattern PR_NUMBER = Pattern.compile("(?im)(?:PR|RFQ)\\s*(?:#|No\\.?|Number)?\\s*:?\\s*([A-Za-z0-9._/-]+)");
     private static final Pattern EMAIL = Pattern.compile("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", Pattern.CASE_INSENSITIVE);
     private static final Pattern PDF_LINE_ITEM = Pattern.compile("^\\s*(\\d{1,4})\\s+(\\d+(?:\\.\\d+)?)\\s+([A-Za-z]{1,12})\\s+([A-Za-z0-9._/-]{2,})\\s+(.+)$");
+    private static final Set<String> KNOWN_HEADER_LABELS = Set.of(
+            "pr#", "prnumber", "prno", "rfq#", "rfqnumber", "purchaserequest", "purchaseorderrequest",
+            "duedate&time", "duedateandtime", "duedatetime", "requesteddeliverydate", "requireddeliverydate",
+            "buyername", "buyeremail", "buyerphone", "shipto", "shippingaddress", "customer", "customername",
+            "customercompany", "company", "companyname", "billto", "requesttitle", "sourceurl", "termsandconditions");
     private static final int MAX_SOURCE_CELLS = 20_000;
     private static final int MAX_SOURCE_TEXT_CHARS = 150_000;
 
@@ -87,12 +92,20 @@ public class RfqDocumentParser {
             TableHeader header = findTableHeader(workbook, formatter);
             if (header == null) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "Could not find the RFQ item table headers. Expected ITEM #, QTY, and DESCRIPTION columns.");
 
-            String pr = findLabelValue(workbook, formatter, Set.of("pr#", "prnumber", "purchaseorderrequest"));
+            String pr = findLabelValue(workbook, formatter, Set.of("pr#", "prnumber", "prno", "rfq#", "rfqnumber",
+                    "purchaserequest", "purchaseorderrequest"), 2);
             if (blank(pr)) pr = idFromRaw(raw);
             if (!blank(idOverride)) pr = idOverride.trim();
-            if (blank(pr)) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "Could not map a PR #. Supply the source RFQ ID explicitly.");
-            String company = findCompany(workbook, formatter);
-            if (blank(company)) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "Could not identify the customer company in this workbook; no RFQ was imported.");
+            if (blank(pr)) {
+                pr = "";
+                warnings.add("PR / Customer RFQ # was not found in the workbook. Enter it manually before confirming.");
+            }
+            CompanyBlock companyBlock = findCompanyBlock(workbook, formatter);
+            String company = companyBlock.company();
+            if (blank(company)) {
+                company = "";
+                warnings.add("Customer name or company could not be identified in this workbook. Enter it manually before confirming.");
+            }
 
             List<CreateRfqRequest.CreateRfqLineItemRequest> items = parseWorkbookItems(header, formatter, warnings);
             if (items.isEmpty()) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "The workbook item table did not contain any importable line items");
@@ -100,34 +113,39 @@ public class RfqDocumentParser {
             LocalDateTime due = parseLocalDateTime(dueRaw);
             String deliveryRaw = findLabelValue(workbook, formatter, Set.of("requesteddeliverydate", "requireddeliverydate"));
             LocalDate delivery = parseLocalDate(deliveryRaw);
-            String buyer = findLabelValue(workbook, formatter, Set.of("buyername"));
-            String email = findLabelValue(workbook, formatter, Set.of("buyeremail"));
-            String shipTo = findLabelValue(workbook, formatter, Set.of("shipto", "shippingaddress"));
-            String managerHint = quotationManagerHint(workbook, formatter);
+            String buyer = findLabelValue(workbook, formatter, Set.of("buyername", "buyer"));
+            String email = findLabelValue(workbook, formatter, Set.of("buyeremail", "email"));
+            String phone = findLabelValue(workbook, formatter, Set.of("buyerphone", "phone"));
+            String shipTo = findAddressBlockValue(workbook, formatter, Set.of("shipto", "shippingaddress"));
+            String managerHint = quotationManagerHint(workbook, formatter, pr);
             String sourceUrl = raw.values().stream().filter(value -> value.matches("(?i)^https?://.+")).findFirst().orElse(null);
             String terms = collectTerms(raw);
             Map<String, Object> sourceData = new LinkedHashMap<>(raw);
             sourceData.put("originalFileName", fileName);
             sourceData.put("importFormat", "EXCEL");
             sourceData.put("configuredDefaultTimeZone", timeProperties.getDefaultTimeZone());
+            if (!blank(companyBlock.address())) sourceData.put("customerAddress", companyBlock.address());
             if (managerHint != null) sourceData.put("importedQuotationManagerHint", managerHint);
             if (due != null) warnings.add("The workbook does not state a timezone. The due time will be interpreted using RFQ_DEFAULT_TIME_ZONE=" + timeProperties.getDefaultTimeZone() + ".");
             if (managerHint != null) warnings.add("Quotation manager hint '" + managerHint + "' was imported as a source hint. An Admin must map it to an active Identity account before assignment.");
             warnings.add("Unmapped workbook cells are preserved in sourceData and in the original attachment.");
 
-            CreateRfqRequest request = new CreateRfqRequest(sourceSystem, pr, null, managerHint, company.trim(), company.trim(),
-                    trimOrNull(buyer), trimOrNull(email), null, "Request for Quote " + pr, due,
-                    due == null ? null : timeProperties.getDefaultTimeZone(), delivery, shipTo, sourceUrl, terms,
+            String title = blank(pr) ? "" : "Request for Quote " + pr;
+            CreateRfqRequest request = new CreateRfqRequest(sourceSystem, pr, null, managerHint, company.trim(),
+                    blank(company) ? null : company.trim(),
+                    trimOrNull(buyer), trimOrNull(email), trimOrNull(phone), title, due,
+                    due == null ? null : timeProperties.getDefaultTimeZone(), delivery, trimOrNull(shipTo), sourceUrl, terms,
                     sourceData, items);
             Map<String, String> mappings = new LinkedHashMap<>();
-            mappings.put("PR #", "sourceRfqId");
-            mappings.put("Company name", "customerName/customerCompany");
-            mappings.put("Buyer Name", "buyerName");
-            mappings.put("Buyer Email", "buyerEmail");
-            mappings.put("Due Date & Time", "dueAtLocal + configured timezone");
-            mappings.put("Requested Delivery Date", "requestedDeliveryDate");
-            mappings.put("Ship To", "shipToText");
-            mappings.put("PALLETI cell beside PR #", "sourceQuotationManagerName (assignment hint only)");
+            if (!blank(pr)) mappings.put("PR #", "sourceRfqId");
+            if (!blank(company)) mappings.put("Company name", "customerName/customerCompany");
+            if (!blank(companyBlock.address())) mappings.put("Customer address", "sourceData.customerAddress");
+            if (!blank(buyer)) mappings.put("Buyer Name", "buyerName");
+            if (!blank(email)) mappings.put("Buyer Email", "buyerEmail");
+            if (due != null) mappings.put("Due Date & Time", "dueAtLocal + configured timezone");
+            if (delivery != null) mappings.put("Requested Delivery Date", "requestedDeliveryDate");
+            if (!blank(shipTo)) mappings.put("Ship To", "shipToText");
+            if (!blank(managerHint)) mappings.put("Source contact beside PR #", "sourceQuotationManagerName (assignment hint only)");
             mappings.put("Item table columns", "rfq line items; unrecognized columns retained in lineItem.sourceData");
             return new RfqImportPreviewResponse(fileName, "EXCEL", request, mappings, warnings, null, null);
         }
@@ -147,6 +165,7 @@ public class RfqDocumentParser {
             String description = value(values, "description");
             String qty = value(values, "qty");
             if (description.isBlank() && qty.isBlank()) continue;
+            if (qty.isBlank() && isFooterRow(row, formatter)) break;
             if (description.isBlank() || qty.isBlank()) throw new RfqException(RfqErrorCode.VALIDATION_FAILED,
                     "Workbook row " + (ri + 1) + " contains an incomplete item. Complete its description and quantity before importing.");
             String sourceLineId = value(values, "item");
@@ -165,9 +184,10 @@ public class RfqDocumentParser {
                 warnings.add("One or more TAA values could not be interpreted as yes/no. Review the original cell; its source value is preserved.");
             }
             lines.add(new CreateRfqRequest.CreateRfqLineItemRequest(sourceLineId, lineNumber,
-                    itemDescription, quantity, value(values, "uom"), value(values, "customerpart"),
-                    value(values, "manufacturer"), value(values, "partnumber"), value(values, "category"),
-                    taaRequired, null, rawLine));
+                    itemDescription, quantity, trimOrNull(value(values, "uom")), trimOrNull(value(values, "customerpart")),
+                    trimOrNull(value(values, "manufacturer")), trimOrNull(value(values, "partnumber")),
+                    trimOrNull(value(values, "category")),
+                    taaRequired, trimOrNull(value(values, "technicalspecifications")), rawLine));
             nextLine++;
             if (lines.size() > 500) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "A single RFQ may contain at most 500 line items");
         }
@@ -185,19 +205,28 @@ public class RfqDocumentParser {
             text = stripper.getText(pdf);
         }
         if (text.length() > MAX_SOURCE_TEXT_CHARS) text = text.substring(0, MAX_SOURCE_TEXT_CHARS);
+        List<String> warnings = new ArrayList<>();
         String pr = firstMatch(PR_NUMBER, text, 1);
         if (!blank(idOverride)) pr = idOverride.trim();
-        if (blank(pr)) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "Could not identify the PR # in this PDF. Use the Excel import or provide the RFQ data manually.");
+        if (blank(pr)) {
+            pr = "";
+            warnings.add("PR / Customer RFQ # was not found in this PDF. Enter it manually before confirming.");
+        }
         String company = findCompany(text);
-        if (blank(company)) throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "Could not identify the customer company in this PDF; no RFQ was imported.");
-        String buyerBlock = firstMatch(Pattern.compile("(?is)BUYER:\\s*(.{1,500}?)(?:SHIP\\s*TO:|$)"), text, 1);
-        String buyerName = firstNonBlankLine(buyerBlock);
-        String buyerEmail = firstMatch(EMAIL, buyerBlock, 0);
-        String dueRaw = firstMatch(Pattern.compile("(?im)Due\\s*Date\\s*&\\s*Time\\s*:\\s*(.+)$"), text, 1);
-        String deliveryRaw = firstMatch(Pattern.compile("(?im)(?:Required|Requested)\\s*Delivery\\s*Date\\s*:\\s*(.+)$"), text, 1);
+        if (blank(company)) {
+            company = "";
+            warnings.add("Customer name or company could not be identified in this PDF. Enter it manually before confirming.");
+        }
+        String buyerBlock = firstMatch(Pattern.compile("(?is)BUYER\\s*:?\\s*(.{1,500}?)(?:SHIP\\s*TO\\s*:?|ITEM\\s*#|$)"), text, 1);
+        String buyerName = firstMatch(Pattern.compile("(?im)^Buyer\\s*Name\\s*:?\\s*(.+)$"), text, 1);
+        if (blank(buyerName)) buyerName = firstNonBlankLine(buyerBlock);
+        String buyerEmail = firstMatch(Pattern.compile("(?im)^Buyer\\s*Email\\s*:?\\s*(" + EMAIL.pattern() + ")"), text, 1);
+        if (blank(buyerEmail)) buyerEmail = firstMatch(EMAIL, buyerBlock, 0);
+        String dueRaw = firstMatch(Pattern.compile("(?im)Due\\s*Date\\s*(?:&|and)?\\s*Time\\s*:?\\s*(.+)$"), text, 1);
+        String deliveryRaw = firstMatch(Pattern.compile("(?im)(?:Required|Requested)\\s*Delivery\\s*Date\\s*:?\\s*(.+)$"), text, 1);
         LocalDateTime due = parseLocalDateTime(dueRaw);
         LocalDate delivery = parseLocalDate(deliveryRaw);
-        String shipTo = firstMatch(Pattern.compile("(?is)SHIP\\s*TO:\\s*(.{1,1000}?)(?:\\n\\s*(?:ITEM\\s*#|A competitive procurement|TERMS|To review)|$)"), text, 1);
+        String shipTo = firstMatch(Pattern.compile("(?is)SHIP\\s*TO\\s*:?\\s*(.{1,1000}?)(?:\\n\\s*(?:ITEM\\s*#|A competitive procurement|TERMS|To review|To submit)|$)"), text, 1);
         String sourceUrl = firstMatch(Pattern.compile("(?i)(https?://[^\\s<>]+)"), text, 1);
         List<CreateRfqRequest.CreateRfqLineItemRequest> items = parsePdfItems(text);
         if (items.isEmpty()) throw new RfqException(RfqErrorCode.VALIDATION_FAILED,
@@ -208,22 +237,29 @@ public class RfqDocumentParser {
         sourceData.put("importFormat", "PDF_TEXT");
         sourceData.put("rawExtractedText", text);
         sourceData.put("configuredDefaultTimeZone", timeProperties.getDefaultTimeZone());
-        List<String> warnings = new ArrayList<>();
         warnings.add("PDF text and item rows were extracted heuristically. Review every imported value against the original PDF before saving.");
         if (due != null) warnings.add("The due time will be interpreted using RFQ_DEFAULT_TIME_ZONE=" + timeProperties.getDefaultTimeZone() + ".");
         warnings.add("The original PDF should be uploaded as a CUSTOMER_REQUEST attachment after the RFQ is created.");
-        CreateRfqRequest request = new CreateRfqRequest(sourceSystem, pr, null, null, company.trim(), company.trim(),
-                trimOrNull(buyerName), trimOrNull(buyerEmail), null, "Request for Quote " + pr, due,
+        String title = blank(pr) ? "" : "Request for Quote " + pr;
+        CreateRfqRequest request = new CreateRfqRequest(sourceSystem, pr, null, null, company.trim(),
+                blank(company) ? null : company.trim(),
+                trimOrNull(buyerName), trimOrNull(buyerEmail), null, title, due,
                 due == null ? null : timeProperties.getDefaultTimeZone(), delivery, trimOrNull(shipTo), trimOrNull(sourceUrl),
                 trimOrNull(terms), sourceData, items);
-        return new RfqImportPreviewResponse(fileName, "PDF_TEXT", request,
-                Map.of("PR #", "sourceRfqId", "Buyer name/email", "buyerName/buyerEmail",
-                        "Due Date & Time", "dueAtLocal + configured timezone", "Ship To", "shipToText",
-                        "Item table", "rfq line items"), warnings, null, null);
+        Map<String, String> mappings = new LinkedHashMap<>();
+        if (!blank(pr)) mappings.put("PR #", "sourceRfqId");
+        if (!blank(company)) mappings.put("Company name", "customerName/customerCompany");
+        if (!blank(buyerName) || !blank(buyerEmail)) mappings.put("Buyer name/email", "buyerName/buyerEmail");
+        if (due != null) mappings.put("Due Date & Time", "dueAtLocal + configured timezone");
+        if (!blank(shipTo)) mappings.put("Ship To", "shipToText");
+        mappings.put("Item table", "rfq line items");
+        return new RfqImportPreviewResponse(fileName, "PDF_TEXT", request, mappings, warnings, null, null);
     }
 
     private List<CreateRfqRequest.CreateRfqLineItemRequest> parsePdfItems(String text) {
         List<CreateRfqRequest.CreateRfqLineItemRequest> result = new ArrayList<>();
+        boolean hasV2xPartColumn = text.lines().map(this::normalize)
+                .anyMatch(line -> line.contains("v2xpart#") || line.contains("v2xpartnumber") || line.contains("v2xpartid"));
         boolean inTable = false;
         String[] lines = text.split("\\R");
         for (int i = 0; i < lines.length; i++) {
@@ -233,8 +269,8 @@ public class RfqDocumentParser {
                 continue;
             }
             if (!inTable) continue;
-            if (line.startsWith("A competitive procurement") || line.startsWith("TERMS OF PAYMENT") || line.startsWith("NOTE :")
-                    || line.startsWith("To submit your bid")) break;
+            if (line.startsWith("A competitive procurement") || line.startsWith("TERMS OF PAYMENT") || line.startsWith("NOTE:")
+                    || line.startsWith("NOTE :") || line.startsWith("To submit your bid")) break;
             Matcher matcher = PDF_LINE_ITEM.matcher(line);
             if (!matcher.matches()) continue;
             StringBuilder description = new StringBuilder(matcher.group(5));
@@ -248,8 +284,9 @@ public class RfqDocumentParser {
             BigDecimal quantity = parseDecimal(matcher.group(2));
             String itemId = matcher.group(1);
             result.add(new CreateRfqRequest.CreateRfqLineItemRequest(itemId, parseInt(itemId, result.size() + 1),
-                    description.toString().trim(), quantity, matcher.group(3), null, null,
-                    matcher.group(4), null, null, null, Map.of("pdfTableRow", line)));
+                    description.toString().trim(), quantity, matcher.group(3),
+                    hasV2xPartColumn ? matcher.group(4) : null, null,
+                    hasV2xPartColumn ? null : matcher.group(4), null, null, null, Map.of("pdfTableRow", line)));
         }
         return result;
     }
@@ -272,13 +309,23 @@ public class RfqDocumentParser {
     }
 
     private String normalizedHeader(String normalized) {
-        if (normalized.equals("item") || normalized.equals("itemnumber") || normalized.equals("item#")) return "item";
+        if (normalized.equals("item") || normalized.equals("itemnumber") || normalized.equals("item#")
+                || normalized.equals("itemno")) return "item";
         if (normalized.equals("qty") || normalized.equals("quantity")) return "qty";
-        if (normalized.equals("ui") || normalized.equals("uom") || normalized.equals("unit")) return "uom";
+        if (normalized.equals("ui") || normalized.equals("uom") || normalized.equals("unit")
+                || normalized.equals("uoi")) return "uom";
         if (normalized.contains("description")) return "description";
-        if (normalized.equals("v2xpart") || normalized.equals("v2xpart#") || normalized.equals("v2xpartnumber") || normalized.equals("customerpartnumber")) return "customerpart";
-        if (normalized.equals("manufacturer") || normalized.equals("brand")) return "manufacturer";
-        if (normalized.equals("partno") || normalized.equals("partnumber") || normalized.equals("modelnumber")) return "partnumber";
+        if (normalized.equals("v2xpart") || normalized.equals("v2xpart#") || normalized.equals("v2xpartid")
+                || normalized.equals("v2xpartnumber") || normalized.equals("customerpartnumber")
+                || normalized.equals("customerpart#") || normalized.equals("customerpart")) return "customerpart";
+        if (normalized.equals("mfg") || normalized.equals("mfr") || normalized.equals("manufacturer")
+                || normalized.equals("brand") || normalized.equals("requestedmanufacturer")) return "manufacturer";
+        if (normalized.equals("pn") || normalized.equals("part#") || normalized.equals("partno")
+                || normalized.equals("partnumber") || normalized.equals("modelnumber")
+                || normalized.equals("requestedpart") || normalized.equals("requestedpartmodel")
+                || normalized.equals("requestedpartnumber")) return "partnumber";
+        if (normalized.equals("technicalspecifications") || normalized.equals("techspecs")
+                || normalized.equals("specifications") || normalized.equals("specs")) return "technicalspecifications";
         if (normalized.equals("category") || normalized.equals("commodity") || normalized.equals("productcategory")
                 || normalized.equals("producttype") || normalized.equals("itemcategory")
                 || normalized.equals("categorytype") || normalized.equals("commodityclass")) return "category";
@@ -288,12 +335,16 @@ public class RfqDocumentParser {
         return normalized;
     }
 
-    private String findLabelValue(Workbook workbook, DataFormatter formatter, java.util.Set<String> labels) {
+    private String findLabelValue(Workbook workbook, DataFormatter formatter, Set<String> labels) {
+        return findLabelValue(workbook, formatter, labels, 5);
+    }
+
+    private String findLabelValue(Workbook workbook, DataFormatter formatter, Set<String> labels, int maxColumnsRight) {
         for (int si = 0; si < workbook.getNumberOfSheets(); si++) {
             for (Row row : workbook.getSheetAt(si)) {
                 for (Cell cell : row) {
                     if (!labels.contains(normalize(cellText(cell, formatter)))) continue;
-                    for (int column = cell.getColumnIndex() + 1; column < Math.min(cell.getColumnIndex() + 5, row.getLastCellNum()); column++) {
+                    for (int column = cell.getColumnIndex() + 1; column < Math.min(cell.getColumnIndex() + maxColumnsRight, row.getLastCellNum()); column++) {
                         String value = cellText(row.getCell(column), formatter);
                         if (!value.isBlank()) return value.trim();
                     }
@@ -303,32 +354,114 @@ public class RfqDocumentParser {
         return null;
     }
 
-    private String findCompany(Workbook workbook, DataFormatter formatter) {
+    private String findAddressBlockValue(Workbook workbook, DataFormatter formatter, Set<String> labels) {
         for (int si = 0; si < workbook.getNumberOfSheets(); si++) {
             var sheet = workbook.getSheetAt(si);
-            int lastRow = Math.min(sheet.getLastRowNum(), 10);
-            for (int ri = 0; ri <= lastRow; ri++) {
-                Row row = sheet.getRow(ri);
-                if (row == null) continue;
+            for (Row row : sheet) {
                 for (Cell cell : row) {
-                    String value = cellText(cell, formatter).trim();
-                    String low = value.toLowerCase(Locale.ROOT);
-                    if ((low.contains("corporation") || low.endsWith(" llc") || low.endsWith(" inc") || low.endsWith(" inc."))
-                            && !value.equalsIgnoreCase("REQUEST FOR QUOTE")) return value;
+                    if (!labels.contains(normalize(cellText(cell, formatter)))) continue;
+                    int labelCol = cell.getColumnIndex();
+                    for (int column = labelCol + 1; column < Math.min(labelCol + 5, row.getLastCellNum()); column++) {
+                        String first = cellText(row.getCell(column), formatter);
+                        if (first.isBlank()) continue;
+                        List<String> lines = new ArrayList<>();
+                        lines.add(first.trim());
+                        for (int nextRi = row.getRowNum() + 1; nextRi <= Math.min(row.getRowNum() + 6, sheet.getLastRowNum()); nextRi++) {
+                            Row nextRow = sheet.getRow(nextRi);
+                            if (nextRow == null) break;
+                            String nextLabel = normalize(cellText(nextRow.getCell(labelCol), formatter));
+                            if (!nextLabel.isBlank() || isItemHeaderRow(nextRow, formatter)) break;
+                            String continuation = cellText(nextRow.getCell(column), formatter).trim();
+                            if (continuation.isBlank()) break;
+                            lines.add(continuation);
+                        }
+                        return String.join("\n", lines);
+                    }
                 }
             }
         }
         return null;
     }
 
-    private String quotationManagerHint(Workbook workbook, DataFormatter formatter) {
+    private CompanyBlock findCompanyBlock(Workbook workbook, DataFormatter formatter) {
+        String labeledCompany = findLabelValue(workbook, formatter, Set.of("customer", "customername", "customercompany", "company", "companyname", "billto"));
+        String labeledAddress = findAddressBlockValue(workbook, formatter, Set.of("customeraddress", "companyaddress", "billingaddress"));
+        if (!blank(labeledCompany)) {
+            return new CompanyBlock(labeledCompany, labeledAddress);
+        }
+        for (int si = 0; si < workbook.getNumberOfSheets(); si++) {
+            var sheet = workbook.getSheetAt(si);
+            int lastRow = Math.min(sheet.getLastRowNum(), 15);
+            for (int ri = 0; ri <= lastRow; ri++) {
+                Row row = sheet.getRow(ri);
+                if (row == null) continue;
+                for (Cell cell : row) {
+                    String value = cellText(cell, formatter).trim();
+                    if (value.isBlank() || value.equalsIgnoreCase("REQUEST FOR QUOTE")) continue;
+                    String low = value.toLowerCase(Locale.ROOT);
+                    boolean looksLikeCompany = low.contains("corporation") || low.endsWith(" corp") || low.endsWith(" corp.")
+                            || low.endsWith(" llc") || low.endsWith(" inc") || low.endsWith(" inc.")
+                            || low.endsWith(" ltd") || low.endsWith(" ltd.") || low.contains("limited")
+                            || low.contains("pvt") || low.contains("gmbh");
+                    if (!looksLikeCompany) continue;
+                    List<String> addressLines = new ArrayList<>();
+                    int colIdx = cell.getColumnIndex();
+                    for (int nextRi = ri + 1; nextRi <= Math.min(ri + 5, sheet.getLastRowNum()); nextRi++) {
+                        Row nextRow = sheet.getRow(nextRi);
+                        if (nextRow == null) break;
+                        String nextVal = cellText(nextRow.getCell(colIdx), formatter).trim();
+                        if (nextVal.isBlank() || KNOWN_HEADER_LABELS.contains(normalize(nextVal)) || isItemHeaderRow(nextRow, formatter)) break;
+                        addressLines.add(nextVal);
+                    }
+                    return new CompanyBlock(value, addressLines.isEmpty() ? null : String.join("\n", addressLines));
+                }
+            }
+        }
+        return new CompanyBlock(null, null);
+    }
+
+    private boolean isItemHeaderRow(Row row, DataFormatter formatter) {
+        boolean hasItem = false;
+        boolean hasDesc = false;
+        for (Cell c : row) {
+            String n = normalize(cellText(c, formatter));
+            if (n.equals("item") || n.equals("item#") || n.equals("itemnumber")) hasItem = true;
+            if (n.contains("description")) hasDesc = true;
+        }
+        return hasItem && hasDesc;
+    }
+
+    private boolean isFooterRow(Row row, DataFormatter formatter) {
+        for (Cell c : row) {
+            String low = cellText(c, formatter).toLowerCase(Locale.ROOT).trim();
+            if (low.startsWith("a competitive procurement") || low.startsWith("terms of payment")
+                    || low.startsWith("terms & conditions") || low.startsWith("note:") || low.startsWith("note :")
+                    || low.startsWith("to submit your bid")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String quotationManagerHint(Workbook workbook, DataFormatter formatter, String prValue) {
         for (int si = 0; si < workbook.getNumberOfSheets(); si++) {
             for (Row row : workbook.getSheetAt(si)) {
                 for (Cell cell : row) {
                     String label = normalize(cellText(cell, formatter));
-                    if (label.equals("pr#") || label.equals("prnumber")) {
-                        String hint = cellText(row.getCell(cell.getColumnIndex() + 2), formatter).trim();
-                        return hint.isBlank() ? null : hint;
+                    if (label.equals("pr#") || label.equals("prnumber") || label.equals("prno")) {
+                        int prValCol = -1;
+                        for (int col = cell.getColumnIndex() + 1; col < Math.min(cell.getColumnIndex() + 4, row.getLastCellNum()); col++) {
+                            String candidate = cellText(row.getCell(col), formatter).trim();
+                            if (!candidate.isBlank()) {
+                                prValCol = col;
+                                break;
+                            }
+                        }
+                        int startCol = prValCol >= 0 ? prValCol + 1 : cell.getColumnIndex() + 2;
+                        for (int col = startCol; col < Math.min(startCol + 4, row.getLastCellNum()); col++) {
+                            String hint = cellText(row.getCell(col), formatter).trim();
+                            if (!hint.isBlank() && !hint.equals(prValue)) return hint;
+                        }
                     }
                 }
             }
@@ -338,8 +471,15 @@ public class RfqDocumentParser {
 
     private LocalDateTime parseLocalDateTime(String value) {
         if (blank(value)) return null;
-        String text = value.trim().replaceAll("\\s+(EDT|EST|UTC|GMT)$", "");
-        for (DateTimeFormatter formatter : List.of(DateTimeFormatter.ofPattern("M/d/yy H:mm", Locale.US),
+        String text = value.trim().replaceAll("\\s+(EDT|EST|UTC|GMT|IST)$", "");
+        for (DateTimeFormatter formatter : List.of(
+                DateTimeFormatter.ofPattern("dd-MM-yyyy H:mm", Locale.US),
+                DateTimeFormatter.ofPattern("dd-MM-yyyy h:mm a", Locale.US),
+                DateTimeFormatter.ofPattern("dd-MM-yyyy H:mm:ss", Locale.US),
+                DateTimeFormatter.ofPattern("MM-dd-yyyy H:mm", Locale.US),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd H:mm", Locale.US),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd H:mm:ss", Locale.US),
+                DateTimeFormatter.ofPattern("M/d/yy H:mm", Locale.US),
                 DateTimeFormatter.ofPattern("M/d/yy h:mm a", Locale.US),
                 DateTimeFormatter.ofPattern("M/d/yyyy H:mm", Locale.US),
                 DateTimeFormatter.ofPattern("M/d/yyyy h:mm a", Locale.US),
@@ -347,14 +487,19 @@ public class RfqDocumentParser {
             try { return LocalDateTime.parse(text, formatter); }
             catch (DateTimeParseException ignored) { }
         }
-        return parseLocalDate(text) == null ? null : parseLocalDate(text).atStartOfDay();
+        LocalDate dateOnly = parseLocalDate(text);
+        return dateOnly == null ? null : dateOnly.atStartOfDay();
     }
 
     private LocalDate parseLocalDate(String value) {
         if (blank(value)) return null;
         String text = value.trim();
-        for (DateTimeFormatter formatter : List.of(DateTimeFormatter.ofPattern("M/d/yy", Locale.US),
-                DateTimeFormatter.ofPattern("M/d/yyyy", Locale.US), DateTimeFormatter.ISO_LOCAL_DATE)) {
+        for (DateTimeFormatter formatter : List.of(
+                DateTimeFormatter.ofPattern("dd-MM-yyyy", Locale.US),
+                DateTimeFormatter.ofPattern("MM-dd-yyyy", Locale.US),
+                DateTimeFormatter.ofPattern("M/d/yy", Locale.US),
+                DateTimeFormatter.ofPattern("M/d/yyyy", Locale.US),
+                DateTimeFormatter.ISO_LOCAL_DATE)) {
             try { return LocalDate.parse(text, formatter); }
             catch (DateTimeParseException ignored) { }
         }
@@ -381,7 +526,7 @@ public class RfqDocumentParser {
     }
 
     private String findCompany(String text) {
-        Matcher matcher = Pattern.compile("(?im)^.{0,100}\\b(?:Corporation|LLC|Inc\\.?)\\b.{0,100}$").matcher(text);
+        Matcher matcher = Pattern.compile("(?im)^.{0,100}\\b(?:Corporation|Corp\\.?|LLC|Inc\\.?|Ltd\\.?|Limited|Pvt\\.?\\s*Ltd\\.?)\\b.{0,100}$").matcher(text);
         return matcher.find() ? matcher.group().trim() : null;
     }
 
@@ -392,6 +537,7 @@ public class RfqDocumentParser {
     }
 
     private String firstMatch(Pattern pattern, String text, int group) {
+        if (blank(text)) return null;
         Matcher matcher = pattern.matcher(text);
         return matcher.find() ? matcher.group(group).trim() : null;
     }
@@ -403,10 +549,11 @@ public class RfqDocumentParser {
 
     private String idFromRaw(Map<String, String> raw) {
         for (Map.Entry<String, String> entry : raw.entrySet()) {
-            if (entry.getValue().equalsIgnoreCase("PR #") || normalize(entry.getValue()).equals("pr#")) {
+            String n = normalize(entry.getValue());
+            if (n.equals("pr#") || n.equals("prnumber") || n.equals("rfq#") || n.equals("rfqnumber")) {
                 String address = entry.getKey().substring(entry.getKey().lastIndexOf('!') + 1);
                 String next = raw.get(entry.getKey().substring(0, entry.getKey().lastIndexOf('!') + 1) + columnAfter(address));
-                if (next != null) return next.trim();
+                if (next != null && !next.isBlank()) return next.trim();
             }
         }
         return null;
@@ -456,4 +603,5 @@ public class RfqDocumentParser {
     private boolean blank(String value) { return value == null || value.isBlank(); }
 
     private record TableHeader(org.apache.poi.ss.usermodel.Sheet sheet, Row row, Map<Integer, String> columns) { }
+    private record CompanyBlock(String company, String address) { }
 }

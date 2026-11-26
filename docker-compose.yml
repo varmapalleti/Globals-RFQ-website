@@ -62,8 +62,8 @@ services:
       GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-dev-gateway-shared-secret-minimum-32-chars!}
       IDENTITY_INTERNAL_SHARED_SECRET: ${IDENTITY_INTERNAL_SHARED_SECRET:-dev-internal-identity-secret-min-32-chars!}
       OUTBOX_ENCRYPTION_KEY: ${OUTBOX_ENCRYPTION_KEY:-dev-outbox-encryption-key-min-32-chars!!}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
-      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-${VITE_FRONTEND_URL:-http://localhost:5173}}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-${VITE_FRONTEND_URL:-http://localhost:5173}}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
       SMS_PROVIDER: ${SMS_PROVIDER:-mock}
@@ -116,6 +116,32 @@ services:
       retries: 10
       start_period: 35s
 
+  clamav:
+    image: ${CLAMAV_IMAGE:-clamav/clamav:1.5}
+    container_name: globalrfq-clamav
+    restart: unless-stopped
+    environment:
+      CLAMAV_NO_MILTERD: "true"
+    volumes:
+      - clamav_signatures:/var/lib/clamav
+
+  attachment-scanner:
+    build:
+      context: ./backend/rfq-scanner
+    container_name: globalrfq-attachment-scanner
+    restart: unless-stopped
+    depends_on:
+      clamav:
+        condition: service_healthy
+      rfq-service:
+        condition: service_healthy
+    environment:
+      RFQ_SCANNER_BASE_URL: http://rfq-service:8082
+      RFQ_ATTACHMENT_SCANNER_TOKEN: ${RFQ_ATTACHMENT_SCANNER_TOKEN:-dev-scanner-token-minimum-32-characters!}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+      SCAN_POLL_INTERVAL_SECONDS: ${SCAN_POLL_INTERVAL_SECONDS:-5}
+
   api-gateway:
     build:
       context: ./backend/api-gateway
@@ -134,8 +160,16 @@ services:
       MANAGEMENT_PORT: 9080
       GATEWAY_SECRET_ENABLED: "true"
       GATEWAY_SHARED_SECRET: ${GATEWAY_SHARED_SECRET:-dev-gateway-shared-secret-minimum-32-chars!}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-${VITE_FRONTEND_URL:-http://localhost:5173}}
       TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-1}
+      AUTH_RATE_LIMIT_REPLENISH_RATE: ${AUTH_RATE_LIMIT_REPLENISH_RATE:-10}
+      AUTH_RATE_LIMIT_BURST_CAPACITY: ${AUTH_RATE_LIMIT_BURST_CAPACITY:-20}
+      IDENTITY_RATE_LIMIT_REPLENISH_RATE: ${IDENTITY_RATE_LIMIT_REPLENISH_RATE:-60}
+      IDENTITY_RATE_LIMIT_BURST_CAPACITY: ${IDENTITY_RATE_LIMIT_BURST_CAPACITY:-120}
+      RFQ_RATE_LIMIT_REPLENISH_RATE: ${RFQ_RATE_LIMIT_REPLENISH_RATE:-120}
+      RFQ_RATE_LIMIT_BURST_CAPACITY: ${RFQ_RATE_LIMIT_BURST_CAPACITY:-240}
+      IDENTITY_REQUEST_MAX_SIZE: ${IDENTITY_REQUEST_MAX_SIZE:-1MB}
+      RFQ_REQUEST_MAX_SIZE: ${RFQ_REQUEST_MAX_SIZE:-30MB}
       EUREKA_INSTANCE_HOSTNAME: api-gateway
       EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-eureka}:${EUREKA_PASSWORD:-local-eureka-password-change-me}@eureka-server:8761/eureka/
     ports:
@@ -151,7 +185,8 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/}
+        VITE_FRONTEND_URL: ${VITE_FRONTEND_URL:-http://localhost:5173}
         VITE_DEMO_MODE: ${VITE_DEMO_MODE:-false}
     container_name: globalrfq-frontend
     restart: unless-stopped
@@ -160,7 +195,14 @@ services:
         condition: service_healthy
     ports:
       - "5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   mysql_data:
   rfq_files:
+  clamav_signatures:

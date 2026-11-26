@@ -78,6 +78,7 @@ const importSchema = z.object({
         description: z.string().trim().min(3, 'Add a line item description.').max(20000),
         requestedQuantity: z.number().finite().positive('Quantity must be greater than zero.'),
         unitOfMeasure: z.string().trim().max(40).optional(),
+        customerPartNumber: z.string().trim().max(255).optional(),
         requestedPartNumber: z.string().trim().max(255).optional(),
         requestedManufacturer: z.string().trim().max(255).optional(),
         procurementCategory: z.string().trim().max(120).optional(),
@@ -89,7 +90,7 @@ const importSchema = z.object({
 })
 const importSourceSchema = z.object({
   sourceSystem: z.string().trim().min(2, 'Enter the source system name.').max(80),
-  sourceRfqId: z.string().trim().min(1, 'Enter the customer’s RFQ number.').max(120),
+  sourceRfqId: z.string().trim().max(120).optional(),
 })
 
 type ImportFormValues = z.infer<typeof importSchema>
@@ -115,7 +116,8 @@ const defaultValues: ImportFormValues = {
       description: 'Motor, AC, 3 phase, 5.5 kW, 1000 RPM, 6 pole, IEC 132ME, B3, TEFC, IP55',
       requestedQuantity: 2,
       unitOfMeasure: 'EA',
-      requestedPartNumber: '6105-09-V30-0008',
+      customerPartNumber: '6105-09-V30-0008',
+      requestedPartNumber: '',
       requestedManufacturer: '',
       procurementCategory: 'Materials',
       technicalSpecifications: '',
@@ -145,6 +147,7 @@ const liveDefaultValues: ImportFormValues = {
       description: '',
       requestedQuantity: 0,
       unitOfMeasure: 'EA',
+      customerPartNumber: '',
       requestedPartNumber: '',
       requestedManufacturer: '',
       procurementCategory: '',
@@ -154,7 +157,7 @@ const liveDefaultValues: ImportFormValues = {
   ],
 }
 
-function ImportRfqPage() {
+export function ImportRfqPage() {
   const navigate = useNavigate()
   const { user, hasAnyRole } = useAuth()
   const importRfq = useRfqDemoStore((state) => state.importRfq)
@@ -171,6 +174,7 @@ function ImportRfqPage() {
     handleSubmit,
     getValues,
     setError,
+    clearErrors,
     setValue,
     watch,
     control,
@@ -207,6 +211,10 @@ function ImportRfqPage() {
     setPreview(null)
     setPreviewed(false)
     setFileError('')
+    clearErrors(['sourceRfqId', 'customerName'])
+    if (!manualIntake && !demo) {
+      setValue('sourceRfqId', '')
+    }
     if (!selected) {
       setFile(null)
       return
@@ -264,7 +272,8 @@ function ImportRfqPage() {
           description: 'Review and correct the mapped fields before importing.',
         })
       } else {
-        const data = await previewImport(file, values.sourceSystem, values.sourceRfqId)
+        const overrideId = values.sourceRfqId?.trim() || undefined
+        const data = await previewImport(file, values.sourceSystem, overrideId)
         setPreview(data)
         const normalized = data.normalizedRfq as {
           sourceRfqId?: string
@@ -288,6 +297,7 @@ function ImportRfqPage() {
             description?: string
             requestedQuantity?: number
             unitOfMeasure?: string
+            customerPartNumber?: string
             requestedPartNumber?: string
             requestedManufacturer?: string
             procurementCategory?: string
@@ -296,12 +306,18 @@ function ImportRfqPage() {
           }>
         }
         const parsedLines = normalized.lineItems?.length ? normalized.lineItems : [{}]
-        setValue('sourceRfqId', normalized.sourceRfqId ?? values.sourceRfqId)
-        setValue('customerName', normalized.customerName ?? values.customerName)
+        const extractedRfqId = normalized.sourceRfqId?.trim() ?? ''
+        const extractedCustomer = normalized.customerName?.trim() ?? ''
+        setValue('sourceRfqId', extractedRfqId)
+        setValue('customerName', extractedCustomer)
         setValue('customerCompany', normalized.customerCompany ?? '')
         setValue('sourceReference', normalized.sourceReference ?? '')
         setValue('sourceQuotationManagerName', normalized.sourceQuotationManagerName ?? '')
-        setValue('requestTitle', normalized.requestTitle ?? values.requestTitle)
+        setValue(
+          'requestTitle',
+          normalized.requestTitle?.trim() ||
+            (extractedRfqId ? `Request for Quote ${extractedRfqId}` : ''),
+        )
         setValue('dueAtLocal', normalized.dueAtLocal ?? '')
         setValue('dueTimeZone', normalized.dueTimeZone ?? '')
         setValue('requestedDeliveryDate', normalized.requestedDeliveryDate ?? '')
@@ -316,6 +332,7 @@ function ImportRfqPage() {
             description: line.description ?? '',
             requestedQuantity: line.requestedQuantity ?? 0,
             unitOfMeasure: line.unitOfMeasure ?? 'EA',
+            customerPartNumber: line.customerPartNumber ?? '',
             requestedPartNumber: line.requestedPartNumber ?? '',
             requestedManufacturer: line.requestedManufacturer ?? '',
             procurementCategory: line.procurementCategory ?? '',
@@ -323,9 +340,24 @@ function ImportRfqPage() {
             taaRequired: line.taaRequired ?? false,
           })),
         )
+        clearErrors(['sourceRfqId', 'customerName'])
+        if (!extractedRfqId) {
+          setError('sourceRfqId', {
+            type: 'manual',
+            message: 'RFQ / PR number was not found in the uploaded file. Enter it manually before confirming.',
+          })
+        }
+        if (!extractedCustomer) {
+          setError('customerName', {
+            type: 'manual',
+            message: 'Customer name was not detected in the uploaded file. Enter it manually.',
+          })
+        }
         setPreviewed(true)
         toast.success('Server import preview is ready', {
-          description: `${data.fieldMappings ? Object.keys(data.fieldMappings).length : 0} source fields were mapped.`,
+          description: extractedRfqId
+            ? `${data.fieldMappings ? Object.keys(data.fieldMappings).length : 0} source fields mapped (PR # ${extractedRfqId}).`
+            : 'Line items extracted — enter the missing PR / Customer RFQ number before confirming.',
         })
       }
     } catch (error) {
@@ -386,6 +418,7 @@ function ImportRfqPage() {
             description: line.description,
             requestedQuantity: line.requestedQuantity,
             unitOfMeasure: line.unitOfMeasure || 'EA',
+            customerPartNumber: line.customerPartNumber || '',
             requestedManufacturer: line.requestedManufacturer || '',
             requestedPartNumber: line.requestedPartNumber || '',
             procurementCategory: line.procurementCategory || '',
@@ -453,6 +486,7 @@ function ImportRfqPage() {
               description: line.description,
               requestedQuantity: line.requestedQuantity,
               unitOfMeasure: line.unitOfMeasure || 'EA',
+              customerPartNumber: line.customerPartNumber || null,
               requestedPartNumber: line.requestedPartNumber || null,
               requestedManufacturer: line.requestedManufacturer || null,
               procurementCategory: line.procurementCategory || null,
@@ -492,7 +526,7 @@ function ImportRfqPage() {
             description: line.description,
             requestedQuantity: line.requestedQuantity,
             unitOfMeasure: line.unitOfMeasure || 'EA',
-            customerPartNumber: null,
+            customerPartNumber: line.customerPartNumber || null,
             requestedManufacturer: line.requestedManufacturer || null,
             requestedPartNumber: line.requestedPartNumber || null,
             procurementCategory: line.procurementCategory || null,
@@ -733,9 +767,18 @@ function ImportRfqPage() {
                 <Field label="Source system" error={errors.sourceSystem?.message}>
                   <Input {...register('sourceSystem')} aria-invalid={!!errors.sourceSystem} />
                 </Field>
-                <Field label="Customer RFQ number" error={errors.sourceRfqId?.message}>
-                  <Input {...register('sourceRfqId')} aria-invalid={!!errors.sourceRfqId} />
-                </Field>
+                {!previewed && !manualIntake && (
+                  <Field
+                    label="Customer RFQ # override (optional)"
+                    error={errors.sourceRfqId?.message}
+                  >
+                    <Input
+                      {...register('sourceRfqId')}
+                      placeholder="Auto-detected from file — enter only to override"
+                      aria-invalid={!!errors.sourceRfqId}
+                    />
+                  </Field>
+                )}
               </div>
             </div>
           </Card>
@@ -754,8 +797,27 @@ function ImportRfqPage() {
                     Correct any values that were read incorrectly. Long product and V2X names are
                     kept intact.
                   </p>
+                  {!manualIntake && !watchedValues.sourceRfqId?.trim() && (
+                    <div
+                      role="alert"
+                      className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                    >
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-700" />
+                      <span>
+                        PR / Customer RFQ number was not found in the uploaded file. Enter the
+                        Customer RFQ number below before confirming.
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="grid gap-4 p-5 sm:grid-cols-2">
+                  <Field label="Customer RFQ / PR number *" error={errors.sourceRfqId?.message}>
+                    <Input
+                      {...register('sourceRfqId')}
+                      placeholder="e.g. 110627"
+                      aria-invalid={!!errors.sourceRfqId}
+                    />
+                  </Field>
                   <Field label="Customer name *" error={errors.customerName?.message}>
                     <Input {...register('customerName')} aria-invalid={!!errors.customerName} />
                   </Field>
@@ -838,6 +900,7 @@ function ImportRfqPage() {
                         description: '',
                         requestedQuantity: 0,
                         unitOfMeasure: 'EA',
+                        customerPartNumber: '',
                         requestedPartNumber: '',
                         requestedManufacturer: '',
                         procurementCategory: '',
@@ -896,6 +959,9 @@ function ImportRfqPage() {
                         </Field>
                         <Field label="Unit of measure">
                           <Input {...register(`lineItems.${index}.unitOfMeasure`)} />
+                        </Field>
+                        <Field label="Customer / V2X part #">
+                          <Input {...register(`lineItems.${index}.customerPartNumber`)} />
                         </Field>
                         <Field label="Requested manufacturer">
                           <Input {...register(`lineItems.${index}.requestedManufacturer`)} />
@@ -1095,6 +1161,7 @@ function ExcelFieldDetectionCard({
     { label: 'Due Date / Time', present: hasText(values.dueAtLocal) },
     { label: 'Delivery Date', present: hasText(values.requestedDeliveryDate) },
     { label: 'Ship-To Address', present: hasText(values.shipToText) },
+    { label: 'Bid / Source URL', present: hasText(values.sourceUrl) },
     { label: 'Terms & Conditions', present: hasText(values.termsAndConditions) },
   ]
   const lineCount = values.lineItems.length || 1
@@ -1108,6 +1175,10 @@ function ExcelFieldDetectionCard({
       count: values.lineItems.filter((item) => item.requestedQuantity > 0).length,
     },
     { label: 'UOM', count: values.lineItems.filter((item) => hasText(item.unitOfMeasure)).length },
+    {
+      label: 'V2X / Customer Part #',
+      count: values.lineItems.filter((item) => hasText(item.customerPartNumber)).length,
+    },
     {
       label: 'Part #',
       count: values.lineItems.filter((item) => hasText(item.requestedPartNumber)).length,

@@ -41,6 +41,10 @@ public class ReviewerReassignmentRequest {
     @Column(nullable = false, length = 16)
     private ReviewerReassignmentStatus status = ReviewerReassignmentStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rfq_status_before_request", length = 40)
+    private RfqStatus rfqStatusBeforeRequest;
+
     @Column(name = "resolved_by_admin_id")
     private Long resolvedByAdminId;
 
@@ -59,12 +63,13 @@ public class ReviewerReassignmentRequest {
     protected ReviewerReassignmentRequest() { }
 
     public ReviewerReassignmentRequest(Rfq rfq, Long requestedByReviewerId, String reason,
-                                       String idempotencyKey, String requestSha256) {
+                                       String idempotencyKey, String requestSha256, RfqStatus rfqStatusBeforeRequest) {
         this.rfq = rfq;
         this.requestedByReviewerId = requestedByReviewerId;
         this.reason = reason;
         this.idempotencyKey = idempotencyKey;
         this.requestSha256 = requestSha256;
+        this.rfqStatusBeforeRequest = rfqStatusBeforeRequest;
     }
 
     public void resolve(ReviewerReassignmentStatus status, Long adminId, String reason, Long replacementReviewerId) {
@@ -82,6 +87,7 @@ public class ReviewerReassignmentRequest {
     public String getIdempotencyKey() { return idempotencyKey; }
     public String getRequestSha256() { return requestSha256; }
     public ReviewerReassignmentStatus getStatus() { return status; }
+    public RfqStatus getRfqStatusBeforeRequest() { return rfqStatusBeforeRequest; }
     public Long getResolvedByAdminId() { return resolvedByAdminId; }
     public String getResolutionReason() { return resolutionReason; }
     public Long getReplacementReviewerId() { return replacementReviewerId; }

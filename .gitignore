@@ -34,3 +34,4 @@ dist/
 *.tmp
 *.orig
 .gemini/
+data/

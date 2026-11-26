@@ -42,7 +42,7 @@ const poBadge: Record<PurchaseOrderDto['status'], string> = {
   CANCELLED: 'bg-rose-50 text-rose-700',
 }
 
-function PurchasesPage() {
+export function PurchasesPage() {
   const { user, hasAnyRole } = useAuth()
   const queryClient = useQueryClient()
   const demo = isDemoMode && isDemoSession()

@@ -342,6 +342,55 @@ export interface QuotationDraftDto {
   warranty: string
   notes: string
 }
+export interface QuotationVersionDto {
+  id: number
+  versionNumber: number
+  status: string
+  currency: string
+  subtotal: number
+  freight: number
+  otherCharges: number
+  discount: number
+  taxAmount: number
+  grandTotal: number
+  quotation: {
+    currency: string
+    items: Array<{
+      sourceLineId: string
+      description: string
+      quantity: number
+      unitPrice: number
+      lineTotal: number
+      unitOfMeasure: string | null
+      manufacturer: string | null
+      partNumber: string | null
+      taaCompliant: boolean | null
+      deliveryTimeline: string | null
+      warranty: string | null
+      note: string | null
+      productUrl: string | null
+    }>
+    freight: number
+    otherCharges: number
+    discount: number
+    taxAmount: number
+    subtotal: number
+    grandTotal: number
+    deliveryTimeline: string | null
+    warranty: string | null
+    notes: string | null
+  }
+  mandatoryFieldsSnapshot: string[]
+  missingMandatoryFields: string[]
+  submittedByUserId: number
+  submittedAt: string
+  review: {
+    decision: string
+    reviewerUserId: number
+    reason: string | null
+    decidedAt: string
+  } | null
+}
 export async function saveQuotationDraft(publicId: string, draft: QuotationDraftDto) {
   const { data } = await http.put<ApiSuccessResponse<unknown>>(
     `/api/rfqs/${publicId}/quotation-draft`,
@@ -359,18 +408,7 @@ export async function submitQuotation(publicId: string, draft: QuotationDraftDto
 }
 export async function getQuotationVersions(publicId: string) {
   const { data } = await http.get<
-    ApiSuccessResponse<
-      Array<{
-        id: number
-        versionNumber: number
-        status: string
-        submittedAt: string
-        currency: string
-        grandTotal: number
-        missingMandatoryFields: string[]
-        review: { decision: string; reason: string | null; decidedAt: string } | null
-      }>
-    >
+    ApiSuccessResponse<QuotationVersionDto[]>
   >(`/api/rfqs/${publicId}/quotation-versions`)
   return data.data
 }

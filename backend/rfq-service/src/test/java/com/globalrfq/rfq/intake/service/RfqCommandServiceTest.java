@@ -123,6 +123,21 @@ class RfqCommandServiceTest {
     }
 
     @Test
+    void directAssignmentIsBlockedWhileReviewerReassignmentAwaitsAdmin() {
+        Rfq rfq = buildStatefulRfq(RfqStatus.AWAITING_REASSIGNMENT, CustomerDecision.PENDING);
+
+        RfqException ex = assertThrows(RfqException.class, () -> service.assign(
+                "pub-10",
+                new AssignmentRequest(AssignmentRole.REVIEWER, 3L, "Bypass pending request"),
+                admin
+        ));
+
+        assertEquals(RfqErrorCode.INVALID_WORKFLOW_TRANSITION, ex.code());
+        assertEquals(RfqStatus.AWAITING_REASSIGNMENT, rfq.getStatus());
+        verify(assignments, never()).save(any());
+    }
+
+    @Test
     void customerDecisionAndMarketingLifecycleCompletesToClosed() {
         Rfq rfq = buildStatefulRfq(RfqStatus.APPROVED_BY_REVIEWER, CustomerDecision.PENDING);
 

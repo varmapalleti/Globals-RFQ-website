@@ -37,7 +37,7 @@ const statusBadge: Record<RedFlagDto['status'], string> = {
   DISMISSED: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
 }
 
-function RedFlagsPage() {
+export function RedFlagsPage() {
   const { user, hasAnyRole } = useAuth()
   const queryClient = useQueryClient()
   const demo = isDemoMode && isDemoSession()

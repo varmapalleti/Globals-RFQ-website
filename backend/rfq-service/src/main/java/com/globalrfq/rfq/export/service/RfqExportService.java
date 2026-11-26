@@ -7,6 +7,7 @@ import com.globalrfq.rfq.intake.entity.Rfq;
 import com.globalrfq.rfq.intake.repository.RfqRepository;
 import com.globalrfq.rfq.intake.service.RfqQueryService;
 import com.globalrfq.rfq.quotation.dto.QuotationSnapshot;
+import com.globalrfq.rfq.quotation.entity.QuotationReviewDecision;
 import com.globalrfq.rfq.quotation.entity.QuotationVersion;
 import com.globalrfq.rfq.quotation.repository.QuotationReviewDecisionRepository;
 import com.globalrfq.rfq.quotation.repository.QuotationVersionRepository;
@@ -36,10 +37,14 @@ import java.util.Map;
 
 @Service
 public class RfqExportService {
-    private static final List<String> EXPORT_HEADERS = List.of("ITEM #", "CATEGORY", "TAA REQUIRED", "QTY", "UI",
-            "V2X PART #", "REQUESTED MANUFACTURER", "REQUESTED PART / MODEL", "DESCRIPTION", "TECHNICAL SPECIFICATIONS",
-            "OFFERED MANUFACTURER", "OFFERED PART / MODEL", "TAA COMPLIANT", "UNIT PRICE", "LINE TOTAL", "FREIGHT",
-            "DELIVERY TIMELINE", "WARRANTY", "NOTE", "URL");
+    private static final List<String> CLIENT_HEADERS = List.of(
+            "ITEM #", "QTY", "UI", "V2X PART #", "DESCRIPTION", "MFG", "PN",
+            "UP", "TOTAL", "FREIGHT", "EDD", "WARRANTY", "NOTES");
+    private static final List<String> INTERNAL_AUDIT_HEADERS = List.of(
+            "ITEM #", "QTY", "UI", "CATEGORY", "TAA REQUIRED", "V2X PART #", "REQUESTED MANUFACTURER",
+            "REQUESTED PART / MODEL", "DESCRIPTION", "TECHNICAL SPECIFICATIONS", "OFFERED MANUFACTURER",
+            "OFFERED PART / MODEL", "TAA COMPLIANT", "UNIT PRICE", "LINE TOTAL", "FREIGHT",
+            "DELIVERY TIMELINE", "WARRANTY", "NOTE", "URL", "SOURCE LINE ID");
 
     private final RfqRepository rfqs;
     private final RfqQueryService queries;
@@ -67,17 +72,19 @@ public class RfqExportService {
                 : versions.findByRfqIdAndId(rfq.getId(), versionId)
                     .orElseThrow(() -> new RfqException(RfqErrorCode.RESOURCE_NOT_FOUND, "Quotation version was not found for this RFQ"));
         QuotationSnapshot quote = version == null ? null : readSnapshot(version.getQuotationJson());
-        String quoteDecision = version == null ? "" : reviews.findByQuotationVersionId(version.getId())
-                .map(review -> review.getDecision() + " by user " + review.getReviewerUserId()).orElse("PENDING_REVIEW");
+        QuotationReviewDecision review = version == null ? null : reviews.findByQuotationVersionId(version.getId()).orElse(null);
+        String quoteDecision = version == null ? "" : review == null ? "PENDING_REVIEW"
+                : review.getDecision() + " by user " + review.getReviewerUserId();
         return switch (format.toLowerCase(Locale.ROOT)) {
             case "xlsx" -> new ExportFile(fileName(rfq, "xlsx"),
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx(rfq, quote, version, quoteDecision));
-            case "pdf" -> new ExportFile(fileName(rfq, "pdf"), "application/pdf", pdf(rfq, quote, version, quoteDecision));
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", xlsx(rfq, quote, version, review, quoteDecision));
+            case "pdf" -> new ExportFile(fileName(rfq, "pdf"), "application/pdf", pdf(rfq, quote, version, review, quoteDecision));
             default -> throw new RfqException(RfqErrorCode.BAD_REQUEST, "Export format must be xlsx or pdf");
         };
     }
 
-    private byte[] xlsx(Rfq rfq, QuotationSnapshot quote, QuotationVersion version, String quoteDecision) {
+    private byte[] xlsx(Rfq rfq, QuotationSnapshot quote, QuotationVersion version,
+                        QuotationReviewDecision review, String quoteDecision) {
         try (var workbook = new XSSFWorkbook(); var output = new ByteArrayOutputStream()) {
             CellStyle title = workbook.createCellStyle();
             Font titleFont = workbook.createFont(); titleFont.setBold(true); titleFont.setFontHeightInPoints((short) 15);
@@ -85,110 +92,155 @@ public class RfqExportService {
             CellStyle heading = workbook.createCellStyle();
             Font headingFont = workbook.createFont(); headingFont.setBold(true); headingFont.setColor(IndexedColors.WHITE.getIndex());
             heading.setFont(headingFont); heading.setFillForegroundColor(IndexedColors.DARK_TEAL.getIndex()); heading.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            heading.setWrapText(true);
             CellStyle label = workbook.createCellStyle();
             Font labelFont = workbook.createFont(); labelFont.setBold(true); label.setFont(labelFont);
             CellStyle wrapped = workbook.createCellStyle(); wrapped.setWrapText(true); wrapped.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.TOP);
 
-            var sheet = workbook.createSheet("Sheet1");
-            sheet.createRow(0).createCell(0).setCellValue("REQUEST FOR QUOTE"); sheet.getRow(0).getCell(0).setCellStyle(title);
-            putField(sheet, 2, "Customer", rfq.getCustomerName(), label);
-            putField(sheet, 3, "Source System", rfq.getSourceSystem(), label);
-            putField(sheet, 4, "PR #", rfq.getSourceRfqId(), label);
-            putField(sheet, 5, "Quotation Manager Hint", rfq.getSourceQuotationManagerName(), label);
-            String due = rfq.getDueAtLocal() == null ? "" : rfq.getDueAtLocal().format(DateTimeFormatter.ofPattern("MM/dd/yyyy h:mm a"))
+            String customerAddress = readCustomerAddress(rfq);
+            String due = rfq.getDueAtLocal() == null ? "" : rfq.getDueAtLocal().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))
                     + (rfq.getDueTimeZone() == null ? "" : " " + rfq.getDueTimeZone());
-            putField(sheet, 6, "Due Date & Time", due, label);
-            putField(sheet, 7, "Requested Delivery Date", rfq.getRequestedDeliveryDate() == null ? "" : rfq.getRequestedDeliveryDate().toString(), label);
-            putField(sheet, 8, "Buyer Name", rfq.getBuyerName(), label);
-            putField(sheet, 9, "Buyer Email", rfq.getBuyerEmail(), label);
-            putField(sheet, 10, "Ship To", rfq.getShipToText(), label);
-            putField(sheet, 11, "Status", rfq.getStatus().name(), label);
-            putField(sheet, 12, "Customer Decision", rfq.getCustomerDecision().name(), label);
-            putField(sheet, 13, "Quotation Version / Review", version == null ? "" : version.getVersionNumber() + " / " + quoteDecision, label);
-            putField(sheet, 14, "Internal RFQ ID", rfq.getPublicId(), label);
-            putField(sheet, 15, "Source Reference / Event ID", rfq.getSourceReference(), label);
-            putField(sheet, 16, "Customer Company", rfq.getCustomerCompany(), label);
-            putField(sheet, 17, "Request Title", rfq.getRequestTitle(), label);
-            putField(sheet, 18, "Buyer Phone", rfq.getBuyerPhone(), label);
-            putField(sheet, 19, "Source URL", rfq.getSourceUrl(), label);
-            putField(sheet, 20, "Terms and Conditions", blank(rfq.getTermsAndConditions()) ? "" : "See Long Text tab", label);
-            int headerRow = 22;
-            var headers = sheet.createRow(headerRow);
-            for (int i = 0; i < EXPORT_HEADERS.size(); i++) { headers.createCell(i).setCellValue(EXPORT_HEADERS.get(i)); headers.getCell(i).setCellStyle(heading); }
+            String deliveryDate = rfq.getRequestedDeliveryDate() == null ? "" : rfq.getRequestedDeliveryDate().toString();
+
+            var clientSheet = workbook.createSheet("Client Quotation");
+            clientSheet.createRow(0).createCell(0).setCellValue("REQUEST FOR QUOTE");
+            clientSheet.getRow(0).getCell(0).setCellStyle(title);
+            int clientRow = 2;
+            putField(clientSheet, clientRow++, "Customer", rfq.getCustomerName(), label);
+            if (!blank(rfq.getCustomerCompany()) && !rfq.getCustomerCompany().equals(rfq.getCustomerName())) {
+                putField(clientSheet, clientRow++, "Customer Company", rfq.getCustomerCompany(), label);
+            }
+            if (!blank(customerAddress)) {
+                putField(clientSheet, clientRow++, "Customer Address", customerAddress, label);
+            }
+            putField(clientSheet, clientRow++, "PR #", rfq.getSourceRfqId(), label);
+            if (!blank(rfq.getSourceQuotationManagerName())) {
+                putField(clientSheet, clientRow++, "Quotation Contact", rfq.getSourceQuotationManagerName(), label);
+            }
+            putField(clientSheet, clientRow++, "Due Date & Time", due, label);
+            putField(clientSheet, clientRow++, "Requested Delivery Date", deliveryDate, label);
+            putField(clientSheet, clientRow++, "Buyer Name", rfq.getBuyerName(), label);
+            putField(clientSheet, clientRow++, "Buyer Email", rfq.getBuyerEmail(), label);
+            if (!blank(rfq.getBuyerPhone())) {
+                putField(clientSheet, clientRow++, "Buyer Phone", rfq.getBuyerPhone(), label);
+            }
+            putField(clientSheet, clientRow++, "Ship To", rfq.getShipToText(), label);
+            if (!blank(rfq.getRequestTitle())) {
+                putField(clientSheet, clientRow++, "Request Title", rfq.getRequestTitle(), label);
+            }
+            putField(clientSheet, clientRow++, "Currency", quote == null ? "" : quote.currency(), label);
+
+            clientRow++;
+            var headers = clientSheet.createRow(clientRow++);
+            for (int i = 0; i < CLIENT_HEADERS.size(); i++) {
+                headers.createCell(i).setCellValue(CLIENT_HEADERS.get(i));
+                headers.getCell(i).setCellStyle(heading);
+            }
             List<QuotationSnapshot.QuotedLineSnapshot> quoteLines = quote == null ? List.of() : quote.items();
             Map<String, List<QuotationSnapshot.QuotedLineSnapshot>> bySource = new LinkedHashMap<>();
             quoteLines.forEach(item -> bySource.computeIfAbsent(item.sourceLineId(), ignored -> new ArrayList<>()).add(item));
-            int rowIndex = headerRow + 1;
             for (var item : rfq.getLineItems()) {
                 List<QuotationSnapshot.QuotedLineSnapshot> mapped = bySource.getOrDefault(item.getSourceLineId(), List.of());
-                if (mapped.isEmpty()) writeExportRow(sheet.createRow(rowIndex++), item.getLineNumber(), item.getRequestedQuantity(),
-                        item.getProcurementCategory(), item.getTaaRequired(), item.getUnitOfMeasure(), item.getCustomerPartNumber(),
-                        item.getRequestedManufacturer(), item.getRequestedPartNumber(), item.getDescription(), item.getTechnicalSpecifications(),
-                        null, version, quote, wrapped);
-                else for (var quoted : mapped) writeExportRow(sheet.createRow(rowIndex++), item.getLineNumber(), item.getRequestedQuantity(),
-                        item.getProcurementCategory(), item.getTaaRequired(), item.getUnitOfMeasure(), item.getCustomerPartNumber(),
-                        item.getRequestedManufacturer(), item.getRequestedPartNumber(), item.getDescription(), item.getTechnicalSpecifications(),
-                        quoted, version, quote, wrapped);
+                if (mapped.isEmpty()) {
+                    writeClientRow(clientSheet.createRow(clientRow++), item.getLineNumber(), item.getRequestedQuantity(),
+                            item.getUnitOfMeasure(), item.getCustomerPartNumber(), item.getDescription(),
+                            item.getRequestedManufacturer(), item.getRequestedPartNumber(), null, quote, wrapped);
+                } else {
+                    for (var quoted : mapped) {
+                        writeClientRow(clientSheet.createRow(clientRow++), item.getLineNumber(), item.getRequestedQuantity(),
+                                item.getUnitOfMeasure(), item.getCustomerPartNumber(), item.getDescription(),
+                                item.getRequestedManufacturer(), item.getRequestedPartNumber(), quoted, quote, wrapped);
+                    }
+                }
             }
-            int[] requestWidths = {9, 22, 16, 10, 10, 28, 28, 28, 58, 58, 28, 28, 17, 15, 15, 15, 24, 24, 36, 42};
-            setColumnWidths(sheet, requestWidths);
-            sheet.setColumnWidth(0, 24 * 256);
-            sheet.setColumnWidth(1, 40 * 256);
+            if (quote != null) {
+                clientRow++;
+                putField(clientSheet, clientRow++, "Subtotal", amount(quote.subtotal()), label);
+                putField(clientSheet, clientRow++, "Freight", amount(quote.freight()), label);
+                if (quote.otherCharges() != null && quote.otherCharges().signum() != 0) {
+                    putField(clientSheet, clientRow++, "Other Charges", amount(quote.otherCharges()), label);
+                }
+                if (quote.discount() != null && quote.discount().signum() != 0) {
+                    putField(clientSheet, clientRow++, "Discount", amount(quote.discount()), label);
+                }
+                if (quote.taxAmount() != null && quote.taxAmount().signum() != 0) {
+                    putField(clientSheet, clientRow++, "Tax Amount", amount(quote.taxAmount()), label);
+                }
+                putField(clientSheet, clientRow++, "Grand Total (" + safe(quote.currency()) + ")", amount(quote.grandTotal()), label);
+                if (!blank(quote.notes())) {
+                    putField(clientSheet, clientRow++, "Quotation Notes", quote.notes(), label);
+                }
+            }
+            if (!blank(rfq.getTermsAndConditions())) {
+                clientRow++;
+                putField(clientSheet, clientRow++, "Terms and Conditions",
+                        excelTextOrLongTextReference(rfq.getTermsAndConditions(), "TERMS_AND_CONDITIONS"), label);
+            }
+            if (!blank(rfq.getSourceUrl())) {
+                putField(clientSheet, clientRow++, "Bid Submission URL", rfq.getSourceUrl(), label);
+            }
+            int[] clientWidths = {10, 10, 10, 24, 58, 26, 24, 15, 16, 14, 24, 24, 36};
+            setColumnWidths(clientSheet, clientWidths);
+            clientSheet.setColumnWidth(0, 24 * 256);
+            clientSheet.setColumnWidth(1, 38 * 256);
 
-            var quotationSheet = workbook.createSheet("Sheet2");
-            quotationSheet.createRow(0).createCell(0).setCellValue("Quotation Version " + (version == null ? "Draft" : version.getVersionNumber()));
-            quotationSheet.getRow(0).getCell(0).setCellStyle(title);
-            putField(quotationSheet, 2, "Currency", quote == null ? "" : quote.currency(), label);
-            putField(quotationSheet, 3, "Review", quoteDecision, label);
-            putField(quotationSheet, 4, "Delivery Timeline", quote == null ? "" : quote.deliveryTimeline(), label);
-            putField(quotationSheet, 5, "Warranty", quote == null ? "" : quote.warranty(), label);
-            putField(quotationSheet, 6, "Notes", quote == null ? "" : quote.notes(), label);
-            putField(quotationSheet, 7, "Subtotal", quote == null ? "" : amount(quote.subtotal()), label);
-            putField(quotationSheet, 8, "Freight", quote == null ? "" : amount(quote.freight()), label);
-            putField(quotationSheet, 9, "Other Charges", quote == null ? "" : amount(quote.otherCharges()), label);
-            putField(quotationSheet, 10, "Discount", quote == null ? "" : amount(quote.discount()), label);
-            putField(quotationSheet, 11, "Tax Amount", quote == null ? "" : amount(quote.taxAmount()), label);
-            putField(quotationSheet, 12, "Grand Total", quote == null ? "" : amount(quote.grandTotal()), label);
-            String[] quoteHeaders = {"ITEM #", "QTY", "UI", "CATEGORY", "TAA REQUIRED", "V2X PART #", "REQUESTED MANUFACTURER",
-                    "REQUESTED PART / MODEL", "DESCRIPTION", "TECHNICAL SPECIFICATIONS", "OFFERED MANUFACTURER", "OFFERED PART / MODEL",
-                    "TAA COMPLIANT", "UNIT PRICE", "LINE TOTAL", "FREIGHT", "DELIVERY TIMELINE", "WARRANTY", "NOTE", "URL"};
-            int quoteTableHeader = 14;
-            var quoteHeaderRow = quotationSheet.createRow(quoteTableHeader);
-            for (int i = 0; i < quoteHeaders.length; i++) { quoteHeaderRow.createCell(i).setCellValue(quoteHeaders[i]); quoteHeaderRow.getCell(i).setCellStyle(heading); }
-            int quoteRow = quoteTableHeader + 1;
+            var auditSheet = workbook.createSheet("Internal Audit");
+            auditSheet.createRow(0).createCell(0).setCellValue("Internal Audit & Governance — " + (version == null ? "Draft" : "V" + version.getVersionNumber()));
+            auditSheet.getRow(0).getCell(0).setCellStyle(title);
+            putField(auditSheet, 2, "Internal RFQ ID", rfq.getPublicId(), label);
+            putField(auditSheet, 3, "Source System", rfq.getSourceSystem(), label);
+            putField(auditSheet, 4, "PR / Source RFQ #", rfq.getSourceRfqId(), label);
+            putField(auditSheet, 5, "Source Reference / Event ID", rfq.getSourceReference(), label);
+            putField(auditSheet, 6, "Status", rfq.getStatus().name(), label);
+            putField(auditSheet, 7, "Customer Decision", rfq.getCustomerDecision().name(), label);
+            putField(auditSheet, 8, "Quotation Manager Hint", rfq.getSourceQuotationManagerName(), label);
+            putField(auditSheet, 9, "Quotation Version Number", version == null ? "" : String.valueOf(version.getVersionNumber()), label);
+            putField(auditSheet, 10, "Quotation Version ID", version == null ? "" : String.valueOf(version.getId()), label);
+            putField(auditSheet, 11, "Submitted By User ID", version == null ? "" : String.valueOf(version.getSubmittedByUserId()), label);
+            putField(auditSheet, 12, "Submitted At (UTC)", version == null ? "" : version.getSubmittedAt().toString(), label);
+            putField(auditSheet, 13, "Review Decision", quoteDecision, label);
+            putField(auditSheet, 14, "Reviewer User ID", review == null ? "" : String.valueOf(review.getReviewerUserId()), label);
+            putField(auditSheet, 15, "Review Reason", review == null ? "" : review.getReason(), label);
+            putField(auditSheet, 16, "Currency", quote == null ? "" : quote.currency(), label);
+            putField(auditSheet, 17, "Subtotal", quote == null ? "" : amount(quote.subtotal()), label);
+            putField(auditSheet, 18, "Freight", quote == null ? "" : amount(quote.freight()), label);
+            putField(auditSheet, 19, "Other Charges", quote == null ? "" : amount(quote.otherCharges()), label);
+            putField(auditSheet, 20, "Discount", quote == null ? "" : amount(quote.discount()), label);
+            putField(auditSheet, 21, "Tax Amount", quote == null ? "" : amount(quote.taxAmount()), label);
+            putField(auditSheet, 22, "Grand Total", quote == null ? "" : amount(quote.grandTotal()), label);
+            putField(auditSheet, 23, "Delivery Timeline", quote == null ? "" : quote.deliveryTimeline(), label);
+            putField(auditSheet, 24, "Warranty", quote == null ? "" : quote.warranty(), label);
+            putField(auditSheet, 25, "Notes", quote == null ? "" : quote.notes(), label);
+            int auditTableHeader = 27;
+            var auditHeaderRow = auditSheet.createRow(auditTableHeader);
+            for (int i = 0; i < INTERNAL_AUDIT_HEADERS.size(); i++) {
+                auditHeaderRow.createCell(i).setCellValue(INTERNAL_AUDIT_HEADERS.get(i));
+                auditHeaderRow.getCell(i).setCellStyle(heading);
+            }
+            int auditRow = auditTableHeader + 1;
             for (var requested : rfq.getLineItems()) {
                 List<QuotationSnapshot.QuotedLineSnapshot> matching = quote == null ? List.of() : quote.items().stream()
                         .filter(line -> line.sourceLineId().equals(requested.getSourceLineId())).toList();
                 if (matching.isEmpty()) {
-                    var row = quotationSheet.createRow(quoteRow++);
-                    set(row, 0, String.valueOf(requested.getLineNumber())); set(row, 1, amount(requested.getRequestedQuantity()));
-                    set(row, 2, requested.getUnitOfMeasure()); set(row, 3, requested.getProcurementCategory());
-                    set(row, 4, yesNoUnknown(requested.getTaaRequired())); set(row, 5, requested.getCustomerPartNumber());
-                    set(row, 6, requested.getRequestedManufacturer()); set(row, 7, requested.getRequestedPartNumber());
-                    set(row, 8, requested.getDescription());
-                    set(row, 9, excelTextOrLongTextReference(requested.getTechnicalSpecifications(), requested.getSourceLineId()));
-                    wrapRow(row, wrapped, quoteHeaders.length);
-                } else for (var line : matching) {
-                    var row = quotationSheet.createRow(quoteRow++);
-                    set(row, 0, String.valueOf(requested.getLineNumber())); set(row, 1, amount(line.quantity()));
-                    set(row, 2, line.unitOfMeasure()); set(row, 3, requested.getProcurementCategory());
-                    set(row, 4, yesNoUnknown(requested.getTaaRequired())); set(row, 5, requested.getCustomerPartNumber());
-                    set(row, 6, requested.getRequestedManufacturer()); set(row, 7, requested.getRequestedPartNumber());
-                    set(row, 8, line.description());
-                    set(row, 9, excelTextOrLongTextReference(requested.getTechnicalSpecifications(), requested.getSourceLineId()));
-                    set(row, 10, line.manufacturer()); set(row, 11, line.partNumber());
-                    set(row, 12, yesNoUnknown(line.taaCompliant())); set(row, 13, amount(line.unitPrice()));
-                    set(row, 14, amount(line.lineTotal())); set(row, 15, quote == null ? null : amount(quote.freight()));
-                    set(row, 16, line.deliveryTimeline() == null ? quote.deliveryTimeline() : line.deliveryTimeline());
-                    set(row, 17, line.warranty() == null ? quote.warranty() : line.warranty());
-                    set(row, 18, line.note()); set(row, 19, line.productUrl());
-                    wrapRow(row, wrapped, quoteHeaders.length);
+                    writeAuditRow(auditSheet.createRow(auditRow++), requested.getLineNumber(), requested.getSourceLineId(),
+                            requested.getRequestedQuantity(), requested.getProcurementCategory(), requested.getTaaRequired(),
+                            requested.getUnitOfMeasure(), requested.getCustomerPartNumber(), requested.getRequestedManufacturer(),
+                            requested.getRequestedPartNumber(), requested.getDescription(), requested.getTechnicalSpecifications(),
+                            null, quote, wrapped);
+                } else {
+                    for (var line : matching) {
+                        writeAuditRow(auditSheet.createRow(auditRow++), requested.getLineNumber(), requested.getSourceLineId(),
+                                requested.getRequestedQuantity(), requested.getProcurementCategory(), requested.getTaaRequired(),
+                                requested.getUnitOfMeasure(), requested.getCustomerPartNumber(), requested.getRequestedManufacturer(),
+                                requested.getRequestedPartNumber(), requested.getDescription(), requested.getTechnicalSpecifications(),
+                                line, quote, wrapped);
+                    }
                 }
             }
-            int[] quoteWidths = {9, 10, 10, 22, 16, 28, 28, 28, 58, 58, 28, 28, 17, 15, 15, 15, 24, 24, 36, 42};
-            setColumnWidths(quotationSheet, quoteWidths);
-            quotationSheet.setColumnWidth(0, 24 * 256);
-            quotationSheet.setColumnWidth(1, 40 * 256);
+            int[] auditWidths = {10, 10, 10, 22, 16, 26, 28, 28, 58, 58, 28, 28, 17, 15, 15, 15, 24, 24, 36, 42, 34};
+            setColumnWidths(auditSheet, auditWidths);
+            auditSheet.setColumnWidth(0, 24 * 256);
+            auditSheet.setColumnWidth(1, 40 * 256);
             writeLongTextSheet(workbook, rfq, heading, wrapped);
             workbook.write(output);
             return output.toByteArray();
@@ -197,27 +249,86 @@ public class RfqExportService {
         }
     }
 
-    private void writeExportRow(org.apache.poi.ss.usermodel.Row row, int lineNumber, BigDecimal requestedQty,
-                                String category, Boolean taaRequired, String uom,
-                                String customerPart, String requestedManufacturer, String requestedPartNumber,
-                                String description, String technicalSpecifications,
-                                QuotationSnapshot.QuotedLineSnapshot quoteLine, QuotationVersion version,
+    private void writeClientRow(org.apache.poi.ss.usermodel.Row row, int lineNumber, BigDecimal requestedQty,
+                                String uom, String customerPart, String description,
+                                String requestedManufacturer, String requestedPartNumber,
+                                QuotationSnapshot.QuotedLineSnapshot quoteLine,
                                 QuotationSnapshot quote, CellStyle wrapped) {
-        set(row, 0, String.valueOf(lineNumber)); set(row, 1, category); set(row, 2, yesNoUnknown(taaRequired));
-        set(row, 3, amount(requestedQty)); set(row, 4, uom); set(row, 5, customerPart);
-        set(row, 6, requestedManufacturer); set(row, 7, requestedPartNumber); set(row, 8, description);
-        set(row, 9, excelTextOrLongTextReference(technicalSpecifications, String.valueOf(lineNumber)));
+        String effectiveQty = quoteLine != null && quoteLine.quantity() != null
+                ? amount(quoteLine.quantity()) : amount(requestedQty);
+        String effectiveUom = quoteLine != null && !blank(quoteLine.unitOfMeasure())
+                ? quoteLine.unitOfMeasure() : uom;
+        String effectiveDesc = quoteLine != null && !blank(quoteLine.description())
+                ? quoteLine.description() : description;
+        String effectiveMfg = quoteLine != null && !blank(quoteLine.manufacturer())
+                ? quoteLine.manufacturer() : requestedManufacturer;
+        String effectivePn = quoteLine != null && !blank(quoteLine.partNumber())
+                ? quoteLine.partNumber() : requestedPartNumber;
+        String edd = quoteLine != null && !blank(quoteLine.deliveryTimeline())
+                ? quoteLine.deliveryTimeline() : (quote == null ? null : quote.deliveryTimeline());
+        String warranty = quoteLine != null && !blank(quoteLine.warranty())
+                ? quoteLine.warranty() : (quote == null ? null : quote.warranty());
+        String notes = quoteLine != null && !blank(quoteLine.note())
+                ? quoteLine.note() : (quote == null ? null : quote.notes());
+        set(row, 0, String.valueOf(lineNumber));
+        set(row, 1, effectiveQty);
+        set(row, 2, effectiveUom);
+        set(row, 3, customerPart);
+        set(row, 4, effectiveDesc);
+        set(row, 5, effectiveMfg);
+        set(row, 6, effectivePn);
+        set(row, 7, quoteLine == null ? null : amount(quoteLine.unitPrice()));
+        set(row, 8, quoteLine == null ? null : amount(quoteLine.lineTotal()));
+        set(row, 9, null);
+        set(row, 10, edd);
+        set(row, 11, warranty);
+        set(row, 12, notes);
+        wrapRow(row, wrapped, CLIENT_HEADERS.size());
+    }
+
+    private void writeAuditRow(org.apache.poi.ss.usermodel.Row row, int lineNumber, String sourceLineId, BigDecimal requestedQty,
+                               String category, Boolean taaRequired, String uom,
+                               String customerPart, String requestedManufacturer, String requestedPartNumber,
+                               String description, String technicalSpecifications,
+                               QuotationSnapshot.QuotedLineSnapshot quoteLine,
+                               QuotationSnapshot quote, CellStyle wrapped) {
+        set(row, 0, String.valueOf(lineNumber));
+        set(row, 1, quoteLine != null && quoteLine.quantity() != null ? amount(quoteLine.quantity()) : amount(requestedQty));
+        set(row, 2, quoteLine != null && !blank(quoteLine.unitOfMeasure()) ? quoteLine.unitOfMeasure() : uom);
+        set(row, 3, category);
+        set(row, 4, yesNoUnknown(taaRequired));
+        set(row, 5, customerPart);
+        set(row, 6, requestedManufacturer);
+        set(row, 7, requestedPartNumber);
+        set(row, 8, quoteLine != null && !blank(quoteLine.description()) ? quoteLine.description() : description);
+        set(row, 9, excelTextOrLongTextReference(technicalSpecifications, sourceLineId));
         set(row, 10, quoteLine == null ? null : quoteLine.manufacturer());
         set(row, 11, quoteLine == null ? null : quoteLine.partNumber());
         set(row, 12, quoteLine == null ? null : yesNoUnknown(quoteLine.taaCompliant()));
         set(row, 13, quoteLine == null ? null : amount(quoteLine.unitPrice()));
         set(row, 14, quoteLine == null ? null : amount(quoteLine.lineTotal()));
         set(row, 15, quote == null ? null : amount(quote.freight()));
-        set(row, 16, quoteLine == null ? (quote == null ? null : quote.deliveryTimeline()) : quoteLine.deliveryTimeline());
-        set(row, 17, quoteLine == null ? (quote == null ? null : quote.warranty()) : quoteLine.warranty());
+        set(row, 16, quoteLine == null ? (quote == null ? null : quote.deliveryTimeline())
+                : (blank(quoteLine.deliveryTimeline()) ? quote.deliveryTimeline() : quoteLine.deliveryTimeline()));
+        set(row, 17, quoteLine == null ? (quote == null ? null : quote.warranty())
+                : (blank(quoteLine.warranty()) ? quote.warranty() : quoteLine.warranty()));
         set(row, 18, quoteLine == null ? (quote == null ? null : quote.notes()) : quoteLine.note());
         set(row, 19, quoteLine == null ? null : quoteLine.productUrl());
-        wrapRow(row, wrapped, EXPORT_HEADERS.size());
+        set(row, 20, sourceLineId);
+        wrapRow(row, wrapped, INTERNAL_AUDIT_HEADERS.size());
+    }
+
+    private String readCustomerAddress(Rfq rfq) {
+        String rawJson = rfq.getSourceDataJson();
+        if (blank(rawJson)) return null;
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parsed = mapper.readValue(rawJson, Map.class);
+            Object addr = parsed == null ? null : parsed.get("customerAddress");
+            return addr == null ? null : String.valueOf(addr).trim();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private void setColumnWidths(org.apache.poi.ss.usermodel.Sheet sheet, int[] widthsInCharacters) {
@@ -291,14 +402,29 @@ public class RfqExportService {
 
     private String amount(BigDecimal value) { return value == null ? "" : value.toPlainString(); }
 
-    private byte[] pdf(Rfq rfq, QuotationSnapshot quote, QuotationVersion version, String quoteDecision) {
+    private byte[] pdf(Rfq rfq, QuotationSnapshot quote, QuotationVersion version,
+                       QuotationReviewDecision review, String quoteDecision) {
         try (PDDocument document = new PDDocument(); var output = new ByteArrayOutputStream()) {
             PdfTextWriter writer = new PdfTextWriter(document);
+            String customerAddress = readCustomerAddress(rfq);
             writer.line("GLOBAL RFQ - REQUEST FOR QUOTE", true, 16);
             writer.line("Customer: " + safe(rfq.getCustomerName()), true, 11);
+            if (!blank(customerAddress)) {
+                writer.wrapped("Customer Address: " + safe(customerAddress), false, 10);
+            }
             writer.wrapped("Customer company: " + safe(rfq.getCustomerCompany()) + " | Request: " + safe(rfq.getRequestTitle()), false, 10);
             writer.wrapped("Source RFQ: " + safe(rfq.getSourceRfqId()) + " | Source System: " + safe(rfq.getSourceSystem()), false, 10);
             writer.wrapped("Internal RFQ ID: " + rfq.getPublicId() + " | Source reference: " + safe(rfq.getSourceReference()), false, 9);
+            if (version != null) {
+                writer.wrapped("Quotation Version ID: " + version.getId() + " | Version: V" + version.getVersionNumber()
+                        + " | Submitted by user ID: " + version.getSubmittedByUserId()
+                        + " | Submitted at UTC: " + version.getSubmittedAt(), false, 9);
+            }
+            if (review != null) {
+                writer.wrapped("Review: " + review.getDecision() + " | Reviewer user ID: " + review.getReviewerUserId()
+                        + " | Decided at: " + review.getDecidedAt(), false, 9);
+                writer.wrapped("Review reason: " + safe(review.getReason()), false, 9);
+            }
             writer.wrapped("Status: " + rfq.getStatus() + " | Customer decision: " + rfq.getCustomerDecision(), false, 10);
             writer.wrapped("Quotation Manager Hint: " + safe(rfq.getSourceQuotationManagerName()), false, 10);
             writer.wrapped("Due: " + safe(rfq.getDueAtLocal() == null ? null : rfq.getDueAtLocal() + " " + safe(rfq.getDueTimeZone())), false, 10);
@@ -314,7 +440,8 @@ public class RfqExportService {
             if (quote != null) quote.items().forEach(item -> mapped.computeIfAbsent(item.sourceLineId(), ignored -> new ArrayList<>()).add(item));
             for (var item : rfq.getLineItems()) {
                 writer.wrapped("Item " + item.getLineNumber() + " | Qty " + amount(item.getRequestedQuantity()) + " | UOM "
-                        + safe(item.getUnitOfMeasure()) + " | Customer part " + safe(item.getCustomerPartNumber()), true, 9);
+                        + safe(item.getUnitOfMeasure()) + " | Customer part " + safe(item.getCustomerPartNumber())
+                        + " | Source line ID " + safe(item.getSourceLineId()), true, 9);
                 writer.wrapped("Category: " + safe(item.getProcurementCategory()) + " | TAA required: " + yesNoUnknown(item.getTaaRequired()), false, 9);
                 writer.wrapped("Requested manufacturer/part: " + safe(item.getRequestedManufacturer()) + " / " + safe(item.getRequestedPartNumber()), false, 9);
                 writer.wrapped("Requested: " + safe(item.getDescription()), false, 9);

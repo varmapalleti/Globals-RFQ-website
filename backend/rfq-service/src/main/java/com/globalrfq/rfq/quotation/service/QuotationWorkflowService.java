@@ -265,10 +265,17 @@ public class QuotationWorkflowService {
                         "V" + version.getVersionNumber() + " rejected: " + reason,
                         rfq.getPublicId());
             }
-            if (escalated && rfq.getCreatedBy() != null && !rfq.getCreatedBy().equals(actor.userId())) {
-                notifications.send(rfq.getCreatedBy(), NotificationType.QUOTATION_ESCALATED,
-                        "RFQ-" + rfq.getSourceRfqId() + " escalated to Admin",
-                        "Maximum reviewer rejections reached on RFQ-" + rfq.getSourceRfqId() + ". Admin resolution required.",
+            if (rfq.getCreatedBy() != null && !rfq.getCreatedBy().equals(actor.userId())
+                    && (activeManager == null || !rfq.getCreatedBy().equals(activeManager.getAssignedUserId()))) {
+                NotificationType adminNotification = escalated
+                        ? NotificationType.QUOTATION_ESCALATED : NotificationType.QUOTATION_REJECTED;
+                notifications.send(rfq.getCreatedBy(), adminNotification,
+                        escalated
+                                ? "RFQ-" + rfq.getSourceRfqId() + " escalated to Admin"
+                                : "Quotation rejected for RFQ-" + rfq.getSourceRfqId(),
+                        "Quotation V" + version.getVersionNumber() + " was rejected by reviewer user ID "
+                                + actor.userId() + ". Reason: " + reason
+                                + (escalated ? " Admin resolution is required." : " Admin review or reassignment may be needed."),
                         rfq.getPublicId());
             }
         }

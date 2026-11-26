@@ -43,10 +43,23 @@ spring:
                   args:
                     name: identityService
                     fallbackUri: forward:/fallback/identity
+                - name: RequestSize
+                  args:
+                    maxSize: ${IDENTITY_REQUEST_MAX_SIZE:1MB}
                 - name: RequestRateLimiter
                   args:
+                    key-resolver: "#{@clientIpKeyResolver}"
                     deny-empty-key: true
-                    empty-key-status: TOO_MANY_REQUESTS
+                    empty-key-status-code: TOO_MANY_REQUESTS
+                    in-memory-rate-limiter.replenishRate: ${IDENTITY_RATE_LIMIT_REPLENISH_RATE:60}
+                    in-memory-rate-limiter.burstCapacity: ${IDENTITY_RATE_LIMIT_BURST_CAPACITY:120}
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@clientIpKeyResolver}"
+                    deny-empty-key: true
+                    empty-key-status-code: TOO_MANY_REQUESTS
+                    in-memory-rate-limiter.replenishRate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:10}
+                    in-memory-rate-limiter.burstCapacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:20}
             - id: identity-api
               order: 0
               uri: lb://identity-service
@@ -57,6 +70,16 @@ spring:
                   args:
                     name: identityService
                     fallbackUri: forward:/fallback/identity
+                - name: RequestSize
+                  args:
+                    maxSize: ${IDENTITY_REQUEST_MAX_SIZE:1MB}
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@clientIpKeyResolver}"
+                    deny-empty-key: true
+                    empty-key-status-code: TOO_MANY_REQUESTS
+                    in-memory-rate-limiter.replenishRate: ${IDENTITY_RATE_LIMIT_REPLENISH_RATE:60}
+                    in-memory-rate-limiter.burstCapacity: ${IDENTITY_RATE_LIMIT_BURST_CAPACITY:120}
             - id: rfq-api
               order: 0
               uri: lb://rfq-service
@@ -67,6 +90,16 @@ spring:
                   args:
                     name: rfqService
                     fallbackUri: forward:/fallback/rfq
+                - name: RequestSize
+                  args:
+                    maxSize: ${RFQ_REQUEST_MAX_SIZE:30MB}
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@clientIpKeyResolver}"
+                    deny-empty-key: true
+                    empty-key-status-code: TOO_MANY_REQUESTS
+                    in-memory-rate-limiter.replenishRate: ${RFQ_RATE_LIMIT_REPLENISH_RATE:120}
+                    in-memory-rate-limiter.burstCapacity: ${RFQ_RATE_LIMIT_BURST_CAPACITY:240}
 
 eureka:
   client:

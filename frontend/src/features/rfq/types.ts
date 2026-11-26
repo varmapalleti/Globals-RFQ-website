@@ -43,6 +43,7 @@ export interface RfqLineItem {
   description: string
   requestedQuantity: number
   unitOfMeasure: string
+  customerPartNumber?: string
   requestedManufacturer: string
   requestedPartNumber: string
   procurementCategory: string

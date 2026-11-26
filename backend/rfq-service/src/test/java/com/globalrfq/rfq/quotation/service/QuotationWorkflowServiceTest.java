@@ -184,6 +184,8 @@ class QuotationWorkflowServiceTest {
         service.review("pub-10", 11L, new ReviewRequest("REJECTED", "Unit price missing freight check"), reviewer);
         assertEquals(RfqStatus.REJECTED_BY_REVIEWER, rfq.getStatus());
         verify(notifications).send(eq(2L), eq(NotificationType.QUOTATION_REJECTED), anyString(), anyString(), eq("pub-10"));
+        verify(notifications).send(eq(1L), eq(NotificationType.QUOTATION_REJECTED), anyString(),
+                org.mockito.ArgumentMatchers.contains("Unit price missing freight check"), eq("pub-10"));
 
         // 2nd rejection hitting maxFormalRejections = 2 -> ESCALATED
         rfq.setStatus(RfqStatus.PENDING_REVIEW);

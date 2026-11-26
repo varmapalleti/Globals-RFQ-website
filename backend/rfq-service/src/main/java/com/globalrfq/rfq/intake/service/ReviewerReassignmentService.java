@@ -83,9 +83,12 @@ public class ReviewerReassignmentService {
         if (requests.existsByRfqIdAndStatus(rfq.getId(), ReviewerReassignmentStatus.PENDING)) {
             throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION, "A reviewer reassignment request is already awaiting Admin action");
         }
+        RfqStatus previousStatus = rfq.getStatus();
         ReviewerReassignmentRequest saved = requests.save(new ReviewerReassignmentRequest(rfq, actor.userId(), reason,
-                idempotencyKey, requestHash));
-        appendEvent(rfq, "REVIEWER_REASSIGNMENT_REQUESTED", actor, reason,
+                idempotencyKey, requestHash, previousStatus));
+        rfq.setStatus(RfqStatus.AWAITING_REASSIGNMENT);
+        appendEvent(rfq, "REVIEWER_REASSIGNMENT_REQUESTED", actor, previousStatus,
+                RfqStatus.AWAITING_REASSIGNMENT, reason,
                 Map.of("requestId", saved.getId(), "reviewerUserId", actor.userId()));
         if (rfq.getCreatedBy() != null && !rfq.getCreatedBy().equals(actor.userId())) {
             notifications.send(rfq.getCreatedBy(), NotificationType.REVIEWER_REASSIGNMENT_REQUESTED,
@@ -126,6 +129,17 @@ public class ReviewerReassignmentService {
 
         Long replacementReviewerId = null;
         ReviewerReassignmentStatus status;
+        RfqStatus previousStatus = request.getRfqStatusBeforeRequest();
+        if (previousStatus == null && rfq.getStatus() != RfqStatus.AWAITING_REASSIGNMENT) {
+            // Compatibility for pending requests created before V16 captured the prior state.
+            previousStatus = rfq.getStatus();
+        }
+        if (previousStatus == null || previousStatus == RfqStatus.AWAITING_REASSIGNMENT) {
+            throw new RfqException(RfqErrorCode.INVALID_WORKFLOW_TRANSITION,
+                    "The RFQ workflow state before the reassignment request is unavailable");
+        }
+        RfqStatus statusBeforeResolution = rfq.getStatus();
+        rfq.setStatus(previousStatus);
         if ("APPROVE".equals(resolution.decision())) {
             if (resolution.replacementReviewerId() == null) {
                 throw new RfqException(RfqErrorCode.VALIDATION_FAILED, "replacementReviewerId is required when approving a reassignment request");
@@ -145,7 +159,8 @@ public class ReviewerReassignmentService {
         }
         request.resolve(status, actor.userId(), resolution.reason().trim(), replacementReviewerId);
         requests.save(request);
-        appendEvent(rfq, "REVIEWER_REASSIGNMENT_RESOLVED", actor, resolution.reason().trim(),
+        appendEvent(rfq, "REVIEWER_REASSIGNMENT_RESOLVED", actor, statusBeforeResolution, rfq.getStatus(),
+                resolution.reason().trim(),
                 Map.of("requestId", request.getId(), "decision", resolution.decision(),
                         "replacementReviewerId", replacementReviewerId == null ? "" : replacementReviewerId));
         if (!request.getRequestedByReviewerId().equals(actor.userId())) {
@@ -161,10 +176,11 @@ public class ReviewerReassignmentService {
                 .orElseThrow(() -> new RfqException(RfqErrorCode.RESOURCE_NOT_FOUND, "RFQ was not found"));
     }
 
-    private void appendEvent(Rfq rfq, String eventType, IdentityPrincipal actor, String reason, Map<String, ?> payload) {
+    private void appendEvent(Rfq rfq, String eventType, IdentityPrincipal actor, RfqStatus fromStatus,
+                             RfqStatus toStatus, String reason, Map<String, ?> payload) {
         try {
             events.save(new RfqWorkflowEvent(rfq, eventType, actor.userId(), objectMapper.writeValueAsString(actor.roles()),
-                    null, null, reason, objectMapper.writeValueAsString(payload), MDC.get("correlationId")));
+                    fromStatus, toStatus, reason, objectMapper.writeValueAsString(payload), MDC.get("correlationId")));
         } catch (Exception exception) {
             throw new RfqException(RfqErrorCode.INTERNAL_ERROR, "Reviewer reassignment history could not be recorded");
         }

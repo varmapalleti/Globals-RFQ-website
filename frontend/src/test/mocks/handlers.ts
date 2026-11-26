@@ -44,6 +44,17 @@ const mockAuthResponse = {
   user: mockUser,
 }
 
+const mockApprovedRfq = {
+  id: 'rfq-public-id-100',
+  sourceRfqId: '112477',
+  customerName: 'V2X Systems Corporation',
+  requestTitle: 'Three phase blower motor',
+  status: 'CUSTOMER_APPROVED',
+  customerDecision: 'APPROVED',
+  requestedDeliveryDate: '2026-12-31',
+  createdAt: new Date().toISOString(),
+}
+
 export const handlers = [
   // Login — success
   http.post(`${BASE}/api/auth/login`, async ({ request }) => {
@@ -186,6 +197,84 @@ export const handlers = [
         correlationId: 'test-id',
       },
       { status: 200 },
+    )
+  }),
+
+  http.get(`${BASE}/api/rfqs`, () =>
+    HttpResponse.json(
+      makeSuccess('RFQs', {
+        content: [mockApprovedRfq],
+        page: 0,
+        size: 50,
+        totalElements: 1,
+        totalPages: 1,
+      }),
+    ),
+  ),
+
+  http.post(`${BASE}/api/rfqs`, async ({ request }) => {
+    const body = (await request.json()) as { sourceRfqId: string }
+    return HttpResponse.json(
+      makeSuccess('RFQ created', { id: 'new-rfq-id', sourceRfqId: body.sourceRfqId }),
+      { status: 201 },
+    )
+  }),
+
+  http.get(`${BASE}/api/red-flags`, () =>
+    HttpResponse.json(
+      makeSuccess('Red flags', { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 }),
+    ),
+  ),
+
+  http.post(`${BASE}/api/red-flags`, async ({ request }) => {
+    const body = (await request.json()) as { rfqPublicId: string; severity: string; reason: string }
+    return HttpResponse.json(
+      makeSuccess('Red flag created', {
+        id: 1,
+        rfqPublicId: body.rfqPublicId,
+        sourceRfqId: '112477',
+        customerName: 'V2X Systems Corporation',
+        severity: body.severity,
+        reason: body.reason,
+        status: 'OPEN',
+        raisedBy: 1,
+        assignedTo: null,
+        resolutionNote: null,
+        resolvedBy: null,
+        resolvedAt: null,
+        createdAt: new Date().toISOString(),
+      }),
+      { status: 201 },
+    )
+  }),
+
+  http.get(`${BASE}/api/purchases`, () =>
+    HttpResponse.json(
+      makeSuccess('Purchase orders', { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 }),
+    ),
+  ),
+
+  http.post(`${BASE}/api/purchases`, async ({ request }) => {
+    const body = (await request.json()) as { rfqPublicId: string; supplierName?: string }
+    return HttpResponse.json(
+      makeSuccess('Purchase order created', {
+        id: 1,
+        orderId: 'PO-1001',
+        rfqId: 10,
+        rfqPublicId: body.rfqPublicId,
+        sourceRfqId: '112477',
+        customerName: 'V2X Systems Corporation',
+        quotationVersionId: 1,
+        supplierName: body.supplierName ?? null,
+        status: 'PENDING',
+        assignedTo: null,
+        orderDate: null,
+        expectedDelivery: null,
+        notes: null,
+        createdBy: 1,
+        createdAt: new Date().toISOString(),
+      }),
+      { status: 201 },
     )
   }),
 ]
