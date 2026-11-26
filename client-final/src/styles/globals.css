@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+
+@theme {
+  /* ── Brand palette — taken from the GSS logo (blue globe + red swoosh) ──
+     Use as bg-brand-primary, text-brand-accent, border-brand-border, … */
+  --color-brand-primary: #1b3a93;
+  --color-brand-primary-dark: #142c70;
+  --color-brand-primary-soft: #eaf0ff;
+  --color-brand-accent: #d32027;
+  --color-brand-accent-dark: #a11216;
+  --color-brand-ink: #1f2937;
+  --color-brand-muted: #6b7280;
+  --color-brand-border: #d8dee9;
+  --color-brand-surface: #f4f7fc;
+
+  /* ── Semantic surface tokens (mapped onto the GSS palette) ── */
+  --color-background: #ffffff;
+  --color-foreground: #1f2937;
+  --color-muted: #f4f7fc;
+  --color-muted-foreground: #6b7280;
+  --color-border: #d8dee9;
+  --color-input: #d8dee9;
+  --color-ring: #1b3a93;
+  --color-card: #ffffff;
+  --color-card-foreground: #1f2937;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1f2937;
+  --color-primary: #1b3a93;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #eaf0ff;
+  --color-secondary-foreground: #1b3a93;
+  --color-accent: #eaf0ff;
+  --color-accent-foreground: #1b3a93;
+  --color-destructive: #d32027;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #059669;
+  --color-success-foreground: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #ffffff;
+
+  /* ── Radius ── */
+  --radius: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* ── Typography ── */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Shadows ── */
+  --shadow-auth: 0 20px 55px -25px rgb(27 58 147 / 0.45);
+  --shadow-card: 0 10px 30px -18px rgb(27 58 147 / 0.35);
+  --shadow-dropdown: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* ── Base ── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-brand-surface);
+    color: var(--color-foreground);
+    min-height: 100dvh;
+  }
+
+  /* Visible focus ring for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  /* Remove default focus for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  /* Remove the number spinners from numeric inputs */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
