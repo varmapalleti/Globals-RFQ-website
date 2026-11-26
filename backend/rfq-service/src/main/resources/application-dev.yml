@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    # Local MySQL fallback for the dev profile. RFQ_DB_URL overrides this value.
+    # Production keeps its URL mandatory in application-prod.yml.
+    url: "${RFQ_DB_URL:jdbc:mysql://localhost:3306/global_rfq?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"

@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: ${RFQ_DB_URL}
+    username: ${RFQ_DB_USERNAME}
+    password: ${RFQ_DB_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: ${RFQ_MAX_FILE_SIZE}
+      max-request-size: ${RFQ_MAX_REQUEST_SIZE}
+
+app:
+  gateway:
+    secret-enabled: true
+    shared-secret: ${GATEWAY_SHARED_SECRET}
+  identity:
+    internal-service-token: ${IDENTITY_INTERNAL_SHARED_SECRET}
+  rfq:
+    storage-provider: ${RFQ_STORAGE_PROVIDER:s3}
+    storage-directory: ${RFQ_STORAGE_DIR:/tmp/rfq-service}
+    s3-bucket: ${RFQ_S3_BUCKET:}
+    s3-prefix: ${RFQ_S3_PREFIX:global-rfq}
+    aws-region: ${AWS_REGION:}
+    default-time-zone: ${RFQ_DEFAULT_TIME_ZONE:Asia/Kolkata}
+    max-attachment-size-bytes: ${RFQ_MAX_ATTACHMENT_SIZE_BYTES}
+  attachment-scanner:
+    shared-token: ${RFQ_ATTACHMENT_SCANNER_TOKEN}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

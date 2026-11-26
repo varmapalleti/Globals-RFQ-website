@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Global RFQ API Documentation</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, sans-serif; color: #0f172a; background: #f8fafc; }
+    body { margin: 0; padding: 24px; max-width: 1120px; margin-inline: auto; }
+    .header { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; }
+    .header h1 { margin: 0 0 6px; font-size: 22px; }
+    .header p { margin: 0; color: #475569; font-size: 14px; }
+    .toolbar { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+    input { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; min-width: 280px; }
+    .tag { margin-top: 22px; }
+    .tag h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: #334155; margin: 0 0 10px; }
+    .op { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .method { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 6px; text-transform: uppercase; min-width: 58px; text-align: center; }
+    .GET { background: #dbeafe; color: #1d4ed8; }
+    .POST { background: #dcfce7; color: #15803d; }
+    .PUT { background: #fef3c7; color: #b45309; }
+    .PATCH { background: #f3e8ff; color: #7e22ce; }
+    .DELETE { background: #fee2e2; color: #b91c1c; }
+    .path { font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600; color: #0f172a; }
+    .summary { color: #475569; font-size: 13px; margin-left: auto; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 id="title">Global RFQ API Docs</h1>
+    <p id="desc">Loading OpenAPI 3.0.3 specification...</p>
+    <div class="toolbar">
+      <input id="filter" type="search" placeholder="Filter endpoints by path, tag, or summary..." />
+      <a href="/v3/api-docs" style="font-size:13px;color:#1d4ed8;font-weight:600;text-decoration:none">Download OpenAPI JSON</a>
+    </div>
+  </div>
+  <div id="content"></div>
+  <script>
+    fetch('/v3/api-docs').then(r => r.json()).then(spec => {
+      document.getElementById('title').textContent = spec.info.title + ' v' + spec.info.version;
+      document.getElementById('desc').textContent = spec.info.description || '';
+      const filterInput = document.getElementById('filter');
+      function render(q) {
+        const query = (q || '').toLowerCase();
+        const groups = {};
+        for (const [path, methods] of Object.entries(spec.paths || {})) {
+          for (const [method, op] of Object.entries(methods)) {
+            const tag = (op.tags && op.tags[0]) || 'General';
+            const hay = (path + ' ' + method + ' ' + tag + ' ' + (op.summary || '')).toLowerCase();
+            if (query && !hay.includes(query)) continue;
+            (groups[tag] ||= []).push({ path, method: method.toUpperCase(), summary: op.summary || '' });
+          }
+        }
+        const root = document.getElementById('content');
+        root.innerHTML = '';
+        for (const [tag, ops] of Object.entries(groups)) {
+          const section = document.createElement('section');
+          section.className = 'tag';
+          const h2 = document.createElement('h2');
+          h2.textContent = tag + ' (' + ops.length + ')';
+          section.appendChild(h2);
+          for (const o of ops) {
+            const row = document.createElement('div');
+            row.className = 'op';
+            const badge = document.createElement('span');
+            badge.className = 'method ' + o.method;
+            badge.textContent = o.method;
+            const pathEl = document.createElement('span');
+            pathEl.className = 'path';
+            pathEl.textContent = o.path;
+            const sumEl = document.createElement('span');
+            sumEl.className = 'summary';
+            sumEl.textContent = o.summary;
+            row.append(badge, pathEl, sumEl);
+            section.appendChild(row);
+          }
+          root.appendChild(section);
+        }
+      }
+      render('');
+      filterInput.addEventListener('input', e => render(e.target.value));
+    }).catch(err => {
+      document.getElementById('desc').textContent = 'Failed to load /v3/api-docs: ' + err;
+    });
+  </script>
+</body>
+</html>

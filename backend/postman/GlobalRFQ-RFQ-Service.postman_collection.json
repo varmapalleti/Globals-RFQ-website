@@ -1,0 +1,1318 @@
+{
+  "info": {
+    "_postman_id": "7cfd172a-3f4a-4fbf-8913-0f8b31291d22",
+    "name": "Global RFQ - RFQ Service (via API Gateway)",
+    "description": "RFQ API collection. Set separate Identity access tokens by role. Do not add X-Gateway-Secret. Internal scanner requests are direct only.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "scannerBaseUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "quotationManagerToken",
+      "value": ""
+    },
+    {
+      "key": "reviewerToken",
+      "value": ""
+    },
+    {
+      "key": "marketingToken",
+      "value": ""
+    },
+    {
+      "key": "scannerToken",
+      "value": ""
+    },
+    {
+      "key": "sourceSystem",
+      "value": "CUSTOMER_SOFTWARE"
+    },
+    {
+      "key": "sourceRfqId",
+      "value": "112477"
+    },
+    {
+      "key": "importPreviewToken",
+      "value": ""
+    },
+    {
+      "key": "rfqId",
+      "value": ""
+    },
+    {
+      "key": "quotationVersionId",
+      "value": ""
+    },
+    {
+      "key": "reviewerReassignmentRequestId",
+      "value": ""
+    },
+    {
+      "key": "reviewerReassignmentIdempotencyKey",
+      "value": "rfq-112477-review-reassign-v1"
+    },
+    {
+      "key": "attachmentId",
+      "value": ""
+    },
+    {
+      "key": "quotationManagerUserId",
+      "value": "42"
+    },
+    {
+      "key": "reviewerUserId",
+      "value": "43"
+    },
+    {
+      "key": "replacementReviewerUserId",
+      "value": "45"
+    },
+    {
+      "key": "marketingUserId",
+      "value": "44"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "rfq-112477-action-v1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Intake",
+      "item": [
+        {
+          "name": "Preview import",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/imports/preview",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "sourceSystem",
+                  "value": "{{sourceSystem}}",
+                  "type": "text"
+                },
+                {
+                  "key": "sourceRfqId",
+                  "value": "{{sourceRfqId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code<300){const d=pm.response.json().data;if(d.previewToken)pm.collectionVariables.set('importPreviewToken',d.previewToken);}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm import",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/imports/confirm",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"previewToken\": \"{{importPreviewToken}}\",\n  \"normalizedRfq\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code<300){const d=pm.response.json().data;if(d.rfq&&d.rfq.id)pm.collectionVariables.set('rfqId',d.rfq.id);if(d.originalAttachment&&d.originalAttachment.id)pm.collectionVariables.set('attachmentId',d.originalAttachment.id);}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create RFQ directly",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceSystem\": \"CUSTOMER_SOFTWARE\",\n  \"sourceRfqId\": \"{{sourceRfqId}}\",\n  \"sourceReference\": null,\n  \"sourceQuotationManagerName\": \"PALLETI\",\n  \"customerName\": \"V2X Systems Corporation\",\n  \"customerCompany\": \"V2X Systems Corporation\",\n  \"buyerName\": \"Marty Barclay\",\n  \"buyerEmail\": \"buyer@example.com\",\n  \"buyerPhone\": null,\n  \"requestTitle\": \"Request for Quote {{sourceRfqId}}\",\n  \"dueAtLocal\": \"2026-10-22T08:00:00\",\n  \"dueTimeZone\": \"Asia/Kolkata\",\n  \"requestedDeliveryDate\": \"2026-12-31\",\n  \"shipToText\": \"Oakland Cross-Dock, Oakland, CA\",\n  \"sourceUrl\": null,\n  \"termsAndConditions\": \"Net 60\",\n  \"sourceData\": {},\n  \"lineItems\": [\n    {\n      \"sourceLineId\": \"1\",\n      \"lineNumber\": 1,\n      \"description\": \"5.5 kW AC motor\",\n      \"requestedQuantity\": 2,\n      \"unitOfMeasure\": \"EA\",\n      \"customerPartNumber\": \"6105-09-V30-0008\",\n      \"sourceData\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code<300){const d=pm.response.json().data;if(d.id)pm.collectionVariables.set('rfqId',d.id);}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List RFQs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs?page=0&size=20",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Role-scoped dashboard summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/dashboard/summary",
+            "description": "Admin sees portfolio totals. Other roles see status counts for RFQs in their assignment scope.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get RFQ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get workflow history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/history",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments and customer",
+      "item": [
+        {
+          "name": "Assign Quotation Manager",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/assignments",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentRole\": \"QUOTATION_MANAGER\",\n  \"assignedUserId\": \"{{quotationManagerUserId}}\",\n  \"reason\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Assign Reviewer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/assignments",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentRole\": \"REVIEWER\",\n  \"assignedUserId\": \"{{reviewerUserId}}\",\n  \"reason\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Reviewer requests reassignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{reviewerReassignmentIdempotencyKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/reviewer-reassignment-requests",
+            "description": "Use the current assigned Reviewer's token. Only one reassignment request can be pending per RFQ.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{reviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"I have a conflict of interest for this request.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code===201){pm.collectionVariables.set('reviewerReassignmentRequestId',pm.response.json().data.id);}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin lists reviewer reassignment requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/reviewer-reassignment-requests",
+            "description": "Admin sees all requests for this RFQ.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin approves Reviewer reassignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/reviewer-reassignment-requests/{{reviewerReassignmentRequestId}}/resolve",
+            "description": "Approval validates the replacement user is active and has the Identity REVIEWER role.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APPROVE\",\n  \"replacementReviewerId\": \"{{replacementReviewerUserId}}\",\n  \"reason\": \"Reassigned to an independent reviewer.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Manager assigns Reviewer (delegated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/assignments",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{quotationManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentRole\": \"REVIEWER\",\n  \"assignedUserId\": \"{{reviewerUserId}}\",\n  \"reason\": \"Assign reviewer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Resolve escalation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/escalation-resolution",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"AUTHORIZE_REVISION\",\n  \"reason\": \"Authorize revision\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Resolve customer rejection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/customer-rejection-resolution",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"AUTHORIZE_REVISION\",\n  \"reason\": \"Authorize revision\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Record manual customer send",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/customer-submissions",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotationVersionId\": \"{{quotationVersionId}}\",\n  \"externalReference\": \"CUSTOMER-EVENT-112477\",\n  \"notes\": \"Sent through existing software\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Record customer decision",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/customer-decision",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APPROVED\",\n  \"quotationVersionId\": \"{{quotationVersionId}}\",\n  \"notes\": \"Approved in source software\",\n  \"sourceReference\": \"CUSTOMER-EVENT-112477\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Assign Marketing Executive",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/assignments",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignmentRole\": \"MARKETING_EXECUTIVE\",\n  \"assignedUserId\": \"{{marketingUserId}}\",\n  \"reason\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quotation and review",
+      "item": [
+        {
+          "name": "Save quotation draft",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-draft",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{quotationManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency\": \"USD\",\n  \"items\": [\n    {\n      \"sourceLineId\": \"1\",\n      \"description\": \"5.5 kW AC motor\",\n      \"quantity\": 2,\n      \"unitPrice\": 1851.43,\n      \"unitOfMeasure\": \"EA\",\n      \"manufacturer\": \"ABB\",\n      \"partNumber\": \"EMM13556-S-A\",\n      \"deliveryTimeline\": \"15 business days\",\n      \"warranty\": \"30 days\",\n      \"note\": \"Supplier reference 314184\",\n      \"productUrl\": \"https://example.invalid/product\"\n    }\n  ],\n  \"freight\": 0,\n  \"otherCharges\": 0,\n  \"discount\": 0,\n  \"taxAmount\": 0,\n  \"deliveryTimeline\": \"15 business days\",\n  \"warranty\": \"30 days\",\n  \"notes\": \"Quote valid for 30 days\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get quotation draft",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-draft",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{quotationManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit immutable quotation version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-versions",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{quotationManagerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency\": \"USD\",\n  \"items\": [\n    {\n      \"sourceLineId\": \"1\",\n      \"description\": \"5.5 kW AC motor\",\n      \"quantity\": 2,\n      \"unitPrice\": 1851.43,\n      \"unitOfMeasure\": \"EA\",\n      \"manufacturer\": \"ABB\",\n      \"partNumber\": \"EMM13556-S-A\",\n      \"deliveryTimeline\": \"15 business days\",\n      \"warranty\": \"30 days\",\n      \"note\": \"Supplier reference 314184\",\n      \"productUrl\": \"https://example.invalid/product\"\n    }\n  ],\n  \"freight\": 0,\n  \"otherCharges\": 0,\n  \"discount\": 0,\n  \"taxAmount\": 0,\n  \"deliveryTimeline\": \"15 business days\",\n  \"warranty\": \"30 days\",\n  \"notes\": \"Quote valid for 30 days\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code<300){const d=pm.response.json().data;if(d.id)pm.collectionVariables.set('quotationVersionId',d.id);}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List quotation versions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-versions",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get quotation version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-versions/{{quotationVersionId}}",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reviewer approves version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-versions/{{quotationVersionId}}/review",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{reviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APPROVED\",\n  \"reason\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Reviewer rejects version",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/quotation-versions/{{quotationVersionId}}/review",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{reviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"REJECTED\",\n  \"reason\": \"Please correct the technical details\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files and exports",
+      "item": [
+        {
+          "name": "Upload attachment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/attachments",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "category",
+                  "value": "QUOTATION_SUPPORT",
+                  "description": "Business category; the server detects the actual file type.",
+                  "type": "text"
+                },
+                {
+                  "key": "lineNumber",
+                  "value": "1",
+                  "description": "Optional: associates this attachment with RFQ line item 1.",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if(pm.response.code<300){const d=pm.response.json().data;if(d.id)pm.collectionVariables.set('attachmentId',d.id);}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List attachments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/attachments",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download CLEAN attachment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/attachments/{{attachmentId}}/download",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export RFQ as xlsx",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/export?format=xlsx&quotationVersionId={{quotationVersionId}}",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export RFQ as PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/export?format=pdf&quotationVersionId={{quotationVersionId}}",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin rules and reports",
+      "item": [
+        {
+          "name": "Get mandatory fields",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/rfq-rules/mandatory-fields",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Replace mandatory fields",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/rfq-rules/mandatory-fields",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requiredFields\": [\n    \"currency\",\n    \"items.quantity\",\n    \"items.unitPrice\",\n    \"deliveryTimeline\",\n    \"warranty\"\n  ],\n  \"reason\": \"Require quote details\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get rejection limit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/rfq-rules/rejection-limit",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set rejection limit",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/rfq-rules/rejection-limit",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maxFormalRejections\": 3,\n  \"reason\": \"Set escalation threshold\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get reviewer delegation for RFQ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/reviewer-assignment-delegation",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set reviewer delegation for RFQ",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/rfqs/{{rfqId}}/reviewer-assignment-delegation",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotationManagerCanAssignReviewer\": true,\n  \"reason\": \"Allow assigned Manager to select this RFQ's Reviewer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get configuration audit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/rfq-rules/audit",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Report summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reports/rfqs/summary?from=2026-10-01&through=2026-10-31",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export report as xlsx",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reports/rfqs/export?format=xlsx",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export report as PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/reports/rfqs/export?format=pdf",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Internal scanner",
+      "item": [
+        {
+          "name": "List pending files",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Attachment-Scanner-Token",
+                "value": "{{scannerToken}}"
+              }
+            ],
+            "url": "{{scannerBaseUrl}}/internal/attachment-scanner/pending",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks."
+          }
+        },
+        {
+          "name": "Fetch attachment bytes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Attachment-Scanner-Token",
+                "value": "{{scannerToken}}"
+              }
+            ],
+            "url": "{{scannerBaseUrl}}/internal/attachment-scanner/attachments/{{attachmentId}}/content",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks."
+          }
+        },
+        {
+          "name": "Report CLEAN result",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Attachment-Scanner-Token",
+                "value": "{{scannerToken}}"
+              }
+            ],
+            "url": "{{scannerBaseUrl}}/internal/attachment-scanner/attachments/{{attachmentId}}/result",
+            "description": "See RFQ_POSTMAN_GUIDE.md for role rules, workflow order, examples, and negative checks."
+          }
+        }
+      ]  
+    }
+  ]
+}
