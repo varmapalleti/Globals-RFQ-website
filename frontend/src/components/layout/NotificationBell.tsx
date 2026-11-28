@@ -111,11 +111,11 @@ export function NotificationBell() {
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="relative text-slate-700"
+        className="relative text-brand-900"
       >
         <Bell className="size-5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-brand-600 px-1 text-[10px] font-bold text-white">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -125,11 +125,11 @@ export function NotificationBell() {
         <div
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg sm:w-96"
+          className="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-brand-100 bg-white shadow-[var(--shadow-dropdown)] sm:w-96"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-brand-100 px-4 py-3">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Notifications</h2>
+              <h2 className="text-sm font-semibold text-brand-900">Notifications</h2>
               <p className="text-[11px] text-slate-500">
                 {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
               </p>
@@ -141,7 +141,7 @@ export function NotificationBell() {
                 size="sm"
                 disabled={markAllMutation.isPending}
                 onClick={() => void handleMarkAllRead()}
-                className="h-7 px-2 text-xs text-blue-700 hover:text-blue-800"
+                className="h-7 px-2 text-xs text-brand-900 hover:text-brand-800"
               >
                 <CheckCheck className="size-3.5" />
                 Mark all read
@@ -149,7 +149,7 @@ export function NotificationBell() {
             )}
           </div>
 
-          <div className="max-h-96 overflow-y-auto divide-y divide-slate-100">
+          <div className="max-h-96 overflow-y-auto divide-y divide-brand-100">
             {!demo && listQuery.isLoading ? (
               <p className="px-4 py-8 text-center text-xs text-slate-500">
                 Loading notifications…
@@ -164,13 +164,13 @@ export function NotificationBell() {
                   key={item.id}
                   type="button"
                   onClick={() => void handleItemClick(item)}
-                  className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-slate-50 ${
-                    item.read ? 'bg-white' : 'bg-blue-50/40'
+                  className={`flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-brand-50/70 ${
+                    item.read ? 'bg-white' : 'bg-brand-50/50'
                   }`}
                 >
                   <span
                     className={`mt-1.5 size-2 shrink-0 rounded-full ${
-                      item.read ? 'bg-transparent' : 'bg-blue-600'
+                      item.read ? 'bg-transparent' : 'bg-red-brand-600'
                     }`}
                   />
                   <div className="min-w-0 flex-1">

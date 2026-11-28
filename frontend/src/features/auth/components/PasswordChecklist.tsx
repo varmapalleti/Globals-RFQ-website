@@ -23,10 +23,7 @@ export function PasswordChecklist({ value, className }: PasswordChecklistProps) 
   return (
     <ul
       aria-label="Password requirements"
-      className={cn(
-        'mt-2 space-y-1 rounded-md border border-[--color-border] bg-[--color-muted] p-3',
-        className,
-      )}
+      className={cn('mt-2 space-y-1 rounded-lg border border-brand-100 bg-brand-50/60 p-3', className)}
     >
       {RULES.map((rule) => {
         const passed = rule.test(value)
@@ -35,13 +32,13 @@ export function PasswordChecklist({ value, className }: PasswordChecklistProps) 
             key={rule.key}
             className={cn(
               'flex items-center gap-2 text-xs',
-              passed ? 'text-green-700' : 'text-[--color-muted-foreground]',
+              passed ? 'font-medium text-green-700' : 'text-muted-foreground',
             )}
           >
             {passed ? (
               <Check className="h-3.5 w-3.5 shrink-0 text-green-600" aria-hidden="true" />
             ) : (
-              <X className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+              <X className="h-3.5 w-3.5 shrink-0 text-red-brand-500" aria-hidden="true" />
             )}
             <span>
               {passed ? <span className="sr-only">✓ </span> : <span className="sr-only">✗ </span>}

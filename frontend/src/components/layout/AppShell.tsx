@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Logo } from '@/components/common/Logo'
 import { NotificationBell } from './NotificationBell'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useLogout } from '@/features/auth/hooks/useAuthMutations'
@@ -118,15 +119,16 @@ export function AppShell({ children }: AppShellProps) {
     .toUpperCase()
 
   return (
-    <div className="min-h-dvh bg-[#fafafa] text-slate-900">
+    <div className="min-h-dvh text-slate-900">
       <div className="flex min-h-dvh">
         <aside
-          className={`${mobileNavOpen ? 'fixed inset-y-0 left-0 z-50 block w-72 shadow-xl' : 'hidden'} border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:block lg:h-dvh lg:w-[240px] lg:shrink-0`}
+          className={`${mobileNavOpen ? 'fixed inset-y-0 left-0 z-50 block w-72 shadow-xl' : 'hidden'} border-r border-brand-100 bg-white/95 backdrop-blur lg:sticky lg:top-0 lg:block lg:h-dvh lg:w-[240px] lg:shrink-0`}
           aria-label="Primary navigation"
         >
-          <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
-            <Link to="/dashboard" className="text-xl font-bold tracking-tight text-blue-700">
-              RFQ System
+          <div className="flex h-16 items-center justify-between border-b border-brand-100 px-4">
+            <Link to="/dashboard" className="flex items-center gap-2.5">
+              <Logo variant="icon" className="h-9 shrink-0" />
+              <span className="text-lg font-bold tracking-tight text-brand-900">GSS CONNECT</span>
             </Link>
             <Button
               variant="ghost"
@@ -151,11 +153,11 @@ export function AppShell({ children }: AppShellProps) {
                     key={item.to}
                     to={item.to}
                     onClick={() => setMobileNavOpen(false)}
-                    className={`mx-0.5 flex items-center gap-4 border-l-[3px] px-[15px] py-3 text-sm transition ${isActive ? 'border-blue-700 bg-[#eaf2fb] font-semibold text-slate-900' : 'border-transparent text-slate-700 hover:bg-slate-50'}`}
+                    className={`mx-2 flex items-center gap-4 rounded-lg border-l-[3px] px-[13px] py-3 text-sm transition ${isActive ? 'border-red-brand-600 bg-brand-50 font-semibold text-brand-900' : 'border-transparent text-slate-700 hover:bg-brand-50/70 hover:text-brand-900'}`}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     <Icon
-                      className={`size-5 ${isActive ? 'text-blue-700' : 'text-slate-700'}`}
+                      className={`size-5 ${isActive ? 'text-brand-900' : 'text-slate-600'}`}
                       aria-hidden="true"
                     />
                     {item.label}
@@ -178,7 +180,7 @@ export function AppShell({ children }: AppShellProps) {
         )}
 
         <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-brand-100 bg-white/90 px-4 shadow-sm backdrop-blur sm:px-6">
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -190,7 +192,7 @@ export function AppShell({ children }: AppShellProps) {
                 {mobileNavOpen ? <X /> : <Menu />}
               </Button>
               {isDemoMode && isDemoSession() && (
-                <label className="flex items-center gap-2 rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800">
+                <label className="flex items-center gap-2 rounded-md border border-brand-100 bg-brand-50 px-3 py-2 text-xs font-medium text-brand-900">
                   Demo role
                   <select
                     aria-label="Switch demo role"
@@ -211,7 +213,7 @@ export function AppShell({ children }: AppShellProps) {
             <div className="flex items-center gap-3 sm:gap-5">
               <NotificationBell />
               <div className="flex items-center gap-2.5">
-                <span className="flex size-9 items-center justify-center rounded-full bg-blue-700 text-sm font-medium text-white">
+                <span className="flex size-9 items-center justify-center rounded-full bg-brand-900 text-sm font-medium text-white ring-2 ring-red-brand-100">
                   {initials}
                 </span>
                 <div className="hidden max-w-44 leading-tight sm:block">

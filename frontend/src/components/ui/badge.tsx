@@ -9,15 +9,13 @@ function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-[--color-ring] focus:ring-offset-2 focus:outline-none',
+        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none',
         {
-          default: 'border-transparent bg-[--color-primary] text-[--color-primary-foreground]',
-          secondary:
-            'border-transparent bg-[--color-secondary] text-[--color-secondary-foreground]',
-          destructive:
-            'border-transparent bg-[--color-destructive] text-[--color-destructive-foreground]',
-          outline: 'text-[--color-foreground]',
-          success: 'border-transparent bg-green-100 text-green-800',
+          default: 'border-transparent bg-primary text-primary-foreground',
+          secondary: 'border-brand-100 bg-brand-50 text-brand-900',
+          destructive: 'border-red-brand-100 bg-red-brand-50 text-red-brand-700',
+          outline: 'border-brand-200 bg-white text-brand-900',
+          success: 'border-green-200 bg-green-50 text-green-800',
         }[variant],
         className,
       )}

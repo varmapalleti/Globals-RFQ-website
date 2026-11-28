@@ -85,9 +85,9 @@ export function ReviewerReassignmentPanel({
   }
 
   return (
-    <Card className="border-slate-200 p-4 shadow-none">
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <UserRound className="size-4 text-blue-700" /> Reviewer reassignment
+    <Card className="p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-brand-900">
+        <UserRound className="size-4 text-brand-900" /> Reviewer reassignment
       </div>
       {demo ? (
         <p className="mt-2 text-xs leading-5 text-slate-500">
@@ -103,10 +103,10 @@ export function ReviewerReassignmentPanel({
           ) : requests.length ? (
             <ul className="mt-3 space-y-2">
               {requests.map((request) => (
-                <li key={request.id} className="rounded-lg border border-slate-200 p-3">
+                <li key={request.id} className="rounded-lg border border-brand-100 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold">Request #{request.id}</span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold">
+                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold text-brand-900">
                       {request.status.replaceAll('_', ' ')}
                     </span>
                   </div>
@@ -121,9 +121,9 @@ export function ReviewerReassignmentPanel({
             <p className="mt-2 text-xs text-slate-500">No reviewer reassignment requests.</p>
           )}
           {canRequest && (
-            <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+            <div className="mt-3 space-y-2 border-t border-brand-100 pt-3">
               <label
-                className="block text-xs font-medium text-slate-700"
+                className="block text-xs font-semibold text-slate-800"
                 htmlFor="reviewer-reassignment-reason"
               >
                 Request Admin reassignment
@@ -134,7 +134,7 @@ export function ReviewerReassignmentPanel({
                 onChange={(event) => setRequestReason(event.target.value)}
                 maxLength={1000}
                 rows={3}
-                className="w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+                className="w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                 placeholder="Explain why a different reviewer is needed"
               />
               <Button
@@ -151,11 +151,13 @@ export function ReviewerReassignmentPanel({
             pending.map((request) => (
               <div
                 key={`resolve-${request.id}`}
-                className="mt-3 space-y-2 border-t border-slate-100 pt-3"
+                className="mt-3 space-y-2 border-t border-brand-100 pt-3"
               >
-                <p className="text-xs font-semibold">Admin decision for request #{request.id}</p>
+                <p className="text-xs font-semibold text-brand-900">
+                  Admin decision for request #{request.id}
+                </p>
                 <label
-                  className="block text-xs font-medium text-slate-700"
+                  className="block text-xs font-semibold text-slate-800"
                   htmlFor={`replacement-reviewer-${request.id}`}
                 >
                   Replacement reviewer Identity user ID (required to approve)
@@ -168,7 +170,7 @@ export function ReviewerReassignmentPanel({
                   onChange={(event) => setReplacementReviewerId(event.target.value)}
                 />
                 <label
-                  className="block text-xs font-medium text-slate-700"
+                  className="block text-xs font-semibold text-slate-800"
                   htmlFor={`reassignment-decision-reason-${request.id}`}
                 >
                   Decision reason
@@ -179,7 +181,7 @@ export function ReviewerReassignmentPanel({
                   onChange={(event) => setResolutionReason(event.target.value)}
                   maxLength={1000}
                   rows={2}
-                  className="w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+                  className="w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -262,10 +264,10 @@ export function ReviewActionPanel({
   }
 
   return (
-    <Card className="border-amber-200 bg-white p-4 shadow-none">
+    <Card className="border-amber-200 bg-white p-4">
       <div className="flex items-center gap-2">
         <ClipboardCheck className="size-4 text-amber-700" />
-        <h2 className="text-sm font-semibold">Reviewer decision</h2>
+        <h2 className="text-sm font-semibold text-brand-900">Reviewer decision</h2>
       </div>
       <p className="mt-1 text-xs text-slate-500">
         Reviewing version{' '}
@@ -276,14 +278,14 @@ export function ReviewActionPanel({
           <strong>Approval blocked by required fields:</strong> {missing.join(', ')}
         </div>
       )}
-      <label className="mt-3 block text-xs font-medium text-slate-700">
+      <label className="mt-3 block text-xs font-semibold text-slate-800">
         Review comments / rejection reason
         <textarea
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           rows={3}
           maxLength={2000}
-          className="mt-1.5 w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+          className="mt-1.5 w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           placeholder="Required when rejecting"
         />
       </label>
@@ -357,10 +359,10 @@ export function AdminActionPanel({
   }
 
   return (
-    <Card className="border-blue-200 bg-white p-4 shadow-none">
+    <Card className="border-brand-200 bg-white p-4">
       <div className="flex items-center gap-2">
-        <ShieldCheck className="size-4 text-blue-700" />
-        <h2 className="text-sm font-semibold">Administrator action</h2>
+        <ShieldCheck className="size-4 text-brand-900" />
+        <h2 className="text-sm font-semibold text-brand-900">Administrator action</h2>
       </div>
       {canMarkSent && (
         <div className="mt-3 space-y-3">
@@ -370,7 +372,7 @@ export function AdminActionPanel({
           </p>
           <label
             htmlFor="external-submission-reference"
-            className="block text-xs font-medium text-slate-700"
+            className="block text-xs font-semibold text-slate-800"
           >
             Source software reference *
             <Input
@@ -407,7 +409,7 @@ export function AdminActionPanel({
           </p>
           <label
             htmlFor="external-customer-reference"
-            className="block text-xs font-medium text-slate-700"
+            className="block text-xs font-semibold text-slate-800"
           >
             Customer response reference (optional)
             <Input
@@ -420,7 +422,7 @@ export function AdminActionPanel({
           </label>
           <label
             htmlFor="customer-response-notes"
-            className="block text-xs font-medium text-slate-700"
+            className="block text-xs font-semibold text-slate-800"
           >
             Notes
             <textarea
@@ -429,7 +431,7 @@ export function AdminActionPanel({
               onChange={(event) => setReason(event.target.value)}
               maxLength={2000}
               rows={2}
-              className="mt-1.5 w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+              className="mt-1.5 w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             />
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -486,7 +488,7 @@ export function AdminActionPanel({
           </div>
           <label
             htmlFor="admin-workflow-reason"
-            className="block text-xs font-medium text-slate-700"
+            className="block text-xs font-semibold text-slate-800"
           >
             Decision reason *
             <textarea
@@ -495,7 +497,7 @@ export function AdminActionPanel({
               onChange={(event) => setReason(event.target.value)}
               maxLength={1000}
               rows={3}
-              className="mt-1.5 w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+              className="mt-1.5 w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             />
           </label>
           <div className="grid grid-cols-2 gap-2">

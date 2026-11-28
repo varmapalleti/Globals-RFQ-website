@@ -75,15 +75,15 @@ export function MarketingWorkflowPanel({
   }
 
   return (
-    <Card className="border-slate-200 p-4 shadow-none">
+    <Card className="p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Marketing handoff</h2>
+          <h2 className="text-sm font-semibold text-brand-900">Marketing handoff</h2>
           <p className="mt-1 text-xs text-slate-500">
             Post-approval marketing routing and campaign completion.
           </p>
         </div>
-        <Megaphone className="size-4 text-blue-600" />
+        <Megaphone className="size-4 text-brand-900" />
       </div>
 
       {marketingDone ? (
@@ -97,7 +97,7 @@ export function MarketingWorkflowPanel({
             onChange={(event) => setNotes(event.target.value)}
             rows={2}
             placeholder="Optional handoff note for marketing…"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+            className="w-full rounded-lg border border-input bg-white px-3 py-2 text-xs focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           />
           <Button
             type="button"
@@ -112,12 +112,12 @@ export function MarketingWorkflowPanel({
         </div>
       ) : canComplete ? (
         <form onSubmit={handleCompleteMarketing} className="mt-3 space-y-2.5">
-          <label className="block text-xs font-medium text-slate-700">
+          <label className="block text-xs font-semibold text-slate-800">
             Outcome
             <select
               value={outcome}
               onChange={(event) => setOutcome(event.target.value)}
-              className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs"
+              className="mt-1 h-9 w-full rounded-lg border border-input bg-white px-2.5 text-xs focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             >
               <option value="CAMPAIGN_LAUNCHED">Campaign launched</option>
               <option value="CUSTOMER_ONBOARDED">Customer onboarded</option>
@@ -129,7 +129,7 @@ export function MarketingWorkflowPanel({
             onChange={(event) => setNotes(event.target.value)}
             rows={2}
             placeholder="Summary of marketing follow-up…"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+            className="w-full rounded-lg border border-input bg-white px-3 py-2 text-xs focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           />
           <Button type="submit" size="sm" className="w-full" disabled={busy}>
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
@@ -137,7 +137,7 @@ export function MarketingWorkflowPanel({
           </Button>
         </form>
       ) : awaitMarketingAssignment ? (
-        <div className="mt-3 rounded-md bg-blue-50 px-3 py-2 text-xs text-blue-800">
+        <div className="mt-3 rounded-md bg-brand-50 px-3 py-2 text-xs text-brand-900">
           Ready for marketing — assign a Marketing Executive in Assignments above to enable
           handoff completion.
         </div>

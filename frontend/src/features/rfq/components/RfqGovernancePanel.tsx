@@ -106,8 +106,8 @@ export function RfqGovernanceQuickPanel({
   }
 
   return (
-    <Card className="border-slate-200 p-4 shadow-none">
-      <h2 className="text-sm font-semibold text-slate-900">Escalation &amp; Procurement</h2>
+    <Card className="p-4">
+      <h2 className="text-sm font-semibold text-brand-900">Escalation &amp; Procurement</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button
           type="button"
@@ -115,7 +115,7 @@ export function RfqGovernanceQuickPanel({
           variant="outline"
           onClick={() => setShowFlagForm((prev) => !prev)}
         >
-          <Flag className="size-3.5 text-red-600" />
+          <Flag className="size-3.5 text-red-brand-600" />
           Raise Red Flag
         </Button>
         {canCreatePo && (
@@ -125,20 +125,20 @@ export function RfqGovernanceQuickPanel({
             variant="outline"
             onClick={() => setShowPoForm((prev) => !prev)}
           >
-            <ShoppingCart className="size-3.5 text-blue-600" />
+            <ShoppingCart className="size-3.5 text-brand-900" />
             Create Purchase Order
           </Button>
         )}
       </div>
 
       {showFlagForm && (
-        <form onSubmit={handleRaiseFlag} className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
+        <form onSubmit={handleRaiseFlag} className="mt-3 space-y-2.5 border-t border-brand-100 pt-3">
           <select
             value={severity}
             onChange={(event) =>
               setSeverity(event.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')
             }
-            className="h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs"
+            className="h-9 w-full rounded-lg border border-input bg-white px-2.5 text-xs focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           >
             <option value="LOW">Low severity</option>
             <option value="MEDIUM">Medium severity</option>
@@ -151,7 +151,7 @@ export function RfqGovernanceQuickPanel({
             value={flagReason}
             onChange={(event) => setFlagReason(event.target.value)}
             placeholder="Describe the blocker, pricing risk, or compliance issue…"
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+            className="w-full rounded-lg border border-input bg-white px-3 py-2 text-xs focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           />
           <div className="flex justify-end gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={() => setShowFlagForm(false)}>
@@ -165,7 +165,7 @@ export function RfqGovernanceQuickPanel({
       )}
 
       {showPoForm && (
-        <form onSubmit={handleCreatePo} className="mt-3 space-y-2.5 border-t border-slate-100 pt-3">
+        <form onSubmit={handleCreatePo} className="mt-3 space-y-2.5 border-t border-brand-100 pt-3">
           <Input
             required
             placeholder="Supplier name"
@@ -185,7 +185,7 @@ export function RfqGovernanceQuickPanel({
             placeholder="PO notes (optional)"
             value={poNotes}
             onChange={(event) => setPoNotes(event.target.value)}
-            className="w-full rounded-md border border-slate-200 px-3 py-2 text-xs"
+            className="w-full rounded-lg border border-input bg-white px-3 py-2 text-xs focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           />
           <div className="flex justify-end gap-2">
             <Button type="button" size="sm" variant="ghost" onClick={() => setShowPoForm(false)}>
@@ -198,11 +198,11 @@ export function RfqGovernanceQuickPanel({
         </form>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-3 border-t border-slate-100 pt-2.5 text-xs">
-        <Link to="/red-flags" className="font-medium text-blue-700 hover:underline">
+      <div className="mt-3 flex flex-wrap gap-3 border-t border-brand-100 pt-2.5 text-xs">
+        <Link to="/red-flags" className="font-semibold text-brand-900 hover:text-red-brand-600 hover:underline">
           View all Red Flags →
         </Link>
-        <Link to="/purchases" className="font-medium text-blue-700 hover:underline">
+        <Link to="/purchases" className="font-semibold text-brand-900 hover:text-red-brand-600 hover:underline">
           View Purchases →
         </Link>
       </div>

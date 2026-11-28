@@ -103,8 +103,8 @@ export function AssignmentPanel({
 
   if (!isAdmin && !canAssignReviewer)
     return (
-      <Card className="border-slate-200 p-4 shadow-none">
-        <h2 className="text-sm font-semibold">Current ownership</h2>
+      <Card className="p-4">
+        <h2 className="text-sm font-semibold text-brand-900">Current ownership</h2>
         <div className="mt-3 space-y-3">
           {(['QUOTATION_MANAGER', 'REVIEWER', 'MARKETING_EXECUTIVE'] as const).map((key) => {
             const assignment = rfq.assignments.find((item) => item.role === key)
@@ -140,17 +140,17 @@ export function AssignmentPanel({
         ? demoUsers.filter((candidate) => candidate.roles.includes('REVIEWER'))
         : demoUsers.filter((candidate) => candidate.roles.includes('MARKETING_EXECUTIVE'))
   return (
-    <Card className="border-slate-200 p-4 shadow-none">
+    <Card className="p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold">Assignments</h2>
+          <h2 className="text-sm font-semibold text-brand-900">Assignments</h2>
           <p className="mt-1 text-xs text-slate-500">
             {isAdmin
               ? 'Controlled routing and reassignment.'
               : 'Assign the reviewer only when delegated.'}
           </p>
         </div>
-        <UserRound className="size-4 text-slate-400" />
+        <UserRound className="size-4 text-brand-900" />
       </div>
       <div className="mt-3 space-y-2">
         {(['QUOTATION_MANAGER', 'REVIEWER', 'MARKETING_EXECUTIVE'] as const).map((key) => {
@@ -158,7 +158,7 @@ export function AssignmentPanel({
           return (
             <div
               key={key}
-              className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2 text-xs"
+              className="flex items-center justify-between gap-3 rounded-md bg-brand-50/60 px-3 py-2 text-xs"
             >
               <span className="text-slate-500">{key.replaceAll('_', ' ')}</span>
               <span className="font-semibold text-slate-800">
@@ -168,8 +168,8 @@ export function AssignmentPanel({
           )
         })}
       </div>
-      <form onSubmit={assignUser} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
-        <label className="block text-xs font-medium text-slate-700">
+      <form onSubmit={assignUser} className="mt-4 space-y-3 border-t border-brand-100 pt-4">
+        <label className="block text-xs font-semibold text-slate-800">
           Role
           <select
             value={selectedRole}
@@ -177,7 +177,7 @@ export function AssignmentPanel({
               setAssignmentRole(event.target.value as RfqAssignmentRole)
               setAssignedUserId('')
             }}
-            className="mt-1.5 h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm"
+            className="mt-1.5 h-9 w-full rounded-lg border border-input bg-white px-2.5 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           >
             {availableRoles.map((value) => (
               <option key={value} value={value}>
@@ -187,13 +187,13 @@ export function AssignmentPanel({
           </select>
         </label>
         {demo ? (
-          <label className="block text-xs font-medium text-slate-700">
+          <label className="block text-xs font-semibold text-slate-800">
             Assign to
             <select
               required
               value={assignedUserId}
               onChange={(event) => setAssignedUserId(event.target.value)}
-              className="mt-1.5 h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm"
+              className="mt-1.5 h-9 w-full rounded-lg border border-input bg-white px-2.5 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             >
               <option value="">Choose a user</option>
               {availableUsers.map((candidate) => (
@@ -216,19 +216,19 @@ export function AssignmentPanel({
                 <button
                   type="button"
                   onClick={() => void eligibleUsersQuery.refetch()}
-                  className="mt-1 font-semibold text-blue-800 underline underline-offset-2"
+                  className="mt-1 font-semibold text-brand-900 underline underline-offset-2"
                 >
                   Retry loading users
                 </button>
               </div>
             )}
             {eligibleUsersQuery.data?.length === 0 && (
-              <p className="rounded-md bg-slate-50 p-2.5 text-xs text-slate-600" role="status">
+              <p className="rounded-md bg-brand-50/60 p-2.5 text-xs text-slate-600" role="status">
                 No active users currently have the {selectedRole.replaceAll('_', ' ')} role.
               </p>
             )}
             <div className="flex items-center justify-between">
-              <label htmlFor="identity-user-id" className="text-xs font-medium text-slate-700">
+              <label htmlFor="identity-user-id" className="text-xs font-semibold text-slate-800">
                 User ID
               </label>
               {eligibleUsersQuery.data && eligibleUsersQuery.data.length > 0 && (
@@ -238,7 +238,7 @@ export function AssignmentPanel({
                     setManualUserIdEntry(false)
                     setAssignedUserId('')
                   }}
-                  className="text-[11px] font-medium text-blue-700 hover:underline"
+                  className="text-[11px] font-semibold text-red-brand-600 hover:underline"
                 >
                   Choose from directory
                 </button>
@@ -258,7 +258,7 @@ export function AssignmentPanel({
         ) : (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label htmlFor="eligible-assignee-select" className="text-xs font-medium text-slate-700">
+              <label htmlFor="eligible-assignee-select" className="text-xs font-semibold text-slate-800">
                 Assign to
               </label>
               <button
@@ -267,7 +267,7 @@ export function AssignmentPanel({
                   setManualUserIdEntry(true)
                   setAssignedUserId('')
                 }}
-                className="text-[11px] font-medium text-blue-700 hover:underline"
+                className="text-[11px] font-semibold text-red-brand-600 hover:underline"
               >
                 Enter ID manually
               </button>
@@ -278,7 +278,7 @@ export function AssignmentPanel({
               disabled={eligibleUsersQuery.isLoading}
               value={assignedUserId}
               onChange={(event) => setAssignedUserId(event.target.value)}
-              className="h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 text-sm"
+              className="h-9 w-full rounded-lg border border-input bg-white px-2.5 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             >
               <option value="">
                 {eligibleUsersQuery.isLoading
@@ -294,7 +294,7 @@ export function AssignmentPanel({
           </div>
         )}
         {current && (
-          <label className="block text-xs font-medium text-slate-700">
+          <label className="block text-xs font-semibold text-slate-800">
             Reassignment reason *
             <textarea
               value={reason}
@@ -302,7 +302,7 @@ export function AssignmentPanel({
               maxLength={1000}
               rows={2}
               required
-              className="mt-1.5 w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+              className="mt-1.5 w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
               placeholder="Explain why ownership is changing"
             />
           </label>
@@ -313,15 +313,15 @@ export function AssignmentPanel({
         </Button>
       </form>
       {isAdmin && (
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <label className="block text-xs font-medium text-slate-700">
+        <div className="mt-4 border-t border-brand-100 pt-4">
+          <label className="block text-xs font-semibold text-slate-800">
             Manager reviewer delegation reason
             <textarea
               value={delegationReason}
               onChange={(event) => setDelegationReason(event.target.value)}
               maxLength={1000}
               rows={2}
-              className="mt-1.5 w-full rounded-md border border-slate-200 px-2.5 py-2 text-sm"
+              className="mt-1.5 w-full rounded-lg border border-input bg-white px-2.5 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             />
           </label>
           <Button

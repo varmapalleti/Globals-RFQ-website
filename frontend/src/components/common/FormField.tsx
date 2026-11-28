@@ -38,24 +38,24 @@ export function FormField({
     [descriptionId, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
 
   return (
-    <div className={cn('space-y-1.5', className)}>
+    <div className={cn('space-y-2', className)}>
       <label
         htmlFor={id}
         className={cn(
-          'block text-sm leading-none font-medium',
-          error ? 'text-[--color-destructive]' : 'text-[--color-foreground]',
+          'block text-sm leading-none font-semibold',
+          error ? 'text-destructive' : 'text-slate-900',
         )}
       >
         {label}
         {required && (
-          <span className="ml-0.5 text-[--color-destructive]" aria-hidden="true">
+          <span className="ml-0.5 text-red-brand-600" aria-hidden="true">
             *
           </span>
         )}
       </label>
 
       {description && (
-        <p id={descriptionId} className="text-xs text-[--color-muted-foreground]">
+        <p id={descriptionId} className="text-xs text-muted-foreground">
           {description}
         </p>
       )}
@@ -73,7 +73,7 @@ export function FormField({
         <p
           id={errorId}
           role="alert"
-          className="flex items-center gap-1 text-xs text-[--color-destructive]"
+          className="flex items-center gap-1 text-xs font-medium text-destructive"
         >
           <AlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" />
           {error}

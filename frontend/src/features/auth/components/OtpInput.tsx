@@ -85,13 +85,13 @@ export function OtpInput({
           onPaste={handlePaste}
           onFocus={(e) => e.target.select()}
           className={cn(
-            'h-12 w-10 rounded-md border text-center text-lg font-semibold shadow-sm transition-colors',
-            'focus-visible:ring-2 focus-visible:ring-[--color-ring] focus-visible:outline-none',
+            'h-12 w-11 rounded-lg border text-center text-lg font-semibold text-brand-900 transition-colors',
+            'focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none',
             'disabled:cursor-not-allowed disabled:opacity-50',
             hasError
-              ? 'border-[--color-destructive] focus-visible:ring-[--color-destructive]'
-              : 'border-[--color-input]',
-            digits[i] ? 'border-[--color-primary] bg-blue-50' : 'bg-[--color-background]',
+              ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20'
+              : 'border-input',
+            digits[i] ? 'border-brand-900 bg-brand-50' : 'bg-white',
           )}
         />
       ))}

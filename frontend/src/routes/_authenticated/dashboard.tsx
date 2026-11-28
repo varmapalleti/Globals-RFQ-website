@@ -289,13 +289,13 @@ function DashboardPage() {
       )}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+          <p className="text-xs font-semibold tracking-[0.15em] text-red-brand-600 uppercase">
             {roleTitles[role]}
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-[28px]">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-900 sm:text-[28px]">
             Good day, {user?.fullName?.split(' ')[0] ?? 'there'}
           </h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{subtitle}</p>
+          <p className="mt-1.5 max-w-2xl text-sm text-slate-600">{subtitle}</p>
         </div>
         <div className="flex gap-2">
           {isAdmin && (
@@ -318,19 +318,19 @@ function DashboardPage() {
         {metrics.map((metric) => {
           const Icon = metric.icon
           const colorMap: Record<string, string> = {
-            blue: 'bg-blue-50 text-blue-700',
+            blue: 'bg-brand-50 text-brand-900',
             amber: 'bg-amber-50 text-amber-700',
             violet: 'bg-violet-50 text-violet-700',
-            red: 'bg-red-50 text-red-700',
+            red: 'bg-red-brand-50 text-red-brand-600',
             green: 'bg-green-50 text-green-700',
             teal: 'bg-teal-50 text-teal-700',
           }
           return (
-            <Card key={metric.label} className="border-slate-200 p-4 shadow-none sm:p-5">
+            <Card key={metric.label} className="p-4 sm:p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500">{metric.label}</p>
-                  <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                  <p className="text-sm font-medium text-slate-600">{metric.label}</p>
+                  <p className="mt-2 text-3xl font-bold tracking-tight text-brand-900">
                     {!isDemo && statsQuery.isLoading
                       ? '…'
                       : !isDemo && statsQuery.error
@@ -366,12 +366,12 @@ function DashboardPage() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+          className="overflow-hidden rounded-xl border border-brand-100 bg-white shadow-[var(--shadow-card)]"
           aria-labelledby="work-queue-title"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
             <div>
-              <h2 id="work-queue-title" className="text-base font-semibold">
+              <h2 id="work-queue-title" className="text-base font-semibold text-brand-900">
                 {isDemo
                   ? isAdmin
                     ? 'Priority work queue'
@@ -404,7 +404,7 @@ function DashboardPage() {
             </Button>
           </div>
           {error ? (
-            <div className="p-6 text-sm text-red-700" role="alert">
+            <div className="p-6 text-sm text-red-brand-700" role="alert">
               <p>{unexpectedErrorMessage(normalizeError(error))}</p>
               <Button className="mt-3" variant="outline" size="sm" onClick={() => void refetch()}>
                 Retry
@@ -424,17 +424,17 @@ function DashboardPage() {
         </section>
 
         <section
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+          className="rounded-xl border border-brand-100 bg-white p-5 shadow-[var(--shadow-card)]"
           aria-labelledby="activity-title"
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 id="activity-title" className="text-base font-semibold">
+              <h2 id="activity-title" className="text-base font-semibold text-brand-900">
                 Recent activity
               </h2>
               <p className="mt-1 text-xs text-slate-500">Latest recorded workflow events</p>
             </div>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold tracking-wide text-slate-600 uppercase">
+            <span className="rounded-full bg-brand-50 px-2 py-1 text-[10px] font-bold tracking-wide text-brand-900 uppercase">
               Activity
             </span>
           </div>
@@ -443,7 +443,7 @@ function DashboardPage() {
               recentActivity.map(({ rfq, event }) => (
                 <div key={`${rfq.id}-${event.id}`} className="flex gap-3">
                   <span
-                    className={`mt-1.5 size-2 shrink-0 rounded-full ${event.tone === 'red' ? 'bg-red-500' : event.tone === 'green' ? 'bg-emerald-500' : event.tone === 'amber' ? 'bg-amber-500' : 'bg-blue-500'}`}
+                    className={`mt-1.5 size-2 shrink-0 rounded-full ${event.tone === 'red' ? 'bg-red-brand-600' : event.tone === 'green' ? 'bg-emerald-500' : event.tone === 'amber' ? 'bg-amber-500' : 'bg-brand-600'}`}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
@@ -468,14 +468,14 @@ function DashboardPage() {
                 </div>
               ))
             ) : (
-              <p className="rounded-lg bg-slate-50 px-4 py-6 text-sm text-slate-500">
+              <p className="rounded-lg bg-brand-50/60 px-4 py-6 text-sm text-slate-500">
                 {isDemo
                   ? 'No activity is available in this demo view yet.'
                   : 'Activity history is available within each RFQ record.'}
               </p>
             )}
           </div>
-          <div className="mt-5 border-t border-slate-100 pt-4">
+          <div className="mt-5 border-t border-brand-100 pt-4">
             <p className="text-xs leading-5 text-slate-500">
               {isDemo
                 ? 'Events shown here are sample records for this presentation.'

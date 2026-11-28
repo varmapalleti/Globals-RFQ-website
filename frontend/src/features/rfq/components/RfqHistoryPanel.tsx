@@ -16,12 +16,12 @@ export function HistoryPanel({ events }: { events: WorkflowEvent[] }) {
               <li key={event.id} className="relative flex gap-4 pb-6 last:pb-0">
                 <div className="flex flex-col items-center">
                   <span
-                    className={`z-10 flex size-8 shrink-0 items-center justify-center rounded-full ${event.tone === 'green' ? 'bg-emerald-100 text-emerald-700' : event.tone === 'red' ? 'bg-red-100 text-red-700' : event.tone === 'amber' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}
+                    className={`z-10 flex size-8 shrink-0 items-center justify-center rounded-full ${event.tone === 'green' ? 'bg-emerald-100 text-emerald-700' : event.tone === 'red' ? 'bg-red-brand-100 text-red-brand-700' : event.tone === 'amber' ? 'bg-amber-100 text-amber-700' : 'bg-brand-100 text-brand-900'}`}
                   >
                     <Circle className="size-2.5 fill-current" />
                   </span>
                   {index < events.length - 1 && (
-                    <span className="absolute top-8 bottom-0 w-px bg-slate-200" />
+                    <span className="absolute top-8 bottom-0 w-px bg-brand-100" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">

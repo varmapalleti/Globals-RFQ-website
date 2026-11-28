@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Mail } from 'lucide-react'
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/authSchemas'
 import { useLogin } from '@/features/auth/hooks/useAuthMutations'
 import { normalizeError } from '@/lib/errors'
@@ -60,6 +60,7 @@ export function LoginForm() {
           type="email"
           autoComplete="username"
           placeholder="you@company.com"
+          icon={<Mail />}
           hasError={!!errors.officialEmail}
           disabled={isPending}
         />
@@ -80,7 +81,7 @@ export function LoginForm() {
         <button
           type="button"
           onClick={() => void navigate({ to: '/forgot-password' })}
-          className="rounded text-sm text-[--color-primary] hover:underline focus-visible:ring-2 focus-visible:ring-[--color-ring] focus-visible:outline-none"
+          className="rounded text-sm font-semibold text-red-brand-600 hover:text-red-brand-700 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           Forgot password?
         </button>

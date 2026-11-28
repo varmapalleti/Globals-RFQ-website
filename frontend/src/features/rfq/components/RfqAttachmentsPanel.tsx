@@ -166,10 +166,10 @@ export function FilesPanel({
         />
       </div>
       {canUpload && (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/60 p-4">
+        <div className="rounded-xl border border-dashed border-brand-200 bg-brand-50/40 p-4">
           <div className="grid gap-3 sm:grid-cols-[1fr_180px_auto]">
-            <label className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3">
-              <UploadCloud className="size-5 shrink-0 text-blue-700" />
+            <label className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg border border-input bg-white px-3 py-3 hover:border-brand-200">
+              <UploadCloud className="size-5 shrink-0 text-brand-900" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium">
                   {selected?.name ?? 'Choose supporting file'}
@@ -188,7 +188,7 @@ export function FilesPanel({
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              className="h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm"
+              className="h-11 rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             >
               <option value="OTHER">Other document</option>
               <option value="CUSTOMER_REQUEST">Customer request</option>
@@ -210,7 +210,7 @@ export function FilesPanel({
             </Button>
           </div>
           {fileError && (
-            <p className="mt-2 text-xs text-red-700" role="alert">
+            <p className="mt-2 text-xs text-red-brand-700" role="alert">
               {fileError}
             </p>
           )}
@@ -242,10 +242,10 @@ export function FilesPanel({
           ].map((row) => (
             <div
               key={row.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-white p-3"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-900">
                   <FileText className="size-4" />
                 </span>
                 <div className="min-w-0">
@@ -261,7 +261,7 @@ export function FilesPanel({
               </div>
               <div className="flex items-center gap-2">
                 <span
-                  className={`rounded px-2 py-1 text-[10px] font-semibold ${row.scanState === 'CLEAN' ? 'bg-emerald-50 text-emerald-800' : row.scanState === 'INFECTED' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'}`}
+                  className={`rounded px-2 py-1 text-[10px] font-semibold ${row.scanState === 'CLEAN' ? 'bg-emerald-50 text-emerald-800' : row.scanState === 'INFECTED' ? 'bg-red-brand-50 text-red-brand-700' : 'bg-amber-50 text-amber-800'}`}
                 >
                   {row.scanState === 'CLEAN' ? 'Clean' : row.scanState.replaceAll('_', ' ')}
                 </span>
@@ -305,7 +305,7 @@ export function FilesPanel({
         </p>
       )}
       {preview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-950/70 p-3 sm:p-6">
           <button
             type="button"
             aria-label="Close attachment preview"
@@ -318,13 +318,13 @@ export function FilesPanel({
             aria-label={`Attachment preview: ${preview.name}`}
             className="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
           >
-            <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-              <h2 className="min-w-0 truncate text-sm font-semibold text-slate-900">{preview.name}</h2>
+            <header className="flex items-center justify-between gap-3 border-b border-brand-100 px-4 py-3">
+              <h2 className="min-w-0 truncate text-sm font-semibold text-brand-900">{preview.name}</h2>
               <Button type="button" size="icon" variant="ghost" aria-label="Close preview" onClick={() => setPreview(null)}>
                 <X className="size-4" />
               </Button>
             </header>
-            <div className="min-h-0 flex-1 overflow-auto bg-slate-100 p-3">
+            <div className="min-h-0 flex-1 overflow-auto bg-brand-50 p-3">
               {preview.mediaType.startsWith('image/') ? (
                 <img className="mx-auto max-h-[78vh] max-w-full object-contain" src={preview.url} alt={preview.name} />
               ) : (

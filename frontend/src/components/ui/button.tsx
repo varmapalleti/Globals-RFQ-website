@@ -4,25 +4,23 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--color-ring] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default:
-          'bg-[--color-primary] text-[--color-primary-foreground] hover:bg-blue-700 shadow-sm',
+        default: 'bg-primary text-primary-foreground hover:bg-brand-800 shadow-sm',
         destructive:
-          'bg-[--color-destructive] text-[--color-destructive-foreground] hover:bg-red-600 shadow-sm',
+          'bg-destructive text-destructive-foreground hover:bg-red-brand-700 shadow-sm',
         outline:
-          'border border-[--color-input] bg-[--color-background] hover:bg-[--color-accent] hover:text-[--color-accent-foreground]',
-        secondary:
-          'bg-[--color-secondary] text-[--color-secondary-foreground] hover:bg-slate-200 shadow-sm',
-        ghost: 'hover:bg-[--color-accent] hover:text-[--color-accent-foreground]',
-        link: 'text-[--color-primary] underline-offset-4 hover:underline',
+          'border border-input bg-white text-brand-900 hover:border-brand-200 hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-brand-100 shadow-sm',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8 text-base',
+        sm: 'h-9 rounded-lg px-3',
+        lg: 'h-11 rounded-lg px-8 text-base',
         icon: 'h-10 w-10',
       },
     },

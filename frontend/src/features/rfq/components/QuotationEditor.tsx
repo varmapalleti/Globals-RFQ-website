@@ -132,8 +132,8 @@ export function QuotationPanel({
         )}
       </div>
       {canEdit && canCreateDraft && showEditor && (
-        <section className="rounded-xl border border-blue-200 bg-blue-50/30 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">Current editable draft</h3>
+        <section className="rounded-xl border border-brand-200 bg-brand-50/40 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-brand-900">Current editable draft</h3>
           <QuotationEditor key={rfq.id} rfq={rfq} demo={demo} invalidate={invalidate} />
         </section>
       )}
@@ -147,10 +147,10 @@ export function QuotationPanel({
                 0,
               )
               return (
-                <div key={version.id} className="rounded-xl border border-slate-200 p-4">
+                <div key={version.id} className="rounded-xl border border-brand-100 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold">Quotation V{version.versionNumber}</p>
+                      <p className="font-semibold text-brand-900">Quotation V{version.versionNumber}</p>
                       <p className="mt-1 text-xs text-slate-500">
                         Submitted{' '}
                         {new Intl.DateTimeFormat('en-IN', {
@@ -160,7 +160,7 @@ export function QuotationPanel({
                         · {version.status.replaceAll('_', ' ').toLowerCase()}
                       </p>
                     </div>
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold">
+                    <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-900">
                       {snapshot.currency}
                     </span>
                   </div>
@@ -168,7 +168,7 @@ export function QuotationPanel({
                     {snapshot.items.map((line, index) => (
                       <div
                         key={`${line.sourceLineId}-${index}`}
-                        className="grid gap-1 border-t border-slate-100 pt-3 text-sm sm:grid-cols-[1fr_auto]"
+                        className="grid gap-1 border-t border-brand-100 pt-3 text-sm sm:grid-cols-[1fr_auto]"
                       >
                         <div>
                           <p className="font-medium">{line.description}</p>
@@ -188,7 +188,7 @@ export function QuotationPanel({
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                  <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-brand-100 pt-3 text-xs text-slate-500">
                     <span>
                       Items total: {lineTotal.toFixed(2)} {snapshot.currency}
                     </span>
@@ -204,7 +204,7 @@ export function QuotationPanel({
                     </p>
                   )}
                   {version.reviewDecision && (
-                    <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-600">
+                    <p className="mt-3 border-t border-brand-100 pt-3 text-xs text-slate-600">
                       {version.reviewDecision === 'APPROVED' ? 'Approved' : 'Rejected'} by{' '}
                       {version.reviewerName}
                       {version.reviewReason ? ` · ${version.reviewReason}` : ''}
@@ -232,11 +232,11 @@ export function QuotationPanel({
               <details
                 key={version.id}
                 open={index === 0}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                className="overflow-hidden rounded-xl border border-brand-100 bg-white"
               >
-                <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-4 hover:bg-slate-50">
+                <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 p-4 hover:bg-brand-50/60">
                   <div>
-                    <p className="font-semibold">Quotation V{version.versionNumber}</p>
+                    <p className="font-semibold text-brand-900">Quotation V{version.versionNumber}</p>
                     <p className="mt-1 text-xs text-slate-500">
                       Submitted{' '}
                       {new Intl.DateTimeFormat('en-IN', {
@@ -247,13 +247,13 @@ export function QuotationPanel({
                     </p>
                   </div>
                   <span
-                    className={`rounded-md px-2 py-1 text-xs font-semibold ${version.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-800' : version.status === 'REJECTED' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'}`}
+                    className={`rounded-md px-2 py-1 text-xs font-semibold ${version.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-800' : version.status === 'REJECTED' ? 'bg-red-brand-50 text-red-brand-700' : 'bg-amber-50 text-amber-800'}`}
                   >
                     {version.status.replaceAll('_', ' ')}
                   </span>
                 </summary>
-                <div className="space-y-4 border-t border-slate-100 p-4">
-                  <div className="grid gap-2 rounded-lg bg-slate-50 p-3 text-xs sm:grid-cols-2">
+                <div className="space-y-4 border-t border-brand-100 p-4">
+                  <div className="grid gap-2 rounded-lg bg-brand-50/60 p-3 text-xs sm:grid-cols-2">
                     <p><span className="text-slate-500">Quotation version ID:</span> <strong>{version.id}</strong></p>
                     <p><span className="text-slate-500">Submitted by user ID:</span> <strong>{version.submittedByUserId}</strong></p>
                     {version.review && (
@@ -278,9 +278,9 @@ export function QuotationPanel({
                       ['Tax', snapshot.taxAmount],
                       ['Grand total', snapshot.grandTotal],
                     ].map(([label, amount]) => (
-                      <div key={String(label)} className="rounded-lg border border-slate-100 p-3">
+                      <div key={String(label)} className="rounded-lg border border-brand-100 p-3">
                         <p className="text-[11px] text-slate-500">{label}</p>
-                        <p className="mt-1 text-sm font-semibold tabular-nums">{formatMoney(Number(amount))}</p>
+                        <p className="mt-1 text-sm font-semibold text-brand-900 tabular-nums">{formatMoney(Number(amount))}</p>
                       </div>
                     ))}
                   </div>
@@ -290,17 +290,17 @@ export function QuotationPanel({
                     {snapshot.notes && <p className="whitespace-pre-wrap sm:col-span-2"><span className="font-medium text-slate-700">Quotation notes:</span> {snapshot.notes}</p>}
                   </div>
                   <div>
-                    <h4 className="mb-2 text-sm font-semibold">Quoted line items</h4>
-                    <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <h4 className="mb-2 text-sm font-semibold text-brand-900">Quoted line items</h4>
+                    <div className="overflow-x-auto rounded-lg border border-brand-100">
                       <table className="min-w-[1050px] w-full text-left text-xs">
-                        <thead className="bg-slate-50 text-slate-600">
+                        <thead className="bg-brand-50/70 text-brand-900">
                           <tr>
                             {['Item / source ID', 'Requested item', 'Offered item', 'Qty / UOM', 'Unit price', 'Line total', 'TAA', 'Delivery / warranty', 'Notes / link'].map((heading) => (
                               <th key={heading} className="px-3 py-2.5 font-semibold">{heading}</th>
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-brand-100">
                           {snapshot.items.map((line, lineIndex) => {
                             const requested = rfq.lineItems.find((item) => item.sourceLineId === line.sourceLineId)
                             return (
@@ -325,7 +325,7 @@ export function QuotationPanel({
                                 <td className="max-w-48 whitespace-pre-wrap px-3 py-3">{line.deliveryTimeline || snapshot.deliveryTimeline || '—'}<br />{line.warranty || snapshot.warranty || '—'}</td>
                                 <td className="max-w-56 whitespace-pre-wrap px-3 py-3">
                                   {line.note || '—'}
-                                  {line.productUrl && <a href={line.productUrl} target="_blank" rel="noreferrer" className="mt-1 block font-medium text-blue-700 underline">View product</a>}
+                                  {line.productUrl && <a href={line.productUrl} target="_blank" rel="noreferrer" className="mt-1 block font-medium text-brand-900 underline hover:text-red-brand-600">View product</a>}
                                 </td>
                               </tr>
                             )
@@ -335,7 +335,7 @@ export function QuotationPanel({
                     </div>
                   </div>
                   {version.review ? (
-                    <div className={`rounded-lg p-3 text-sm ${version.review.decision === 'REJECTED' ? 'border border-red-200 bg-red-50 text-red-950' : 'border border-emerald-200 bg-emerald-50 text-emerald-950'}`}>
+                    <div className={`rounded-lg p-3 text-sm ${version.review.decision === 'REJECTED' ? 'border border-red-brand-100 bg-red-brand-50 text-red-950' : 'border border-emerald-200 bg-emerald-50 text-emerald-950'}`}>
                       <p className="font-semibold">Reviewer {version.review.decision.toLowerCase()}</p>
                       <p className="mt-1 text-xs">Reviewer user ID {version.review.reviewerUserId} · {new Date(version.review.decidedAt).toLocaleString()}</p>
                       {version.review.reason && <p className="mt-2 whitespace-pre-wrap text-sm">{version.review.reason}</p>}
@@ -352,13 +352,13 @@ export function QuotationPanel({
         <EmptyMessage>No submitted quotation versions were found.</EmptyMessage>
       )}
       {!canEdit && canReview && (
-        <p className="rounded-lg bg-blue-50 p-3 text-xs leading-5 text-blue-900">
+        <p className="rounded-lg bg-brand-50 p-3 text-xs leading-5 text-brand-900">
           Submitted quotation snapshots are read-only. Use the review controls on this page to
           record your decision.
         </p>
       )}
       {isAdmin && (
-        <p className="rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+        <p className="rounded-lg bg-brand-50/60 p-3 text-xs leading-5 text-slate-600">
           Administrators can inspect quotation history but do not alter manager drafts or submitted
           snapshots.
         </p>
@@ -462,7 +462,7 @@ export function QuotationEditor({
           title="Quotation draft"
           description="Enter a response against each requested line. Save as often as needed; submission creates a locked version."
         />
-        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 p-3 text-xs leading-5 text-blue-900">
+        <div className="mt-3 rounded-lg border border-brand-100 bg-brand-50/70 p-3 text-xs leading-5 text-brand-900">
           <strong>Completeness:</strong> missing business fields may be submitted, but reviewer
           approval will be blocked by the mandatory-field rules saved with that version.
         </div>
@@ -480,17 +480,17 @@ export function QuotationEditor({
       </div>
       <div className="space-y-3">
         {fields.map((field, index) => (
-          <div key={field.id} className="rounded-lg border border-slate-200 p-4">
+          <div key={field.id} className="rounded-lg border border-brand-100 bg-white p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <span className="text-[11px] font-semibold tracking-wide text-blue-700 uppercase">
+                <span className="text-[11px] font-semibold tracking-wide text-red-brand-600 uppercase">
                   Offer for request line {index + 1}
                 </span>
                 <p className="mt-1 text-sm leading-5 font-medium text-slate-800">
                   {rfq.lineItems[index]?.description ?? field.description}
                 </p>
               </div>
-              <span className="rounded-md bg-slate-100 px-2 py-1 text-xs whitespace-nowrap text-slate-600">
+              <span className="rounded-md bg-brand-50 px-2 py-1 text-xs whitespace-nowrap text-brand-900">
                 Requested {rfq.lineItems[index]?.requestedQuantity ?? field.quantity}{' '}
                 {rfq.lineItems[index]?.unitOfMeasure}
               </span>
@@ -538,7 +538,7 @@ export function QuotationEditor({
                 <input
                   type="checkbox"
                   {...register(`items.${index}.taaCompliant`)}
-                  className="size-4 accent-blue-700"
+                  className="size-4 accent-primary"
                 />{' '}
                 Offered product is TAA compliant
               </label>
@@ -548,7 +548,7 @@ export function QuotationEditor({
                     {...register(`items.${index}.note`)}
                     rows={2}
                     maxLength={4000}
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                   />
                 </Field>
               </div>
@@ -595,17 +595,17 @@ export function QuotationEditor({
           {...register('notes')}
           rows={3}
           maxLength={10000}
-          className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
         />
       </Field>
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-brand-50/60 p-4">
         <div className="text-xs text-slate-500">
           Subtotal{' '}
           <strong className="mx-1 text-slate-700">
             {form.currency} {subtotal.toFixed(2)}
           </strong>
           <span className="mx-2 text-slate-300">·</span>Estimated total{' '}
-          <strong className="mx-1 text-slate-900">
+          <strong className="mx-1 text-brand-900">
             {form.currency} {Math.max(0, total).toFixed(2)}
           </strong>
           <p className="mt-1">Backend recalculates authoritative totals on save and submission.</p>
@@ -643,11 +643,11 @@ export function Field({
   children: React.ReactNode
 }) {
   return (
-    <label className="block space-y-1.5 text-xs font-medium text-slate-700">
+    <label className="block space-y-1.5 text-xs font-semibold text-slate-800">
       {label}
       {children}
       {error && (
-        <span className="block font-normal text-red-700" role="alert">
+        <span className="block font-normal text-red-brand-700" role="alert">
           {error}
         </span>
       )}

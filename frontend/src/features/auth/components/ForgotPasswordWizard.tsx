@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, ArrowLeft, RefreshCw } from 'lucide-react'
+import { Loader2, ArrowLeft, Mail, RefreshCw } from 'lucide-react'
 import {
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -62,17 +62,20 @@ function RequestStep({ onSuccess }: { onSuccess: (state: StepState) => void }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-[--color-foreground]">
+        <legend className="mb-2 text-sm font-semibold text-slate-900">
           Which email should we send the code to?
         </legend>
         <div className="flex gap-4">
           {(['OFFICIAL', 'PERSONAL'] as const).map((type) => (
-            <label key={type} className="flex cursor-pointer items-center gap-2 text-sm">
+            <label
+              key={type}
+              className="flex cursor-pointer items-center gap-2 text-sm text-slate-700"
+            >
               <input
                 {...register('emailType')}
                 type="radio"
                 value={type}
-                className="h-4 w-4 accent-[--color-primary]"
+                className="h-4 w-4 accent-primary"
                 disabled={isPending}
               />
               {type === 'OFFICIAL' ? 'Official email' : 'Personal email'}
@@ -80,7 +83,7 @@ function RequestStep({ onSuccess }: { onSuccess: (state: StepState) => void }) {
           ))}
         </div>
         {errors.emailType && (
-          <p role="alert" className="mt-1 text-xs text-[--color-destructive]">
+          <p role="alert" className="mt-1 text-xs text-destructive">
             {errors.emailType.message}
           </p>
         )}
@@ -98,6 +101,7 @@ function RequestStep({ onSuccess }: { onSuccess: (state: StepState) => void }) {
           type="email"
           autoComplete="email"
           placeholder={emailType === 'OFFICIAL' ? 'you@company.com' : 'you@gmail.com'}
+          icon={<Mail />}
           hasError={!!errors.email}
           disabled={isPending}
         />
@@ -197,14 +201,14 @@ function OtpStep({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
-      <p className="text-sm text-[--color-muted-foreground]">
+      <p className="text-sm text-muted-foreground">
         We sent a 6-digit code to{' '}
-        <span className="font-medium text-[--color-foreground]">{stepState.email}</span>. The code
-        expires in 10 minutes.
+        <span className="font-semibold text-brand-900">{stepState.email}</span>. The code expires
+        in 10 minutes.
       </p>
 
-      <div className="space-y-1.5">
-        <label htmlFor="otp-0" className="text-sm font-medium">
+      <div className="space-y-2">
+        <label htmlFor="otp-0" className="text-sm font-semibold text-slate-900">
           Verification code
         </label>
         <OtpInput
@@ -215,11 +219,11 @@ function OtpStep({
           disabled={isPending}
         />
         {otpError && (
-          <p role="alert" className="text-xs text-[--color-destructive]">
+          <p role="alert" className="text-xs font-medium text-destructive">
             {otpError}
           </p>
         )}
-        <p className="text-xs text-[--color-muted-foreground]">
+        <p className="text-xs text-muted-foreground">
           Didn't receive it? Check your spam folder first.
         </p>
       </div>
@@ -238,7 +242,7 @@ function OtpStep({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1 rounded text-sm text-[--color-muted-foreground] hover:text-[--color-foreground] focus-visible:ring-2 focus-visible:ring-[--color-ring] focus-visible:outline-none"
+          className="flex items-center gap-1 rounded text-sm text-muted-foreground hover:text-brand-900 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Change email
@@ -248,7 +252,7 @@ function OtpStep({
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || isResending}
-          className="flex items-center gap-1 rounded text-sm text-[--color-primary] hover:underline focus-visible:ring-2 focus-visible:ring-[--color-ring] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-1 rounded text-sm font-semibold text-red-brand-600 hover:text-red-brand-700 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw
             className={`h-3.5 w-3.5 ${isResending ? 'animate-spin' : ''}`}
@@ -377,8 +381,8 @@ function SuccessStep({ onGoToLogin }: { onGoToLogin: () => void }) {
         </svg>
       </div>
       <div>
-        <h3 className="text-base font-semibold text-[--color-foreground]">Password changed!</h3>
-        <p className="mt-1 text-sm text-[--color-muted-foreground]">
+        <h3 className="text-base font-semibold text-brand-900">Password changed!</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           Your password has been updated successfully. You can now sign in with your new password.
         </p>
       </div>
@@ -413,10 +417,10 @@ export function ForgotPasswordWizard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-[--color-foreground]">{STEP_TITLES[step]}</h2>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold tracking-tight text-brand-900">{STEP_TITLES[step]}</h2>
         {STEP_DESCRIPTIONS[step] && (
-          <p className="mt-1 text-sm text-[--color-muted-foreground]">{STEP_DESCRIPTIONS[step]}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{STEP_DESCRIPTIONS[step]}</p>
         )}
       </div>
 
@@ -453,7 +457,7 @@ export function ForgotPasswordWizard() {
           <button
             type="button"
             onClick={() => void navigate({ to: ROUTES.LOGIN })}
-            className="rounded text-sm text-[--color-muted-foreground] hover:text-[--color-foreground] hover:underline focus-visible:ring-2 focus-visible:ring-[--color-ring] focus-visible:outline-none"
+            className="rounded text-sm font-semibold text-brand-900 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             Back to Sign In
           </button>
