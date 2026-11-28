@@ -138,9 +138,9 @@ function RfqSettingsPage() {
   if (!allowed)
     return (
       <AppShell>
-        <div className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-8 text-center">
-          <Settings2 className="mx-auto size-8 text-red-600" />
-          <h1 className="mt-3 text-xl font-bold">Administrator access required</h1>
+        <div className="mx-auto max-w-xl rounded-xl border border-red-brand-100 bg-white p-8 text-center shadow-[var(--shadow-card)]">
+          <Settings2 className="mx-auto size-8 text-red-brand-600" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">Administrator access required</h1>
           <p className="mt-2 text-sm text-slate-500">
             Only Admin and Super Admin accounts can configure RFQ workflow rules.
           </p>
@@ -155,11 +155,11 @@ function RfqSettingsPage() {
   return (
     <AppShell>
       <div className="mb-6">
-        <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+        <p className="text-xs font-semibold tracking-[0.15em] text-red-brand-600 uppercase">
           Workflow governance
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">RFQ rules</h1>
-        <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-900">RFQ rules</h1>
+        <p className="mt-1.5 max-w-3xl text-sm text-slate-600">
           Configure reviewer approval requirements and the formal rejection escalation threshold.
           Submitted quotation versions keep the validation rules captured at submission.
         </p>
@@ -176,15 +176,15 @@ function RfqSettingsPage() {
         </div>
       )}
       {!demo && query.error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+        <div className="mb-4 rounded-lg border border-red-brand-100 bg-red-brand-50 p-4 text-sm text-red-950">
           {unexpectedErrorMessage(normalizeError(query.error))}
         </div>
       )}
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
-          <Card className="overflow-hidden border-slate-200 shadow-none">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="font-semibold">Mandatory quotation fields</h2>
+          <Card className="overflow-hidden">
+            <div className="border-b border-brand-100 px-5 py-4">
+              <h2 className="font-semibold text-brand-900">Mandatory quotation fields</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 Managers may submit incomplete quotes. Reviewers cannot approve a version that fails
                 the rules captured at submission.
@@ -200,7 +200,7 @@ function RfqSettingsPage() {
                 return (
                   <div
                     key={key}
-                    className="flex items-start gap-2 rounded-lg border border-slate-200 p-3 text-sm hover:bg-slate-50"
+                    className="flex items-start gap-2 rounded-lg border border-brand-100 p-3 text-sm hover:bg-brand-50/60"
                   >
                     <input
                       id={inputId}
@@ -213,7 +213,7 @@ function RfqSettingsPage() {
                             : current.filter((field) => field !== key),
                         )
                       }
-                      className="mt-0.5 size-4 accent-blue-700"
+                      className="mt-0.5 size-4 accent-primary"
                     />
                     <label htmlFor={inputId} className="cursor-pointer">
                       <span className="block font-medium">{label}</span>
@@ -223,14 +223,14 @@ function RfqSettingsPage() {
                 )
               })}
             </fieldset>
-            <div className="space-y-3 border-t border-slate-100 p-5">
+            <div className="space-y-3 border-t border-brand-100 p-5">
               <Field label="Reason for changing these rules">
                 <textarea
                   value={fieldReason}
                   onChange={(event) => setFieldReason(event.target.value)}
                   rows={2}
                   maxLength={1000}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                   placeholder="Explain the business reason (required)"
                 />
               </Field>
@@ -249,9 +249,9 @@ function RfqSettingsPage() {
             </div>
           </Card>
 
-          <Card className="overflow-hidden border-slate-200 shadow-none">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="font-semibold">Reviewer rejection limit</h2>
+          <Card className="overflow-hidden">
+            <div className="border-b border-brand-100 px-5 py-4">
+              <h2 className="font-semibold text-brand-900">Reviewer rejection limit</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 Reaching this count escalates the RFQ to an administrator. Values are constrained by
                 the service to 1–20.
@@ -274,12 +274,12 @@ function RfqSettingsPage() {
                   onChange={(event) => setLimitReason(event.target.value)}
                   rows={3}
                   maxLength={1000}
-                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                   placeholder="Explain the business reason (required)"
                 />
               </Field>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-brand-100 p-5">
               <span className="text-xs text-slate-500">Current saved limit: {savedLimit}</span>
               <Button
                 onClick={() => void saveLimit()}
@@ -292,11 +292,11 @@ function RfqSettingsPage() {
           </Card>
         </div>
 
-        <Card className="overflow-hidden border-slate-200 shadow-none">
-          <div className="border-b border-slate-100 px-5 py-4">
+        <Card className="overflow-hidden">
+          <div className="border-b border-brand-100 px-5 py-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 text-amber-700" />
-              <h2 className="font-semibold">Configuration audit</h2>
+              <h2 className="font-semibold text-brand-900">Configuration audit</h2>
             </div>
             <p className="mt-1 text-xs text-slate-500">
               Changes record actor, reason, prior value, and new value.
@@ -304,7 +304,7 @@ function RfqSettingsPage() {
           </div>
           {demo ? (
             demoAudit.length ? (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-brand-100/70">
                 {demoAudit.map((event, index) => (
                   <li key={`${event.at}-${index}`} className="p-4">
                     <p className="text-xs font-semibold">{event.action.replaceAll('_', ' ')}</p>
@@ -321,7 +321,7 @@ function RfqSettingsPage() {
               </p>
             )
           ) : audit.length ? (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-brand-100/70">
               {audit.map((event) => (
                 <li key={event.id} className="p-4">
                   <p className="text-xs font-semibold">{event.actionType.replaceAll('_', ' ')}</p>
@@ -347,7 +347,7 @@ function RfqSettingsPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5 text-xs font-medium text-slate-700">
+    <label className="block space-y-1.5 text-xs font-semibold text-slate-800">
       <span>{label}</span>
       {children}
     </label>

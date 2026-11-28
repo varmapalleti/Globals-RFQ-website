@@ -197,9 +197,9 @@ export function ImportRfqPage() {
   if (!hasAnyRole(['ADMIN', 'SUPER_ADMIN']))
     return (
       <AppShell>
-        <div className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-8 text-center">
-          <ShieldCheck className="mx-auto size-8 text-red-600" />
-          <h1 className="mt-3 text-xl font-bold">Admin access required</h1>
+        <div className="mx-auto max-w-xl rounded-xl border border-red-brand-100 bg-white p-8 text-center shadow-[var(--shadow-card)]">
+          <ShieldCheck className="mx-auto size-8 text-red-brand-600" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">Admin access required</h1>
           <p className="mt-2 text-sm text-slate-500">
             Only an authorized administrator can import a customer RFQ.
           </p>
@@ -603,11 +603,11 @@ export function ImportRfqPage() {
       </div>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+          <p className="text-xs font-semibold tracking-[0.15em] text-red-brand-600 uppercase">
             Customer request intake
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Import RFQs</h1>
-          <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-900">Import RFQs</h1>
+          <p className="mt-1.5 max-w-3xl text-sm text-slate-600">
             Upload an Excel (.xlsx/.xls), CSV, or PDF request file to detect fields and validate
             missing columns before creating the RFQ.
           </p>
@@ -618,30 +618,30 @@ export function ImportRfqPage() {
           </Link>
         </Button>
       </div>
-      <nav aria-label="Import progress" className="mb-6 rounded-xl border border-slate-200 bg-white px-5 py-3.5">
+      <nav aria-label="Import progress" className="mb-6 rounded-xl border border-brand-100 bg-white px-5 py-3.5 shadow-[var(--shadow-card)]">
         <ol className="flex flex-wrap items-center gap-3 text-xs font-medium sm:gap-5">
-          <li className="flex items-center gap-2 text-slate-900">
+          <li className="flex items-center gap-2 text-brand-900">
             <span
               className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
-                !previewed ? 'bg-blue-700 text-white' : 'bg-emerald-600 text-white'
+                !previewed ? 'bg-brand-900 text-white' : 'bg-emerald-600 text-white'
               }`}
             >
               1
             </span>
             Upload File
           </li>
-          <span className="hidden h-px flex-1 bg-slate-200 sm:block" />
-          <li className={`flex items-center gap-2 ${previewed ? 'text-slate-900' : 'text-slate-400'}`}>
+          <span className="hidden h-px flex-1 bg-brand-100 sm:block" />
+          <li className={`flex items-center gap-2 ${previewed ? 'text-brand-900' : 'text-slate-400'}`}>
             <span
               className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
-                previewed ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-600'
+                previewed ? 'bg-brand-900 text-white' : 'bg-slate-200 text-slate-600'
               }`}
             >
               2
             </span>
             Preview &amp; Validate Fields
           </li>
-          <span className="hidden h-px flex-1 bg-slate-200 sm:block" />
+          <span className="hidden h-px flex-1 bg-brand-100 sm:block" />
           <li className="flex items-center gap-2 text-slate-400">
             <span className="flex size-6 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-600">
               3
@@ -665,10 +665,10 @@ export function ImportRfqPage() {
             setPreview(null)
             setPreviewed(false)
           }}
-          className={`rounded-xl border p-4 text-left transition ${!manualIntake ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 bg-white hover:border-blue-300'}`}
+          className={`rounded-xl border p-4 text-left transition ${!manualIntake ? 'border-brand-900 bg-brand-50 ring-2 ring-brand-900/10' : 'border-brand-100 bg-white hover:border-brand-300'}`}
         >
-          <span className="flex items-center gap-2 font-semibold text-slate-900">
-            <FileSpreadsheet className="size-5 text-blue-700" /> Import Excel or PDF
+          <span className="flex items-center gap-2 font-semibold text-brand-900">
+            <FileSpreadsheet className="size-5 text-brand-900" /> Import Excel or PDF
           </span>
           <span className="mt-1 block text-sm text-slate-600">
             Upload, preview extracted fields, correct them, and confirm.
@@ -684,10 +684,10 @@ export function ImportRfqPage() {
             setPreviewed(true)
             setFileError('')
           }}
-          className={`rounded-xl border p-4 text-left transition ${manualIntake ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 bg-white hover:border-blue-300'}`}
+          className={`rounded-xl border p-4 text-left transition ${manualIntake ? 'border-brand-900 bg-brand-50 ring-2 ring-brand-900/10' : 'border-brand-100 bg-white hover:border-brand-300'}`}
         >
-          <span className="flex items-center gap-2 font-semibold text-slate-900">
-            <FileText className="size-5 text-blue-700" /> Enter details manually
+          <span className="flex items-center gap-2 font-semibold text-brand-900">
+            <FileText className="size-5 text-brand-900" /> Enter details manually
           </span>
           <span className="mt-1 block text-sm text-slate-600">
             Create the RFQ from form fields. Attaching a file is optional.
@@ -696,9 +696,9 @@ export function ImportRfqPage() {
       </div>
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <form onSubmit={handleImportFormSubmit} noValidate className="space-y-5">
-          <Card className="overflow-hidden border-slate-200 shadow-none">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h2 className="font-semibold">1. Source document {manualIntake ? '(optional)' : ''}</h2>
+          <Card className="overflow-hidden">
+            <div className="border-b border-brand-100 px-5 py-4">
+              <h2 className="font-semibold text-brand-900">1. Source document {manualIntake ? '(optional)' : ''}</h2>
               <p className="mt-1 text-xs text-slate-500">
                 Excel and text-readable PDFs can be parsed. In manual mode, you can create the RFQ
                 without a file or attach a source document for reference.
@@ -717,7 +717,7 @@ export function ImportRfqPage() {
                   setDraggingFile(false)
                   handleFile(event.dataTransfer.files[0])
                 }}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 py-8 text-center transition ${fileError ? 'border-red-300 bg-red-50/40' : draggingFile ? 'border-blue-600 bg-blue-50' : file ? 'border-emerald-300 bg-emerald-50/40' : 'border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/30'}`}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-5 py-8 text-center transition ${fileError ? 'border-red-brand-500/50 bg-red-brand-50/40' : draggingFile ? 'border-brand-900 bg-brand-50' : file ? 'border-emerald-300 bg-emerald-50/40' : 'border-brand-200 bg-brand-50/40 hover:border-brand-900 hover:bg-brand-50'}`}
               >
                 {file ? (
                   <>
@@ -735,7 +735,7 @@ export function ImportRfqPage() {
                   </>
                 ) : (
                   <>
-                    <span className="flex size-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                    <span className="flex size-12 items-center justify-center rounded-xl bg-brand-100 text-brand-900">
                       <UploadCloud className="size-6" />
                     </span>
                     <span className="mt-3 text-sm font-semibold">
@@ -759,7 +759,7 @@ export function ImportRfqPage() {
                 />
               </label>
               {fileError && (
-                <p id="file-error" className="mt-2 text-sm text-red-700" role="alert">
+                <p id="file-error" className="mt-2 text-sm text-red-brand-700" role="alert">
                   {fileError}
                 </p>
               )}
@@ -790,9 +790,9 @@ export function ImportRfqPage() {
                 preview={preview}
                 manualIntake={manualIntake}
               />
-              <Card className="overflow-hidden border-slate-200 shadow-none">
-                <div className="border-b border-slate-100 px-5 py-4">
-                  <h2 className="font-semibold">2. Verify request details</h2>
+              <Card className="overflow-hidden">
+                <div className="border-b border-brand-100 px-5 py-4">
+                  <h2 className="font-semibold text-brand-900">2. Verify request details</h2>
                   <p className="mt-1 text-xs text-slate-500">
                     Correct any values that were read incorrectly. Long product and V2X names are
                     kept intact.
@@ -866,7 +866,7 @@ export function ImportRfqPage() {
                       <textarea
                         {...register('shipToText')}
                         rows={3}
-                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                       />
                     </Field>
                   </div>
@@ -876,16 +876,16 @@ export function ImportRfqPage() {
                         {...register('termsAndConditions')}
                         rows={4}
                         maxLength={100000}
-                        className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                       />
                     </Field>
                   </div>
                 </div>
               </Card>
-              <Card className="overflow-hidden border-slate-200 shadow-none">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+              <Card className="overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-100 px-5 py-4">
                   <div>
-                    <h2 className="font-semibold">3. Request line items</h2>
+                    <h2 className="font-semibold text-brand-900">3. Request line items</h2>
                     <p className="mt-1 text-xs text-slate-500">
                       Verify each requested product. Original workbook rows remain attached to this
                       RFQ.
@@ -914,9 +914,9 @@ export function ImportRfqPage() {
                 </div>
                 <div className="space-y-4 p-5">
                   {lineFields.map((field, index) => (
-                    <div key={field.id} className="rounded-xl border border-slate-200 p-4">
+                    <div key={field.id} className="rounded-xl border border-brand-100 p-4">
                       <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-slate-800">Item {index + 1}</h3>
+                        <h3 className="text-sm font-semibold text-brand-900">Item {index + 1}</h3>
                         <Button
                           type="button"
                           variant="ghost"
@@ -939,7 +939,7 @@ export function ImportRfqPage() {
                               rows={4}
                               maxLength={20000}
                               aria-invalid={!!errors.lineItems?.[index]?.description}
-                              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                             />
                           </Field>
                         </div>
@@ -979,7 +979,7 @@ export function ImportRfqPage() {
                           <input
                             type="checkbox"
                             {...register(`lineItems.${index}.taaRequired`)}
-                            className="size-4 rounded border-slate-300 accent-blue-700"
+                            className="size-4 rounded border-slate-300 accent-primary"
                           />{' '}
                           TAA compliance required
                         </label>
@@ -989,7 +989,7 @@ export function ImportRfqPage() {
                               {...register(`lineItems.${index}.technicalSpecifications`)}
                               rows={3}
                               maxLength={20000}
-                              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                             />
                           </Field>
                         </div>
@@ -999,7 +999,7 @@ export function ImportRfqPage() {
                 </div>
               </Card>
               {preview && !demo && (
-                <Card className="border-amber-200 bg-amber-50/50 p-5 shadow-none">
+                <Card className="border-amber-200 bg-amber-50/50 p-5">
                   <h2 className="flex items-center gap-2 text-sm font-semibold text-amber-900">
                     <AlertTriangle className="size-4" /> Server preview notes
                   </h2>
@@ -1065,12 +1065,12 @@ export function ImportRfqPage() {
         </form>
 
         <aside className="space-y-4">
-          <Card className="border-blue-100 bg-blue-50/70 p-5 shadow-none">
+          <Card className="border-brand-100 bg-brand-50/70 p-5">
             <div className="flex items-start gap-3">
-              <Info className="mt-0.5 size-5 shrink-0 text-blue-700" />
+              <Info className="mt-0.5 size-5 shrink-0 text-brand-900" />
               <div>
-                <h2 className="text-sm font-semibold text-blue-950">Import safely</h2>
-                <ul className="mt-3 space-y-2 text-xs leading-5 text-blue-900">
+                <h2 className="text-sm font-semibold text-brand-900">Import safely</h2>
+                <ul className="mt-3 space-y-2 text-xs leading-5 text-brand-900/90">
                   <li>• Original document is preserved as a customer request attachment.</li>
                   <li>• Duplicate source RFQs are checked by the server.</li>
                   <li>• Preview warnings must be reviewed before confirming.</li>
@@ -1082,20 +1082,20 @@ export function ImportRfqPage() {
               </div>
             </div>
           </Card>
-          <Card className="border-slate-200 p-5 shadow-none">
-            <h2 className="text-sm font-semibold">Common supported fields</h2>
+          <Card className="p-5">
+            <h2 className="text-sm font-semibold text-brand-900">Common supported fields</h2>
             <p className="mt-2 text-xs leading-5 text-slate-500">
               Customer, buyer contact, source reference, due and delivery dates, ship-to address,
               line items, long descriptions, part numbers, category, TAA requirement, and source
               document.
             </p>
-            <div className="mt-4 flex items-start gap-2 border-t border-slate-100 pt-4 text-xs leading-5 text-slate-500">
+            <div className="mt-4 flex items-start gap-2 border-t border-brand-100 pt-4 text-xs leading-5 text-slate-500">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" />
               Admin actions are authenticated and audited in connected mode.
             </div>
           </Card>
-          <Card className="border-slate-200 p-5 shadow-none">
-            <h2 className="text-sm font-semibold">Other supporting files?</h2>
+          <Card className="p-5">
+            <h2 className="text-sm font-semibold text-brand-900">Other supporting files?</h2>
             <p className="mt-2 text-xs leading-5 text-slate-500">
               Word documents, product photos, drawings, scanned PDFs, and other supported files can
               be used as manually reviewed source attachments or added after import. The server
@@ -1118,11 +1118,11 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <label className="block space-y-1.5 text-sm font-medium text-slate-700">
+    <label className="block space-y-1.5 text-sm font-semibold text-slate-800">
       {label}
       {children}
       {error && (
-        <span className="block text-xs font-normal text-red-700" role="alert">
+        <span className="block text-xs font-normal text-red-brand-700" role="alert">
           {error}
         </span>
       )}
@@ -1198,10 +1198,10 @@ function ExcelFieldDetectionCard({
   const mappings = preview?.fieldMappings ? Object.entries(preview.fieldMappings) : []
 
   return (
-    <Card className="overflow-hidden border-slate-200 shadow-none">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/70 px-5 py-3.5">
+    <Card className="overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-100 bg-brand-50/70 px-5 py-3.5">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-brand-900">
             Excel / Source Field Detection &amp; Validation
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -1242,9 +1242,9 @@ function ExcelFieldDetectionCard({
                 {check.present ? (
                   <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600" />
                 ) : (
-                  <XCircle className="size-3.5 shrink-0 text-red-600" />
+                  <XCircle className="size-3.5 shrink-0 text-red-brand-600" />
                 )}
-                <span className={check.present ? 'text-slate-700' : 'font-medium text-red-700'}>
+                <span className={check.present ? 'text-slate-700' : 'font-medium text-red-brand-700'}>
                   {check.label} — {check.present ? 'Detected' : 'Missing'}
                 </span>
               </li>
@@ -1274,7 +1274,7 @@ function ExcelFieldDetectionCard({
         </div>
       </div>
 
-      <div className="border-t border-slate-100 bg-slate-50/40 px-5 py-3">
+      <div className="border-t border-brand-100 bg-brand-50/40 px-5 py-3">
         <p className="text-xs font-semibold text-slate-600">
           Line-item column detection ({values.lineItems.length} item
           {values.lineItems.length === 1 ? '' : 's'})
@@ -1296,7 +1296,7 @@ function ExcelFieldDetectionCard({
           ))}
         </div>
         {mappings.length > 0 && (
-          <div className="mt-3 border-t border-slate-200/70 pt-2.5">
+          <div className="mt-3 border-t border-brand-100 pt-2.5">
             <p className="text-[11px] font-semibold text-slate-500">
               Mapped Excel columns ({mappings.length})
             </p>
@@ -1304,7 +1304,7 @@ function ExcelFieldDetectionCard({
               {mappings.map(([target, source]) => (
                 <span
                   key={target}
-                  className="rounded bg-blue-50 px-2 py-0.5 text-[11px] text-blue-800"
+                  className="rounded bg-brand-50 px-2 py-0.5 text-[11px] text-brand-900"
                 >
                   {source} → {target}
                 </span>

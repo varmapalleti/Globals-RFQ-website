@@ -81,9 +81,13 @@ function AcceptInvitePage() {
   return (
     <AuthLayout>
       <div className="mb-6 text-center">
-        <MailCheck className="mx-auto size-10 text-blue-700" />
-        <h1 className="mt-3 text-2xl font-bold tracking-tight">Accept your invitation</h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-50">
+          <MailCheck className="size-6 text-brand-900" />
+        </span>
+        <h1 className="mt-3 text-2xl font-bold tracking-tight text-brand-900">
+          Accept your invitation
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Create a password to activate your Global RFQ account.
         </p>
       </div>

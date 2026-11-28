@@ -71,11 +71,15 @@ function ChangePasswordPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-xl">
-        <Card className="border-slate-200 p-6 shadow-none sm:p-8">
+        <Card className="p-6 shadow-[var(--shadow-auth)] sm:p-8">
           <div className="mb-6 text-center">
-            <KeyRound className="mx-auto size-9 text-blue-700" />
-            <h1 className="mt-3 text-2xl font-bold tracking-tight">Set a new password</h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-50">
+              <KeyRound className="size-6 text-brand-900" />
+            </span>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-brand-900">
+              Set a new password
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
               Your account must use a new password before you can continue.
             </p>
           </div>

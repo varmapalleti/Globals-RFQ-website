@@ -41,13 +41,13 @@ function DetailTabs({
     { id: 'activity', label: 'Workflow history', icon: History },
   ]
   return (
-    <div className="flex gap-1 overflow-x-auto border-b border-slate-200">
+    <div className="flex gap-1 overflow-x-auto border-b border-brand-100">
       {tabs.map(({ id, label, icon: Icon }) => (
         <button
           key={id}
           type="button"
           onClick={() => onChange(id)}
-          className={`inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium ${selected === id ? 'border-blue-700 text-blue-800' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+          className={`inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold ${selected === id ? 'border-red-brand-600 text-brand-900' : 'border-transparent text-slate-500 hover:text-brand-900'}`}
           aria-current={selected === id ? 'page' : undefined}
         >
           <Icon className="size-4" aria-hidden="true" />
@@ -145,15 +145,15 @@ function RfqDetailPage() {
     return (
       <AppShell>
         <div
-          className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-8 text-center"
+          className="mx-auto max-w-xl rounded-xl border border-red-brand-100 bg-white p-8 text-center shadow-[var(--shadow-card)]"
           role="alert"
         >
-          <AlertTriangle className="mx-auto size-8 text-red-600" />
-          <h1 className="mt-3 text-xl font-bold">Could not load this RFQ</h1>
+          <AlertTriangle className="mx-auto size-8 text-red-brand-600" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">Could not load this RFQ</h1>
           <p className="mt-2 text-sm text-slate-500">
             Check your access and confirm RFQ Service is available.
           </p>
-          <p className="mt-2 text-xs text-red-700">
+          <p className="mt-2 text-xs text-red-brand-700">
             {unexpectedErrorMessage(normalizeError(error))}
           </p>
           <Button className="mt-5" variant="outline" onClick={() => void refetch()}>
@@ -166,9 +166,9 @@ function RfqDetailPage() {
   if (!rfq)
     return (
       <AppShell>
-        <div className="mx-auto max-w-xl rounded-xl border border-slate-200 bg-white p-8 text-center">
-          <FileText className="mx-auto size-8 text-slate-400" />
-          <h1 className="mt-3 text-xl font-bold">RFQ not found</h1>
+        <div className="mx-auto max-w-xl rounded-xl border border-brand-100 bg-white p-8 text-center shadow-[var(--shadow-card)]">
+          <FileText className="mx-auto size-8 text-brand-900/40" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">RFQ not found</h1>
           <p className="mt-2 text-sm text-slate-500">
             The request does not exist or is outside your authorized scope.
           </p>
@@ -239,7 +239,7 @@ function RfqDetailPage() {
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+            <h1 className="text-2xl font-bold tracking-tight text-brand-900">
               {formatRfqNumber(rfq)}
             </h1>
             <StatusPill status={rfq.status} />
@@ -251,7 +251,7 @@ function RfqDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
+          <span className="rounded-lg border border-brand-100 bg-white px-3 py-2 text-xs font-medium text-brand-900">
             Version {rfq.version}
           </span>
           <Button
@@ -291,7 +291,7 @@ function RfqDetailPage() {
       <ProgressStrip status={rfq.status} />
 
       <div className="mt-5 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-xl border border-brand-100 bg-white shadow-[var(--shadow-card)]">
           <DetailTabs selected={tab} onChange={setTab} />
           <div className="p-4 sm:p-6">
             {tab === 'overview' && <OverviewPanel rfq={rfq} />}
@@ -327,9 +327,9 @@ function RfqDetailPage() {
           {isAdmin &&
             ['REJECTED_BY_REVIEWER', 'ESCALATED'].includes(rfq.status) &&
             versionRows[0]?.review?.decision === 'REJECTED' && (
-              <Card className="border-red-200 bg-red-50/60 p-4 shadow-none">
+              <Card className="border-red-brand-100 bg-red-brand-50/60 p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-red-950">
-                  <AlertTriangle className="size-4 text-red-700" /> Reviewer rejection needs attention
+                  <AlertTriangle className="size-4 text-red-brand-700" /> Reviewer rejection needs attention
                 </div>
                 <p className="mt-2 text-xs text-red-900">
                   Quotation V{versionRows[0].versionNumber} (version ID {versionRows[0].id}) was rejected
@@ -402,8 +402,8 @@ function RfqDetailPage() {
             userId={user?.id ?? 1}
             invalidate={invalidate}
           />
-          <Card className="border-slate-200 p-4 shadow-none">
-            <div className="flex items-center gap-2 text-sm font-semibold">
+          <Card className="p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-brand-900">
               <ShieldCheck className="size-4 text-emerald-600" />
               Access & traceability
             </div>

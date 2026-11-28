@@ -141,9 +141,9 @@ export function CreateRfqPage() {
   if (!hasAnyRole(['ADMIN', 'SUPER_ADMIN'])) {
     return (
       <AppShell>
-        <div className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-8 text-center">
-          <ShieldCheck className="mx-auto size-8 text-red-600" />
-          <h1 className="mt-3 text-xl font-bold">Admin access required</h1>
+        <div className="mx-auto max-w-xl rounded-xl border border-red-brand-100 bg-white p-8 text-center shadow-[var(--shadow-card)]">
+          <ShieldCheck className="mx-auto size-8 text-red-brand-600" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">Admin access required</h1>
           <p className="mt-2 text-sm text-slate-500">
             Only an authorized administrator can create a new RFQ.
           </p>
@@ -305,11 +305,11 @@ export function CreateRfqPage() {
         </Button>
       </div>
 
-      <h1 className="mb-5 text-2xl font-bold tracking-tight text-slate-950">Create New RFQ</h1>
+      <h1 className="mb-5 text-2xl font-bold tracking-tight text-brand-900">Create New RFQ</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-        <Card className="border-slate-200 p-5 shadow-xs">
-          <h2 className="text-base font-semibold text-slate-900">RFQ Information</h2>
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-brand-900">RFQ Information</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-4">
             <Field label="PR Number *" error={errors.sourceRfqId?.message}>
               <Input
@@ -364,8 +364,8 @@ export function CreateRfqPage() {
           </div>
         </Card>
 
-        <Card className="border-slate-200 p-5 shadow-xs">
-          <h2 className="text-base font-semibold text-slate-900">Customer Information</h2>
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-brand-900">Customer Information</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Field label="Name *" error={errors.customerName?.message}>
               <Input
@@ -383,8 +383,8 @@ export function CreateRfqPage() {
           </div>
         </Card>
 
-        <Card className="border-slate-200 p-5 shadow-xs">
-          <h2 className="text-base font-semibold text-slate-900">Buyer Information</h2>
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-brand-900">Buyer Information</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <Field label="Name">
               <Input {...register('buyerName')} placeholder="Name" />
@@ -403,8 +403,8 @@ export function CreateRfqPage() {
           </div>
         </Card>
 
-        <Card className="border-slate-200 p-5 shadow-xs">
-          <h2 className="text-base font-semibold text-slate-900">Ship-To Information</h2>
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-brand-900">Ship-To Information</h2>
           <div className="mt-4 space-y-4">
             <Field label="Address">
               <Input {...register('shipAddress')} placeholder="Address" />
@@ -426,14 +426,14 @@ export function CreateRfqPage() {
           </div>
         </Card>
 
-        <Card className="border-slate-200 p-5 shadow-xs">
+        <Card className="p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-slate-900">RFQ Items</h2>
+            <h2 className="text-base font-semibold text-brand-900">RFQ Items</h2>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="font-semibold text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+              className="font-semibold text-brand-900 hover:bg-brand-50 hover:text-red-brand-600"
               onClick={() =>
                 append({
                   lineNumber: fields.length + 1,
@@ -454,7 +454,7 @@ export function CreateRfqPage() {
           </div>
 
           {errors.lineItems?.message && (
-            <p className="mt-2 text-xs text-red-700" role="alert">
+            <p className="mt-2 text-xs text-red-brand-700" role="alert">
               {errors.lineItems.message}
             </p>
           )}
@@ -463,7 +463,7 @@ export function CreateRfqPage() {
             {fields.map((field, index) => (
               <div
                 key={field.id}
-                className="rounded-lg border border-slate-200 bg-slate-50/40 p-4"
+                className="rounded-lg border border-brand-100 bg-brand-50/30 p-4"
               >
                 <div className="grid items-start gap-3 md:grid-cols-[70px_95px_85px_1fr_1fr_1.5fr_auto]">
                   <Field label="Item #">
@@ -519,7 +519,7 @@ export function CreateRfqPage() {
                       disabled={fields.length === 1}
                       aria-label={`Remove item ${index + 1}`}
                       onClick={() => remove(index)}
-                      className="text-slate-400 hover:text-red-600"
+                      className="text-slate-400 hover:text-red-brand-600"
                     >
                       <Trash2 className="size-4" />
                     </Button>
@@ -545,7 +545,7 @@ export function CreateRfqPage() {
                     <input
                       type="checkbox"
                       {...register(`lineItems.${index}.taaRequired`)}
-                      className="size-3.5 rounded accent-blue-700"
+                      className="size-3.5 rounded accent-primary"
                     />
                     TAA Compliance Required
                   </label>
@@ -555,8 +555,8 @@ export function CreateRfqPage() {
           </div>
         </Card>
 
-        <Card className="border-slate-200 p-5 shadow-xs">
-          <h2 className="text-base font-semibold text-slate-900">Terms &amp; Commercial Notes</h2>
+        <Card className="p-5">
+          <h2 className="text-base font-semibold text-brand-900">Terms &amp; Commercial Notes</h2>
           <p className="mt-1 text-xs text-slate-500">
             Include payment terms (e.g. NET 60), DFARS/compliance clauses, or bid instructions.
           </p>
@@ -567,7 +567,7 @@ export function CreateRfqPage() {
                 rows={4}
                 maxLength={100000}
                 placeholder="e.g. TERMS OF PAYMENT: NET 60. Firm Fixed Price (FFP). No manufacturer substitutions without prior written approval."
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
               />
             </Field>
           </div>
@@ -607,11 +607,11 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <label className="block space-y-1 text-xs font-medium text-slate-600">
+    <label className="block space-y-1 text-xs font-semibold text-slate-800">
       <span>{label}</span>
       {children}
       {error && (
-        <span className="block text-[11px] font-normal text-red-700" role="alert">
+        <span className="block text-[11px] font-normal text-red-brand-700" role="alert">
           {error}
         </span>
       )}

@@ -23,6 +23,7 @@ import { changeDemoRole, isDemoSession } from '@/features/auth/demoSession'
 import { demoRoleOrder, roleTitles } from '@/features/rfq/types'
 import { isDemoMode } from '@/lib/env'
 import type { RoleName } from '@/types/api'
+import { BackgroundDecoration } from './BackgroundDecoration'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -119,8 +120,9 @@ export function AppShell({ children }: AppShellProps) {
     .toUpperCase()
 
   return (
-    <div className="min-h-dvh text-slate-900">
-      <div className="flex min-h-dvh">
+    <div className="relative min-h-dvh overflow-hidden text-slate-900">
+      <BackgroundDecoration/>
+      <div className="relative z-10 flex min-h-dvh">
         <aside
           className={`${mobileNavOpen ? 'fixed inset-y-0 left-0 z-50 block w-72 shadow-xl' : 'hidden'} border-r border-brand-100 bg-white/95 backdrop-blur lg:sticky lg:top-0 lg:block lg:h-dvh lg:w-[240px] lg:shrink-0`}
           aria-label="Primary navigation"

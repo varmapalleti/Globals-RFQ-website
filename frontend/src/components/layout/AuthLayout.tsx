@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { Logo } from '@/components/common/Logo'
+import { BackgroundDecoration } from './BackgroundDecoration'
 
 interface AuthLayoutProps {
   children: React.ReactNode
@@ -13,8 +14,9 @@ interface AuthLayoutProps {
  */
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-12">
+      <BackgroundDecoration/>
+      <div className="relative z-10 w-full max-w-md">
         {/* Card */}
         <div className="rounded-2xl border border-white/70 bg-white p-8 shadow-[var(--shadow-auth)]">
           {/* Brand header */}

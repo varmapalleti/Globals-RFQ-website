@@ -115,9 +115,9 @@ function ReportsPage() {
   if (!isAdmin && !demo) {
     return (
       <AppShell>
-        <Card className="mx-auto max-w-xl p-8 text-center shadow-none">
-          <BarChart3 className="mx-auto size-8 text-red-600" aria-hidden="true" />
-          <h1 className="mt-3 text-xl font-bold">Administrator access required</h1>
+        <Card className="mx-auto max-w-xl p-8 text-center">
+          <BarChart3 className="mx-auto size-8 text-red-brand-600" aria-hidden="true" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">Administrator access required</h1>
           <p className="mt-2 text-sm text-slate-500">
             Operational reports and exports are restricted to Admin and Super Admin accounts.
           </p>
@@ -130,11 +130,11 @@ function ReportsPage() {
     <AppShell>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+          <p className="text-xs font-semibold tracking-[0.15em] text-red-brand-600 uppercase">
             Operations intelligence
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Reports & workload</h1>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-900">Reports & workload</h1>
+          <p className="mt-1.5 text-sm text-slate-600">
             Monitor RFQ stage distribution, customer outcomes, and team workload.
           </p>
         </div>
@@ -150,13 +150,13 @@ function ReportsPage() {
         </div>
       </div>
       {!demo && reportQuery.isLoading && (
-        <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800" role="status">
+        <div className="mb-4 rounded-lg bg-brand-50 p-3 text-sm text-brand-900" role="status">
           Loading operational report…
         </div>
       )}
       {reportQuery.error && (
         <div
-          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800"
+          className="mb-4 rounded-lg border border-red-brand-100 bg-red-brand-50 p-3 text-sm text-red-brand-700"
           role="alert"
         >
           {unexpectedErrorMessage(normalizeError(reportQuery.error))}
@@ -190,9 +190,9 @@ function ReportsPage() {
         />
       </div>
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <Card className="overflow-hidden border-slate-200 shadow-sm">
-          <div className="border-b border-slate-100 px-5 py-4">
-            <h2 className="font-semibold">Workflow funnel</h2>
+        <Card className="overflow-hidden">
+          <div className="border-b border-brand-100 px-5 py-4">
+            <h2 className="font-semibold text-brand-900">Workflow funnel</h2>
             <p className="mt-1 text-xs text-slate-500">
               Counts by current RFQ status. A request contributes to one active status.
             </p>
@@ -208,11 +208,11 @@ function ReportsPage() {
                 <div key={group.label}>
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold text-slate-800">{group.label}</h3>
-                    <span className="text-sm font-bold text-slate-700 tabular-nums">{count}</span>
+                    <span className="text-sm font-bold text-brand-900 tabular-nums">{count}</span>
                   </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-brand-50">
                     <div
-                      className="h-full rounded-full bg-blue-600 transition-all"
+                      className="h-full rounded-full bg-brand-900 transition-all"
                       style={{ width: `${width}%` }}
                     />
                   </div>
@@ -230,8 +230,8 @@ function ReportsPage() {
           </div>
         </Card>
         <div className="space-y-5">
-          <Card className="border-slate-200 p-5 shadow-sm">
-            <h2 className="font-semibold">Customer outcomes</h2>
+          <Card className="p-5">
+            <h2 className="font-semibold text-brand-900">Customer outcomes</h2>
             <p className="mt-1 text-xs text-slate-500">Separate from internal reviewer decisions</p>
             <div className="mt-5 space-y-4">
               {Object.entries(decisionCounts).map(([label, value]) => {
@@ -241,7 +241,7 @@ function ReportsPage() {
                   label === 'APPROVED'
                     ? 'bg-emerald-500'
                     : label === 'REJECTED'
-                      ? 'bg-rose-500'
+                      ? 'bg-red-brand-600'
                       : 'bg-slate-400'
                 return (
                   <div key={label}>
@@ -253,7 +253,7 @@ function ReportsPage() {
                         {count} <span className="font-normal text-slate-400">({percent}%)</span>
                       </span>
                     </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-brand-50">
                       <div
                         className={`h-full rounded-full ${color}`}
                         style={{ width: `${percent}%` }}
@@ -264,20 +264,20 @@ function ReportsPage() {
               })}
             </div>
           </Card>
-          <Card className="border-slate-200 p-5 shadow-sm">
-            <h2 className="font-semibold">Assignment workload</h2>
+          <Card className="p-5">
+            <h2 className="font-semibold text-brand-900">Assignment workload</h2>
             <p className="mt-1 text-xs text-slate-500">Active ownership distribution</p>
             {demo ? (
               <div className="mt-4 space-y-3">
                 {demoWorkload.map((entry) => (
                   <div
                     key={entry.role}
-                    className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                    className="flex items-center justify-between border-b border-brand-100 pb-3 last:border-0 last:pb-0"
                   >
                     <span className="text-xs text-slate-600">
                       {entry.role.replaceAll('_', ' ')}
                     </span>
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold">
+                    <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-900">
                       {entry.amount}
                     </span>
                   </div>
@@ -288,12 +288,12 @@ function ReportsPage() {
                 {(reportQuery.data?.activeAssignmentWorkload ?? []).map((entry) => (
                   <div
                     key={`${entry.role}-${entry.identityUserId}`}
-                    className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                    className="flex items-center justify-between border-b border-brand-100 pb-3 last:border-0 last:pb-0"
                   >
                     <span className="text-xs text-slate-600">
                       {entry.role.replaceAll('_', ' ')} · User {entry.identityUserId}
                     </span>
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold">
+                    <span className="rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-900">
                       {entry.activeRfqs}
                     </span>
                   </div>
@@ -308,7 +308,7 @@ function ReportsPage() {
       </div>
       <style>
         {
-          '@media print { aside, header, button { display:none !important } main { padding:0 !important } body { background:white !important } }'
+          '@media print { aside, header, button { display:none !important } main { padding:0 !important } body { background:white !important } body::before { display:none !important } }'
         }
       </style>
     </AppShell>
@@ -329,14 +329,14 @@ function Metric({
   tone?: 'blue' | 'red'
 }) {
   return (
-    <Card className="border-slate-200 p-4 shadow-none">
+    <Card className="p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-slate-500">{label}</p>
-          <p className="mt-2 text-3xl font-bold">{value}</p>
+          <p className="text-sm text-slate-600">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-brand-900">{value}</p>
         </div>
         <span
-          className={`flex size-10 items-center justify-center rounded-xl ${tone === 'red' ? 'bg-red-50 text-red-700' : 'bg-blue-50 text-blue-700'}`}
+          className={`flex size-10 items-center justify-center rounded-xl ${tone === 'red' ? 'bg-red-brand-50 text-red-brand-600' : 'bg-brand-50 text-brand-900'}`}
         >
           <Icon className="size-5" />
         </span>

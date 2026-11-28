@@ -89,7 +89,7 @@ const statusStyle: Record<UserStatus, string> = {
   ACTIVE: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
   PENDING_VERIFICATION: 'bg-amber-50 text-amber-800 ring-amber-200',
   LOCKED: 'bg-orange-50 text-orange-800 ring-orange-200',
-  DISABLED: 'bg-red-50 text-red-800 ring-red-200',
+  DISABLED: 'bg-red-brand-50 text-red-brand-700 ring-red-brand-100',
 }
 
 function roleRank(role: RoleName) {
@@ -377,11 +377,11 @@ function UserManagementPage() {
     <AppShell>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+          <p className="text-xs font-semibold tracking-[0.15em] text-red-brand-600 uppercase">
             Identity administration
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">Users and roles</h1>
-          <p className="mt-1.5 max-w-3xl text-sm text-slate-500">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-900">Users and roles</h1>
+          <p className="mt-1.5 max-w-3xl text-sm text-slate-600">
             Invite team members and assign roles that your Identity account is authorized to
             delegate.
           </p>
@@ -404,11 +404,11 @@ function UserManagementPage() {
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
         <div className="space-y-5">
-          <Card className="overflow-hidden border-slate-200 shadow-none">
-            <div className="border-b border-slate-100 px-5 py-4">
+          <Card className="overflow-hidden">
+            <div className="border-b border-brand-100 px-5 py-4">
               <div className="flex items-center gap-2">
-                <UserPlus className="size-4 text-blue-700" />
-                <h2 className="font-semibold">Invite a team member</h2>
+                <UserPlus className="size-4 text-brand-900" />
+                <h2 className="font-semibold text-brand-900">Invite a team member</h2>
               </div>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 Identity creates a pending account and sends the invitation. The user chooses their
@@ -451,7 +451,7 @@ function UserManagementPage() {
                 </Field>
               </div>
               <fieldset>
-                <legend className="text-sm font-semibold">Assign role(s)</legend>
+                <legend className="text-sm font-semibold text-slate-900">Assign role(s)</legend>
                 {rolesQuery.isLoading && !demo ? (
                   <p className="mt-2 text-xs text-slate-500">
                     Loading roles permitted for your account…
@@ -461,13 +461,13 @@ function UserManagementPage() {
                     {availableRoles.map((role) => (
                       <label
                         key={role.name}
-                        className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 p-3 text-sm hover:bg-slate-50"
+                        className="flex cursor-pointer items-start gap-2 rounded-lg border border-brand-100 p-3 text-sm hover:bg-brand-50/60"
                       >
                         <input
                           type="checkbox"
                           value={role.name}
                           {...createForm.register('roles')}
-                          className="mt-0.5 size-4 accent-blue-700"
+                          className="mt-0.5 size-4 accent-primary"
                         />
                         <span>
                           <span className="block font-medium">{roleTitles[role.name]}</span>
@@ -486,7 +486,7 @@ function UserManagementPage() {
                   </p>
                 )}
                 {createForm.formState.errors.roles?.message && (
-                  <p className="mt-1.5 text-xs text-red-700" role="alert">
+                  <p className="mt-1.5 text-xs text-red-brand-700" role="alert">
                     {createForm.formState.errors.roles.message}
                   </p>
                 )}
@@ -511,18 +511,18 @@ function UserManagementPage() {
             </form>
           </Card>
 
-          <Card className="overflow-hidden border-slate-200 shadow-none">
-            <div className="border-b border-slate-100 px-5 py-4">
+          <Card className="overflow-hidden">
+            <div className="border-b border-brand-100 px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold">Managed accounts</h2>
+                  <h2 className="font-semibold text-brand-900">Managed accounts</h2>
                   <p className="mt-1 text-xs text-slate-500">
                     {totalElements} account(s) in your management scope
                   </p>
                 </div>
                 {!demo && usersQuery.isFetching && (
                   <Loader2
-                    className="size-4 animate-spin text-blue-700"
+                    className="size-4 animate-spin text-brand-900"
                     aria-label="Loading accounts"
                   />
                 )}
@@ -532,7 +532,7 @@ function UserManagementPage() {
                   <label htmlFor="identity-user-search" className="sr-only">
                     Search users
                   </label>
-                  <Search className="absolute top-3 left-3 size-4 text-slate-400" />
+                  <Search className="absolute top-3.5 left-3 size-4 text-slate-400" />
                   <Input
                     id="identity-user-search"
                     className="pl-9"
@@ -546,7 +546,7 @@ function UserManagementPage() {
                   <select
                     value={roleFilter}
                     onChange={(event) => setRoleFilter(event.target.value as RoleName | '')}
-                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                   >
                     <option value="">All roles</option>
                     {availableRoles.map((role) => (
@@ -561,7 +561,7 @@ function UserManagementPage() {
                   <select
                     value={statusFilter}
                     onChange={(event) => setStatusFilter(event.target.value as UserStatus | '')}
-                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                   >
                     <option value="">All statuses</option>
                     {Object.entries(statusText).map(([value, label]) => (
@@ -579,17 +579,17 @@ function UserManagementPage() {
                 Loading accounts…
               </div>
             ) : usersQuery.error && !demo ? (
-              <div className="p-5 text-sm text-red-800" role="alert">
+              <div className="p-5 text-sm text-red-brand-700" role="alert">
                 {unexpectedErrorMessage(normalizeError(usersQuery.error))}
               </div>
             ) : rows.length ? (
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-brand-100/70">
                 {rows.map((candidate) => (
                   <button
                     key={candidate.id}
                     type="button"
                     onClick={() => setSelectedId(candidate.id)}
-                    className={`flex w-full flex-col gap-3 px-5 py-4 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between ${selectedId === candidate.id ? 'bg-blue-50/70' : ''}`}
+                    className={`flex w-full flex-col gap-3 px-5 py-4 text-left transition hover:bg-brand-50/60 sm:flex-row sm:items-center sm:justify-between ${selectedId === candidate.id ? 'bg-brand-50' : ''}`}
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-slate-900">
@@ -605,7 +605,7 @@ function UserManagementPage() {
                         {candidate.roles.map((role) => (
                           <span
                             key={role}
-                            className="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                            className="rounded bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-900"
                           >
                             {roleTitles[role]}
                           </span>
@@ -625,13 +625,13 @@ function UserManagementPage() {
                 No accounts match these filters.
               </div>
             )}
-            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
+            <div className="flex items-center justify-between border-t border-brand-100 px-5 py-3 text-xs text-slate-500">
               <label className="flex items-center gap-2">
                 Rows per page
                 <select
                   value={pageSize}
                   onChange={(event) => setPageSize(Number(event.target.value))}
-                  className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs"
+                  className="h-9 rounded-md border border-input bg-white px-2 text-xs focus-visible:border-brand-900 focus-visible:outline-none"
                 >
                   {[10, 20, 50].map((size) => (
                     <option key={size} value={size}>
@@ -671,11 +671,11 @@ function UserManagementPage() {
 
         <div className="space-y-5">
           {selectedUser ? (
-            <Card className="overflow-hidden border-slate-200 shadow-none">
-              <div className="border-b border-slate-100 px-5 py-4">
+            <Card className="overflow-hidden">
+              <div className="border-b border-brand-100 px-5 py-4">
                 <div className="flex items-center gap-2">
-                  <UserRoundCog className="size-4 text-blue-700" />
-                  <h2 className="font-semibold">Manage account</h2>
+                  <UserRoundCog className="size-4 text-brand-900" />
+                  <h2 className="font-semibold text-brand-900">Manage account</h2>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
                   ID {selectedUser.id} · Created{' '}
@@ -707,7 +707,7 @@ function UserManagementPage() {
                   <Input name="phone" defaultValue={selectedUser.phone ?? ''} maxLength={25} />
                 </Field>
                 <fieldset>
-                  <legend className="text-sm font-semibold">Role access</legend>
+                  <legend className="text-sm font-semibold text-slate-900">Role access</legend>
                   <div className="mt-2 space-y-2">
                     {availableRoles.map((role) => (
                       <label key={role.name} className="flex items-center gap-2 text-sm">
@@ -716,7 +716,7 @@ function UserManagementPage() {
                           type="checkbox"
                           value={role.name}
                           defaultChecked={selectedUser.roles.includes(role.name)}
-                          className="size-4 accent-blue-700"
+                          className="size-4 accent-primary"
                         />
                         {roleTitles[role.name]}
                       </label>
@@ -728,7 +728,7 @@ function UserManagementPage() {
                   Save profile and roles
                 </Button>
               </form>
-              <div className="space-y-2 border-t border-slate-100 p-5">
+              <div className="space-y-2 border-t border-brand-100 p-5">
                 {selectedUser.status === 'PENDING_VERIFICATION' && (
                   <Button
                     variant="outline"
@@ -765,10 +765,10 @@ function UserManagementPage() {
                 {isSuperAdmin &&
                   selectedUser.status !== 'DISABLED' &&
                   (showFreezeForm ? (
-                    <div className="space-y-2 rounded-lg border border-red-200 bg-red-50 p-3">
+                    <div className="space-y-2 rounded-lg border border-red-brand-100 bg-red-brand-50 p-3">
                       <label
                         htmlFor="freeze-reason"
-                        className="block text-xs font-semibold text-red-900"
+                        className="block text-xs font-semibold text-red-950"
                       >
                         Reason for freezing this account
                       </label>
@@ -778,7 +778,7 @@ function UserManagementPage() {
                         onChange={(event) => setFreezeReason(event.target.value)}
                         maxLength={500}
                         rows={3}
-                        className="w-full rounded-md border border-red-200 bg-white px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-red-brand-100 bg-white px-3 py-2 text-sm focus-visible:border-red-brand-600 focus-visible:ring-2 focus-visible:ring-red-brand-600/20 focus-visible:outline-none"
                       />
                       <div className="flex justify-end gap-2">
                         <Button
@@ -803,7 +803,7 @@ function UserManagementPage() {
                   ) : (
                     <Button
                       variant="outline"
-                      className="w-full border-red-200 text-red-800 hover:bg-red-50"
+                      className="w-full border-red-brand-100 text-red-brand-700 hover:bg-red-brand-50 hover:text-red-brand-700"
                       disabled={busy}
                       onClick={() => setShowFreezeForm(true)}
                     >
@@ -814,35 +814,35 @@ function UserManagementPage() {
               </div>
             </Card>
           ) : (
-            <Card className="border-slate-200 p-6 text-center shadow-none">
-              <UserRoundCog className="mx-auto size-8 text-slate-300" />
-              <p className="mt-3 text-sm font-semibold">Select a managed account</p>
+            <Card className="p-6 text-center">
+              <UserRoundCog className="mx-auto size-8 text-brand-900/30" />
+              <p className="mt-3 text-sm font-semibold text-brand-900">Select a managed account</p>
               <p className="mt-1 text-xs leading-5 text-slate-500">
                 Profile, role, invitation, and account actions appear here.
               </p>
             </Card>
           )}
 
-          <Card className="border-blue-100 bg-blue-50/60 p-5 shadow-none">
-            <h2 className="text-sm font-semibold text-blue-950">
+          <Card className="border-brand-100 bg-brand-50/70 p-5">
+            <h2 className="text-sm font-semibold text-brand-900">
               Role delegation follows Identity policy
             </h2>
-            <p className="mt-2 text-xs leading-5 text-blue-900">
+            <p className="mt-2 text-xs leading-5 text-brand-900/90">
               Admins can delegate business roles. Super Admins can also create Admin accounts. The
               service blocks assigning roles at or above the acting user’s privilege level.
             </p>
-            <p className="mt-2 text-xs leading-5 text-blue-900">
+            <p className="mt-2 text-xs leading-5 text-brand-900/90">
               Roles are currently fixed in Identity Service. This page creates users and assigns
               configured roles; it does not create new role definitions.
             </p>
           </Card>
 
           {isSuperAdmin && !demo && (
-            <Card className="overflow-hidden border-slate-200 shadow-none">
-              <div className="border-b border-slate-100 px-5 py-4">
+            <Card className="overflow-hidden">
+              <div className="border-b border-brand-100 px-5 py-4">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="size-4 text-slate-600" />
-                  <h2 className="font-semibold">Recent Identity audit events</h2>
+                  <KeyRound className="size-4 text-brand-900" />
+                  <h2 className="font-semibold text-brand-900">Recent Identity audit events</h2>
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
                   Read-only events from Identity Service
@@ -851,11 +851,11 @@ function UserManagementPage() {
               {auditQuery.isLoading ? (
                 <p className="p-4 text-xs text-slate-500">Loading audit events…</p>
               ) : auditQuery.error ? (
-                <p className="p-4 text-xs text-red-800">
+                <p className="p-4 text-xs text-red-brand-700">
                   {unexpectedErrorMessage(normalizeError(auditQuery.error))}
                 </p>
               ) : auditQuery.data?.content.length ? (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-brand-100/70">
                   {auditQuery.data.content.map((event) => (
                     <li key={event.id} className="px-5 py-3">
                       <p className="text-xs font-semibold">
@@ -892,11 +892,11 @@ function Field({
   children: React.ReactNode
 }) {
   return (
-    <label className="block space-y-1.5 text-xs font-medium text-slate-700">
+    <label className="block space-y-1.5 text-xs font-semibold text-slate-800">
       <span>{label}</span>
       {children}
       {error && (
-        <span className="block text-red-700" role="alert">
+        <span className="block font-normal text-red-brand-700" role="alert">
           {error}
         </span>
       )}
@@ -906,9 +906,9 @@ function Field({
 
 function AccessDenied() {
   return (
-    <div className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-8 text-center">
-      <ShieldCheck className="mx-auto size-8 text-red-600" />
-      <h1 className="mt-3 text-xl font-bold">Administrator access required</h1>
+    <div className="mx-auto max-w-xl rounded-xl border border-red-brand-100 bg-white p-8 text-center shadow-[var(--shadow-card)]">
+      <ShieldCheck className="mx-auto size-8 text-red-brand-600" />
+      <h1 className="mt-3 text-xl font-bold text-brand-900">Administrator access required</h1>
       <p className="mt-2 text-sm text-slate-500">
         Identity Service manages access to this page. Your role cannot manage users.
       </p>

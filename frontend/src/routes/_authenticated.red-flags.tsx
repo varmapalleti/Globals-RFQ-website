@@ -28,11 +28,11 @@ const severityBadge: Record<RedFlagDto['severity'], string> = {
   LOW: 'bg-slate-100 text-slate-700',
   MEDIUM: 'bg-amber-100 text-amber-800',
   HIGH: 'bg-orange-100 text-orange-800',
-  CRITICAL: 'bg-red-100 text-red-800',
+  CRITICAL: 'bg-red-brand-100 text-red-brand-700',
 }
 
 const statusBadge: Record<RedFlagDto['status'], string> = {
-  OPEN: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+  OPEN: 'bg-red-brand-50 text-red-brand-700 ring-1 ring-red-brand-100',
   RESOLVED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
   DISMISSED: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
 }
@@ -142,24 +142,24 @@ export function RedFlagsPage() {
   return (
     <AppShell>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">Red Flags</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-brand-900">Red Flags</h1>
         <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
           <Plus className="size-4" /> Raise Red Flag
         </Button>
       </div>
 
       {showCreate && (
-        <Card className="mb-5 border-red-200 bg-red-50/30 p-5 shadow-none">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-            <Flag className="size-4 text-red-600" /> Raise a new Red Flag
+        <Card className="mb-5 border-red-brand-100 bg-red-brand-50/30 p-5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-brand-900">
+            <Flag className="size-4 text-red-brand-600" /> Raise a new Red Flag
           </h2>
           <form onSubmit={submitNew} className="mt-4 grid gap-4 md:grid-cols-[1fr_180px]">
-            <label className="block text-xs font-medium text-slate-700">
+            <label className="block text-xs font-semibold text-slate-800">
               RFQ *
               <select
                 value={newRfqId}
                 onChange={(e) => setNewRfqId(e.target.value)}
-                className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                className="mt-1 h-11 w-full rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                 required
               >
                 <option value="">Select an RFQ…</option>
@@ -170,12 +170,12 @@ export function RedFlagsPage() {
                 ))}
               </select>
             </label>
-            <label className="block text-xs font-medium text-slate-700">
+            <label className="block text-xs font-semibold text-slate-800">
               Severity *
               <select
                 value={newSeverity}
                 onChange={(e) => setNewSeverity(e.target.value as RedFlagDto['severity'])}
-                className="mt-1 h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                className="mt-1 h-11 w-full rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
               >
                 <option value="LOW">LOW</option>
                 <option value="MEDIUM">MEDIUM</option>
@@ -183,7 +183,7 @@ export function RedFlagsPage() {
                 <option value="CRITICAL">CRITICAL</option>
               </select>
             </label>
-            <label className="block text-xs font-medium text-slate-700 md:col-span-2">
+            <label className="block text-xs font-semibold text-slate-800 md:col-span-2">
               Reason / Escalation Details *
               <textarea
                 value={newReason}
@@ -191,7 +191,7 @@ export function RedFlagsPage() {
                 rows={2}
                 maxLength={2000}
                 placeholder="Describe the blocking issue, pricing anomaly, or SLA risk"
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                 required
               />
             </label>
@@ -208,12 +208,12 @@ export function RedFlagsPage() {
       )}
 
       <div className="mb-4 flex flex-wrap gap-3">
-        <label className="block text-xs font-medium text-slate-600">
+        <label className="block text-xs font-semibold text-slate-800">
           Status
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as RedFlagDto['status'] | '')}
-            className="mt-1 block h-10 min-w-40 rounded-md border border-slate-200 bg-white px-3 text-sm"
+            className="mt-1 block h-11 min-w-40 rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           >
             <option value="">All Statuses</option>
             <option value="OPEN">OPEN</option>
@@ -221,12 +221,12 @@ export function RedFlagsPage() {
             <option value="DISMISSED">DISMISSED</option>
           </select>
         </label>
-        <label className="block text-xs font-medium text-slate-600">
+        <label className="block text-xs font-semibold text-slate-800">
           Severity
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value as RedFlagDto['severity'] | '')}
-            className="mt-1 block h-10 min-w-40 rounded-md border border-slate-200 bg-white px-3 text-sm"
+            className="mt-1 block h-11 min-w-40 rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
           >
             <option value="">All Severities</option>
             <option value="LOW">LOW</option>
@@ -237,18 +237,18 @@ export function RedFlagsPage() {
         </label>
       </div>
 
-      <Card className="overflow-hidden border-slate-200 shadow-xs">
+      <Card className="overflow-hidden">
         {!demo && flagsQuery.isLoading ? (
           <div className="p-8 text-center text-sm text-slate-500">Loading red flags…</div>
         ) : !demo && flagsQuery.error ? (
-          <div className="p-6 text-sm text-red-700" role="alert">
+          <div className="p-6 text-sm text-red-brand-700" role="alert">
             {unexpectedErrorMessage(normalizeError(flagsQuery.error))}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-slate-200 bg-white text-xs font-medium text-slate-600">
+                <tr className="border-b border-brand-100 bg-brand-50/70 text-xs font-semibold text-brand-900">
                   <th className="px-4 py-3">RFQ ID</th>
                   <th className="px-4 py-3">Severity</th>
                   <th className="px-4 py-3">Reason</th>
@@ -259,7 +259,7 @@ export function RedFlagsPage() {
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-brand-100/70">
                 {rows.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
@@ -269,12 +269,12 @@ export function RedFlagsPage() {
                 ) : (
                   rows.map((flag) => (
                     <React.Fragment key={flag.id}>
-                      <tr className="hover:bg-slate-50/70">
+                      <tr className="hover:bg-brand-50/50">
                         <td className="px-4 py-3 text-sm font-semibold">
                           <Link
                             to="/rfqs/$rfqId"
                             params={{ rfqId: flag.rfqPublicId }}
-                            className="text-blue-700 hover:underline"
+                            className="text-brand-900 hover:text-red-brand-600 hover:underline"
                           >
                             {flag.sourceRfqId ? `RFQ-${flag.sourceRfqId}` : flag.rfqPublicId.slice(0, 8)}
                           </Link>
@@ -322,7 +322,7 @@ export function RedFlagsPage() {
                         </td>
                       </tr>
                       {resolvingId === flag.id && (
-                        <tr className="bg-slate-50">
+                        <tr className="bg-brand-50/50">
                           <td colSpan={8} className="px-4 py-3">
                             <div className="flex flex-wrap items-center gap-2">
                               <Input

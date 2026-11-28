@@ -101,9 +101,9 @@ function AuditLogsPage() {
   return (
     <AppShell>
       {!isSuperAdmin ? (
-        <Card className="mx-auto max-w-xl p-8 text-center shadow-none">
-          <ClipboardList className="mx-auto size-8 text-red-600" aria-hidden="true" />
-          <h1 className="mt-3 text-xl font-bold">Super Admin access required</h1>
+        <Card className="mx-auto max-w-xl p-8 text-center">
+          <ClipboardList className="mx-auto size-8 text-red-brand-600" aria-hidden="true" />
+          <h1 className="mt-3 text-xl font-bold text-brand-900">Super Admin access required</h1>
           <p className="mt-2 text-sm text-slate-500">
             Identity audit records contain sensitive security activity and are restricted to Super
             Admins.
@@ -112,16 +112,16 @@ function AuditLogsPage() {
       ) : (
         <>
           <div className="mb-6">
-            <p className="text-xs font-semibold tracking-[0.15em] text-blue-700 uppercase">
+            <p className="text-xs font-semibold tracking-[0.15em] text-red-brand-600 uppercase">
               Identity and access
             </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight">Audit Logs</h1>
-            <p className="mt-1.5 text-sm text-slate-500">
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-brand-900">Audit Logs</h1>
+            <p className="mt-1.5 text-sm text-slate-600">
               Read-only security events recorded by Identity Service.
             </p>
           </div>
 
-          <Card className="mb-5 border-slate-200 p-4 shadow-none">
+          <Card className="mb-5 p-4">
             <form
               onSubmit={applyFilters}
               className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_1fr_auto_auto] xl:items-end"
@@ -150,7 +150,7 @@ function AuditLogsPage() {
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, eventType: event.target.value }))
                   }
-                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="h-11 w-full rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
                 >
                   <option value="">All events</option>
                   {eventTypes.map((eventType) => (
@@ -170,37 +170,37 @@ function AuditLogsPage() {
                   placeholder="Any user"
                 />
               </Field>
-              <Button type="submit" className="w-full xl:w-auto">
+              <Button type="submit" className="h-11 w-full xl:w-auto">
                 <Search className="size-4" /> Apply
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={clearFilters}
-                className="w-full xl:w-auto"
+                className="h-11 w-full xl:w-auto"
               >
                 <FilterX className="size-4" /> Clear
               </Button>
             </form>
             {invalidDateRange && (
-              <p className="mt-2 text-sm text-red-700" role="alert">
+              <p className="mt-2 text-sm text-red-brand-700" role="alert">
                 The start date must be on or before the end date.
               </p>
             )}
             {invalidUserId && (
-              <p className="mt-2 text-sm text-red-700" role="alert">
+              <p className="mt-2 text-sm text-red-brand-700" role="alert">
                 Enter a positive whole number for the user ID.
               </p>
             )}
           </Card>
 
-          <Card className="overflow-hidden border-slate-200 shadow-none">
+          <Card className="overflow-hidden">
             {query.isLoading ? (
               <div className="p-10 text-center text-sm text-slate-500" role="status">
                 Loading audit records…
               </div>
             ) : query.error ? (
-              <div className="p-6 text-sm text-red-800" role="alert">
+              <div className="p-6 text-sm text-red-brand-700" role="alert">
                 <p className="font-semibold">Could not load audit logs.</p>
                 <p className="mt-1">
                   Check Identity Service availability and your Super Admin session.
@@ -218,30 +218,30 @@ function AuditLogsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] border-collapse text-left">
                   <thead>
-                    <tr className="border-b border-slate-200 text-xs text-slate-600">
-                      <th scope="col" className="px-5 py-4 font-medium">
+                    <tr className="border-b border-brand-100 bg-brand-50/70 text-xs text-brand-900">
+                      <th scope="col" className="px-5 py-4 font-semibold">
                         Timestamp
                       </th>
-                      <th scope="col" className="px-5 py-4 font-medium">
+                      <th scope="col" className="px-5 py-4 font-semibold">
                         User
                       </th>
-                      <th scope="col" className="px-5 py-4 font-medium">
+                      <th scope="col" className="px-5 py-4 font-semibold">
                         Action
                       </th>
-                      <th scope="col" className="px-5 py-4 font-medium">
+                      <th scope="col" className="px-5 py-4 font-semibold">
                         Outcome
                       </th>
-                      <th scope="col" className="px-5 py-4 font-medium">
+                      <th scope="col" className="px-5 py-4 font-semibold">
                         IP address
                       </th>
-                      <th scope="col" className="px-5 py-4 font-medium">
+                      <th scope="col" className="px-5 py-4 font-semibold">
                         Details
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-brand-100/70">
                     {rows.map((event) => (
-                      <tr key={event.id} className="align-top hover:bg-slate-50">
+                      <tr key={event.id} className="align-top hover:bg-brand-50/50">
                         <td className="px-5 py-4 text-sm whitespace-nowrap text-slate-600">
                           {new Intl.DateTimeFormat('en-IN', {
                             dateStyle: 'medium',
@@ -254,13 +254,13 @@ function AuditLogsPage() {
                             Target: {event.targetUserId ?? '—'}
                           </p>
                         </td>
-                        <td className="px-5 py-4 text-sm font-semibold text-blue-800">
+                        <td className="px-5 py-4 text-sm font-semibold text-brand-900">
                           {event.eventType.replaceAll('_', ' ')}
                           <p className="mt-1 text-xs font-normal text-slate-500">{event.action}</p>
                         </td>
                         <td className="px-5 py-4">
                           <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${event.outcome === 'SUCCESS' ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${event.outcome === 'SUCCESS' ? 'bg-emerald-50 text-emerald-800' : 'bg-red-brand-50 text-red-brand-700'}`}
                           >
                             {event.outcome}
                           </span>
@@ -270,7 +270,7 @@ function AuditLogsPage() {
                         </td>
                         <td className="px-5 py-4 text-xs text-slate-600">
                           <details>
-                            <summary className="cursor-pointer font-medium text-blue-800">
+                            <summary className="cursor-pointer font-semibold text-brand-900 hover:text-red-brand-600">
                               View
                             </summary>
                             <dl className="mt-2 max-w-xs space-y-1 break-all">
@@ -302,13 +302,13 @@ function AuditLogsPage() {
               </div>
             ) : (
               <div className="px-6 py-16 text-center">
-                <ClipboardList className="mx-auto size-8 text-slate-300" aria-hidden="true" />
-                <p className="mt-3 font-semibold">No audit records found</p>
+                <ClipboardList className="mx-auto size-8 text-brand-900/30" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-brand-900">No audit records found</p>
                 <p className="mt-1 text-sm text-slate-500">Try clearing one or more filters.</p>
               </div>
             )}
             {!query.isLoading && !query.error && (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3 text-sm text-slate-600">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-brand-100 px-5 py-3 text-sm text-slate-600">
                 <label className="flex items-center gap-2">
                   Rows per page
                   <select
@@ -317,7 +317,7 @@ function AuditLogsPage() {
                       setPageSize(Number(event.target.value))
                       setPage(0)
                     }}
-                    className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm"
+                    className="h-9 rounded-md border border-input bg-white px-2 text-sm focus-visible:border-brand-900 focus-visible:outline-none"
                   >
                     {[10, 20, 50, 100].map((size) => (
                       <option key={size} value={size}>
@@ -364,7 +364,7 @@ function AuditLogsPage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5 text-xs font-medium text-slate-700">
+    <label className="block space-y-1.5 text-xs font-semibold text-slate-800">
       <span>{label}</span>
       {children}
     </label>

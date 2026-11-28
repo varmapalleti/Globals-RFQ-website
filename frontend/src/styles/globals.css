@@ -82,11 +82,10 @@
 
   /* Page background: soft white-blue gradient (propagates to the canvas) */
   body {
-    background: linear-gradient(135deg, #f8fbff 0%, #f1f6fe 45%, #e9f0fb 100%);
-    background-attachment: fixed;
-    color: var(--color-foreground);
-    min-height: 100dvh;
-  }
+  background-color: #f4f7fc;
+  color: var(--color-foreground);
+  min-height: 100dvh;
+}
 
   /* Visible focus ring for keyboard navigation */
   :focus-visible {
@@ -113,7 +112,7 @@
 /* ── Globe + arcs background (shared by every page) ──
    Pure CSS/inline SVG, fixed behind all content. Cards, tables and forms
    stay solid white on top. */
-@layer base {
+/* @layer base {
   body::before {
     content: '';
     position: fixed;
@@ -121,13 +120,13 @@
     z-index: -1;
     pointer-events: none;
     background-repeat: no-repeat;
-    background-image:
+    background-image: */
       /* bottom-right navy swoosh with red edge */
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 160'%3E%3Cpath d='M300 160V40C240 110 150 150 40 160Z' fill='%232a4a9c'/%3E%3Cpath d='M300 62C245 122 160 156 70 160' fill='none' stroke='%23dc2626' stroke-width='3'/%3E%3C/svg%3E"),
+     /* url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 160'%3E%3Cpath d='M300 160V40C240 110 150 150 40 160Z' fill='%232a4a9c'/%3E%3Cpath d='M300 62C245 122 160 156 70 160' fill='none' stroke='%23dc2626' stroke-width='3'/%3E%3C/svg%3E"),*/
       /* right-side thin arcs (blue + red) and dots */
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 700'%3E%3Cpath d='M120 20C380 90 560 230 600 330' fill='none' stroke='%23c9d6ea' stroke-width='1.3'/%3E%3Cpath d='M0 160C260 220 470 360 600 520' fill='none' stroke='%23c3d1e8' stroke-width='1.3'/%3E%3Cpath d='M0 330C240 360 430 470 560 640' fill='none' stroke='%23f2a9a9' stroke-width='1.3'/%3E%3Ccircle cx='108' cy='18' r='3.5' fill='%23f29b9b'/%3E%3Ccircle cx='452' cy='190' r='3.5' fill='%2393b4e8'/%3E%3C/svg%3E"),
+     /* url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 700'%3E%3Cpath d='M120 20C380 90 560 230 600 330' fill='none' stroke='%23c9d6ea' stroke-width='1.3'/%3E%3Cpath d='M0 160C260 220 470 360 600 520' fill='none' stroke='%23c3d1e8' stroke-width='1.3'/%3E%3Cpath d='M0 330C240 360 430 470 560 640' fill='none' stroke='%23f2a9a9' stroke-width='1.3'/%3E%3Ccircle cx='108' cy='18' r='3.5' fill='%23f29b9b'/%3E%3Ccircle cx='452' cy='190' r='3.5' fill='%2393b4e8'/%3E%3C/svg%3E"), */
       /* left translucent globe */
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cdefs%3E%3CradialGradient id='g' cx='65%25' cy='40%25' r='70%25'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23dbe7fb'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='200' cy='200' r='190' fill='url(%23g)' stroke='%23b3cbee' stroke-width='1.5'/%3E%3Cg fill='none' stroke='%23b3cbee' stroke-width='1.2'%3E%3Cellipse cx='200' cy='200' rx='75' ry='190'/%3E%3Cellipse cx='200' cy='200' rx='140' ry='190'/%3E%3Cpath d='M200 10V390'/%3E%3Cpath d='M10 200H390'/%3E%3Cellipse cx='200' cy='200' rx='190' ry='65'/%3E%3Cellipse cx='200' cy='200' rx='190' ry='125'/%3E%3C/g%3E%3Cg fill='%23ffffff' opacity='.85'%3E%3Cpath d='M215 90c25-8 55 6 60 26s-18 30-35 28-40-14-25-54z'/%3E%3Cpath d='M130 170c20-6 45 4 40 24s-8 50-30 70-34-30-28-52 6-36 18-42z'/%3E%3C/g%3E%3C/svg%3E");
+      /* url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Cdefs%3E%3CradialGradient id='g' cx='65%25' cy='40%25' r='70%25'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23dbe7fb'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='200' cy='200' r='190' fill='url(%23g)' stroke='%23b3cbee' stroke-width='1.5'/%3E%3Cg fill='none' stroke='%23b3cbee' stroke-width='1.2'%3E%3Cellipse cx='200' cy='200' rx='75' ry='190'/%3E%3Cellipse cx='200' cy='200' rx='140' ry='190'/%3E%3Cpath d='M200 10V390'/%3E%3Cpath d='M10 200H390'/%3E%3Cellipse cx='200' cy='200' rx='190' ry='65'/%3E%3Cellipse cx='200' cy='200' rx='190' ry='125'/%3E%3C/g%3E%3Cg fill='%23ffffff' opacity='.85'%3E%3Cpath d='M215 90c25-8 55 6 60 26s-18 30-35 28-40-14-25-54z'/%3E%3Cpath d='M130 170c20-6 45 4 40 24s-8 50-30 70-34-30-28-52 6-36 18-42z'/%3E%3C/g%3E%3C/svg%3E");
     background-position:
       right bottom,
       right top,
@@ -138,4 +137,4 @@
       min(52vh, 460px) auto;
     opacity: 0.95;
   }
-}
+} */

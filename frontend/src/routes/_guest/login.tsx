@@ -36,13 +36,9 @@ function LoginPage() {
 
   return (
     <AuthLayout>
-      <div className="mb-6 space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-[--color-foreground]">
-          Welcome back
-        </h1>
-        <p className="text-sm text-[--color-muted-foreground]">
-          Sign in to your Global RFQ account
-        </p>
+      <div className="mb-6 space-y-2 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-brand-900">Welcome back</h1>
+        <p className="text-sm text-muted-foreground">Sign in to your Global RFQ account</p>
       </div>
       {isDemoMode ? (
         <DemoWorkspacePicker
@@ -70,11 +66,11 @@ const roleIcons: Record<RoleName, typeof Shield> = {
 function DemoWorkspacePicker({ onSelect }: { onSelect: (role: RoleName) => void }) {
   return (
     <section aria-labelledby="demo-heading" className="space-y-4">
-      <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-        <Sparkles className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+      <div className="flex items-start gap-3 rounded-xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-900">
+        <Sparkles className="mt-0.5 size-5 shrink-0 text-red-brand-600" aria-hidden="true" />
         <div>
           <p className="font-semibold">Client presentation mode</p>
-          <p className="mt-1 text-blue-800">
+          <p className="mt-1 text-brand-900/80">
             Choose a role to preview its RFQ workspace. All sample records are local demo data.
           </p>
         </div>
@@ -94,7 +90,7 @@ function DemoWorkspacePicker({ onSelect }: { onSelect: (role: RoleName) => void 
               onClick={() => onSelect(role)}
             >
               <span className="flex items-center gap-3">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-brand-50 text-brand-900">
                   <Icon className="size-4" aria-hidden="true" />
                 </span>
                 <span>
@@ -113,8 +109,8 @@ function DemoWorkspacePicker({ onSelect }: { onSelect: (role: RoleName) => void 
         Demo access is enabled only by the local Vite demo mode. It is disabled in production
         builds.
       </p>
-      <details className="rounded-lg border border-slate-200 p-3 text-sm">
-        <summary className="cursor-pointer font-medium text-slate-700">
+      <details className="rounded-lg border border-brand-100 p-3 text-sm">
+        <summary className="cursor-pointer font-semibold text-brand-900">
           Use a live account instead
         </summary>
         <div className="mt-4">

@@ -74,7 +74,7 @@ const allStatuses = Object.keys(statusLabels) as RfqStatus[]
 function LookupError({ error }: { error: unknown }) {
   const apiError = normalizeError(error)
   return (
-    <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    <p className="rounded-lg border border-red-brand-100 bg-red-brand-50 px-4 py-3 text-sm text-red-brand-700">
       {apiError.message} <span className="text-xs">({apiError.errorCode})</span>
     </p>
   )
@@ -236,7 +236,7 @@ function RfqWorkspacePage() {
   return (
     <AppShell>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-950">RFQs</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-brand-900">RFQs</h1>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
@@ -266,7 +266,7 @@ function RfqWorkspacePage() {
         </div>
       </div>
 
-      <Card className="mb-5 border-slate-200 p-4 shadow-xs">
+      <Card className="mb-5 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative min-w-0 flex-1 sm:max-w-xs">
             <label htmlFor="rfq-search" className="sr-only">
@@ -290,7 +290,7 @@ function RfqWorkspacePage() {
               aria-label="Status"
               value={status}
               onChange={(event) => setStatus(event.target.value as RfqStatus | 'ALL')}
-              className="h-10 min-w-44 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-11 min-w-44 rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             >
               <option value="ALL">Status</option>
               {allStatuses.map((value) => (
@@ -306,13 +306,13 @@ function RfqWorkspacePage() {
               aria-label="Sort RFQs"
               value={sortOrder}
               onChange={(event) => setSortOrder(event.target.value as typeof sortOrder)}
-              className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="h-11 rounded-lg border border-input bg-white px-3 text-sm focus-visible:border-brand-900 focus-visible:ring-2 focus-visible:ring-brand-900/20 focus-visible:outline-none"
             >
               <option value="newest">Newest first</option>
               <option value="delivery">Delivery date</option>
             </select>
           </label>
-          <Button type="button" variant="ghost" size="sm" className="text-blue-700" onClick={clearFilters}>
+          <Button type="button" variant="ghost" size="sm" className="text-red-brand-600 hover:text-red-brand-700" onClick={clearFilters}>
             Clear Filters
           </Button>
         </div>
@@ -320,7 +320,7 @@ function RfqWorkspacePage() {
         {isAdmin && (
           <form
             onSubmit={submitNumberLookup}
-            className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center"
+            className="mt-3 flex flex-col gap-2 border-t border-brand-100 pt-3 sm:flex-row sm:items-center"
           >
             <Input
               value={lookupInput}
@@ -349,13 +349,13 @@ function RfqWorkspacePage() {
                 {lookupMatches.map((rfq) => (
                   <div
                     key={rfq.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-100 bg-brand-50/60 px-4 py-2.5"
                   >
                     <div>
                       <Link
                         to="/rfqs/$rfqId"
                         params={{ rfqId: rfq.id }}
-                        className="font-semibold text-blue-800 hover:underline"
+                        className="font-semibold text-brand-900 hover:text-red-brand-600 hover:underline"
                       >
                         {formatRfqNumber(rfq)}
                       </Link>
@@ -373,7 +373,7 @@ function RfqWorkspacePage() {
                 ))}
               </div>
             ) : (
-              <p className="rounded-lg bg-slate-50 px-4 py-2.5 text-sm text-slate-600">
+              <p className="rounded-lg bg-brand-50/60 px-4 py-2.5 text-sm text-slate-600">
                 No RFQ found for number <span className="font-semibold">{submittedLookup}</span>.
               </p>
             )}
@@ -382,11 +382,11 @@ function RfqWorkspacePage() {
       </Card>
 
       <section
-        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs"
+        className="overflow-hidden rounded-xl border border-brand-100 bg-white shadow-[var(--shadow-card)]"
         aria-label="RFQs table"
       >
         {error ? (
-          <div className="p-8 text-sm text-red-700" role="alert">
+          <div className="p-8 text-sm text-red-brand-700" role="alert">
             <p className="font-semibold">Could not load RFQ data.</p>
             <p className="mt-1">{listError?.message}</p>
             {listError && (
@@ -406,7 +406,7 @@ function RfqWorkspacePage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[960px] border-collapse text-left">
               <thead>
-                <tr className="border-b border-slate-200 bg-white text-xs font-medium text-slate-600">
+                <tr className="border-b border-brand-100 bg-brand-50/70 text-xs font-semibold text-brand-900">
                   <th scope="col" className="px-4 py-3">RFQ #</th>
                   <th scope="col" className="px-4 py-3">PR #</th>
                   <th scope="col" className="px-4 py-3">Customer</th>
@@ -419,18 +419,18 @@ function RfqWorkspacePage() {
                   <th scope="col" className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-brand-100/70">
                 {filtered.map((rfq) => {
                   const assignee = rfq.assignments[0]
                   const dueDate = rfq.dueAt?.slice(0, 10) || rfq.requestedDeliveryDate
                   const itemCount = rfq.lineItemCount ?? rfq.lineItems.length
                   return (
-                    <tr key={rfq.id} className="hover:bg-blue-50/30">
+                    <tr key={rfq.id} className="hover:bg-brand-50/50">
                       <td className="px-4 py-3.5 text-sm font-semibold whitespace-nowrap">
                         <Link
                           to="/rfqs/$rfqId"
                           params={{ rfqId: rfq.id }}
-                          className="text-blue-700 hover:underline"
+                          className="text-brand-900 hover:text-red-brand-600 hover:underline"
                         >
                           {formatRfqNumber(rfq)}
                         </Link>
@@ -490,13 +490,13 @@ function RfqWorkspacePage() {
         )}
 
         {!error && !isLoading && (
-          <div className="flex flex-wrap items-center justify-end gap-4 border-t border-slate-100 px-5 py-3 text-xs text-slate-600">
+          <div className="flex flex-wrap items-center justify-end gap-4 border-t border-brand-100 px-5 py-3 text-xs text-slate-600">
             <label className="flex items-center gap-2">
               Rows per page:
               <select
                 value={pageSize}
                 onChange={(event) => setPageSize(Number(event.target.value))}
-                className="h-8 rounded border border-slate-200 bg-white px-2 text-xs"
+                className="h-8 rounded-md border border-input bg-white px-2 text-xs focus-visible:border-brand-900 focus-visible:outline-none"
               >
                 {[10, 20, 50].map((size) => (
                   <option key={size} value={size}>
