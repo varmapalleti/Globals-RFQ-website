@@ -9,6 +9,13 @@ app:
   security:
     cookie-secure: true
   notification:
+    email-provider: ${EMAIL_PROVIDER:ses}
+    from-email: ${MAIL_FROM_ADDRESS}
+    from-name: ${MAIL_FROM_NAME:Global RFQ}
+    reply-to-email: ${MAIL_REPLY_TO_ADDRESS:}
+    ses-region: ${AWS_REGION}
+    ses-configuration-set: ${SES_CONFIGURATION_SET:}
+    log-sensitive-in-mock: ${LOG_SENSITIVE_IN_MOCK:false}
     outbox-encryption-key: ${OUTBOX_ENCRYPTION_KEY}
 
 eureka:

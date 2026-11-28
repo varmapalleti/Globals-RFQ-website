@@ -8,24 +8,48 @@ import com.globalrfq.rfq.notification.dto.NotificationResponse;
 import com.globalrfq.rfq.notification.entity.InAppNotification;
 import com.globalrfq.rfq.notification.entity.NotificationType;
 import com.globalrfq.rfq.notification.repository.InAppNotificationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Map;
 
 @Service
 public class InAppNotificationService {
     private final InAppNotificationRepository notifications;
+    private final RfqWorkflowEmailDispatcher emailDispatcher;
 
     public InAppNotificationService(InAppNotificationRepository notifications) {
-        this.notifications = notifications;
+        this(notifications, null);
     }
 
-    /** Send a notification to a specific user (called internally by other services). */
+    @Autowired
+    public InAppNotificationService(
+            InAppNotificationRepository notifications,
+            RfqWorkflowEmailDispatcher emailDispatcher) {
+        this.notifications = notifications;
+        this.emailDispatcher = emailDispatcher;
+    }
+
+    /** Send an in-app notification and queue a corresponding workflow email after commit. */
     @Transactional
     public void send(Long userId, NotificationType type, String title, String message, String rfqPublicId) {
         notifications.save(new InAppNotification(userId, type, title, message, rfqPublicId));
+        if (emailDispatcher != null) {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        emailDispatcher.dispatch(userId, type, title, message, rfqPublicId);
+                    }
+                });
+            } else {
+                emailDispatcher.dispatch(userId, type, title, message, rfqPublicId);
+            }
+        }
     }
 
     @Transactional(readOnly = true)

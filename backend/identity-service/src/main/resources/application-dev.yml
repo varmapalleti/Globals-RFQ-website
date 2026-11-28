@@ -9,5 +9,5 @@ app:
   gateway:
     secret-enabled: ${GATEWAY_SECRET_ENABLED:true}
   notification:
-    log-sensitive-in-mock: true
+    log-sensitive-in-mock: ${LOG_SENSITIVE_IN_MOCK:true}
     outbox-encryption-key: ${OUTBOX_ENCRYPTION_KEY:dev-only-identity-notification-key-rotate-before-use}

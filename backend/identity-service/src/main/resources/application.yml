@@ -35,11 +35,14 @@ eureka:
       defaultZone: "${EUREKA_SERVER_URL:http://${EUREKA_USERNAME:eureka}:${EUREKA_PASSWORD:eureka}@localhost:8761/eureka/}"
     register-with-eureka: true
     fetch-registry: true
+    instance-info-replication-interval-seconds: ${EUREKA_REPLICATION_INTERVAL:5}
     healthcheck:
       enabled: true
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${HOSTNAME:localhost}:${server.port}
+    lease-renewal-interval-in-seconds: ${EUREKA_LEASE_RENEWAL:5}
+    lease-expiration-duration-in-seconds: ${EUREKA_LEASE_EXPIRATION:10}
 
 
 management:
@@ -89,9 +92,10 @@ app:
     sms-provider: ${SMS_PROVIDER:mock}
     from-email: ${MAIL_FROM_ADDRESS:no-reply@globalrfq.com}
     from-name: ${MAIL_FROM_NAME:Global RFQ}
-    ses-region: ${AWS_REGION:ap-southeast-1}
+    reply-to-email: ${MAIL_REPLY_TO_ADDRESS:}
+    ses-region: ${AWS_REGION:ap-south-1}
     ses-configuration-set: ${SES_CONFIGURATION_SET:}
-    log-sensitive-in-mock: false
+    log-sensitive-in-mock: ${LOG_SENSITIVE_IN_MOCK:true}
     outbox-encryption-key: ${OUTBOX_ENCRYPTION_KEY:}
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:5173}

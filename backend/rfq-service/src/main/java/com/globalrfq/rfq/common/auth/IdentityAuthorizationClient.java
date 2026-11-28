@@ -2,6 +2,8 @@ package com.globalrfq.rfq.common.auth;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
@@ -11,6 +13,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.Set;
 
 @Component
@@ -26,7 +29,10 @@ public class IdentityAuthorizationClient {
     private final LoadBalancerClient loadBalancerClient;
 
     public IdentityAuthorizationClient(IdentityClientProperties properties, LoadBalancerClient loadBalancerClient) {
-        this.restClient = RestClient.create();
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(Duration.ofSeconds(3));
+        requestFactory.setReadTimeout(Duration.ofSeconds(5));
+        this.restClient = RestClient.builder().requestFactory(requestFactory).build();
         this.properties = properties;
         this.loadBalancerClient = loadBalancerClient;
     }
@@ -73,6 +79,28 @@ public class IdentityAuthorizationClient {
             throw new IdentityUnavailableException("Identity user eligibility could not be verified");
         }
     }
+
+    public void sendWorkflowNotificationEmail(
+            Long recipientUserId,
+            String eventType,
+            String title,
+            String message,
+            String rfqPublicId) {
+        restClient.post()
+                .uri(identityUri("/internal/identity/notifications/rfq-workflow"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(SERVICE_TOKEN_HEADER, properties.internalServiceToken())
+                .body(new WorkflowEmailPayload(recipientUserId, eventType, title, message, rfqPublicId))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    private record WorkflowEmailPayload(
+            Long recipientUserId,
+            String eventType,
+            String title,
+            String message,
+            String rfqPublicId) { }
 
     private URI identityUri(String path) {
         try {

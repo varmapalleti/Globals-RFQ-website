@@ -187,6 +187,7 @@ export function ReviewerReassignmentPanel({
                   <Button
                     size="sm"
                     disabled={busy || resolutionReason.trim().length < 5}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => void resolveRequest(request.id, 'APPROVE')}
                   >
                     Approve
@@ -195,6 +196,7 @@ export function ReviewerReassignmentPanel({
                     size="sm"
                     variant="outline"
                     disabled={busy || resolutionReason.trim().length < 5}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => void resolveRequest(request.id, 'DECLINE')}
                   >
                     Decline
@@ -293,6 +295,7 @@ export function ReviewActionPanel({
         <Button
           type="button"
           size="sm"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => void decide('APPROVED')}
           disabled={busy || missing.length > 0}
         >
@@ -303,6 +306,7 @@ export function ReviewActionPanel({
           type="button"
           size="sm"
           variant="destructive"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => void decide('REJECTED')}
           disabled={busy || reason.trim().length < 5}
         >

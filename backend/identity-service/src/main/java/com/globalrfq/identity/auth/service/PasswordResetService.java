@@ -95,6 +95,7 @@ public class PasswordResetService {
         otpRepository.invalidateActive(user.getId(), now);
 
         String otp = OtpGenerator.sixDigits();
+        System.out.println("Hey these is opt : " + otp);
         PasswordResetOtp row = new PasswordResetOtp();
         row.setUser(user);
         row.setEmailType(request.emailType());

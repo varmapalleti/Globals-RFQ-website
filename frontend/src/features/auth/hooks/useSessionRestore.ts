@@ -35,6 +35,7 @@ export function useSessionRestore(): {
 
   React.useEffect(() => {
     let active = true
+    let retryTimer: number | undefined
 
     if (isDemoMode) {
       if (!restoreDemoSession()) clearSession()
@@ -59,6 +60,19 @@ export function useSessionRestore(): {
         if (apiErr.httpStatus === 401) {
           clearSession()
           setStatus('unauthenticated')
+        } else if (
+          attempt < 2 &&
+          (apiErr.httpStatus === 503 ||
+            apiErr.status === 503 ||
+            apiErr.errorCode === 'SERVICE_UNAVAILABLE' ||
+            apiErr.errorCode === 'NETWORK_ERROR')
+        ) {
+          // Gateway/Eureka cold start discovery delay: automatically retry after 1.5s
+          retryTimer = window.setTimeout(() => {
+            if (active) {
+              setAttempt((prev) => prev + 1)
+            }
+          }, 1500)
         } else {
           // Preserve the session state and let the user retry after a transient
           // network, gateway, or origin configuration failure.
@@ -68,6 +82,9 @@ export function useSessionRestore(): {
       })
     return () => {
       active = false
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer)
+      }
     }
   }, [attempt, setSession, clearSession])
 

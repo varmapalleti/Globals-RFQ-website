@@ -63,6 +63,27 @@ public enum NotificationTemplate {
             Hello {{fullName}},
             Your account password was changed on {{changedAt}}.
             If this was not you, contact your administrator immediately.
+            """),
+
+    RFQ_WORKFLOW_EVENT(
+            NotificationChannel.EMAIL,
+            "[Global RFQ] {{title}}",
+            """
+            <p>Hello {{fullName}},</p>
+            <p><strong>{{eventLabel}}</strong></p>
+            <p>{{title}}</p>
+            <p>{{message}}</p>
+            <p><a href="{{actionUrl}}">Open RFQ Workspace</a></p>
+            <p>This is an automated workflow notification from Global RFQ.</p>
+            """,
+            """
+            Hello {{fullName}},
+
+            Event: {{eventLabel}}
+            Title: {{title}}
+            Details: {{message}}
+
+            Open RFQ Workspace: {{actionUrl}}
             """);
 
     private final NotificationChannel channel;

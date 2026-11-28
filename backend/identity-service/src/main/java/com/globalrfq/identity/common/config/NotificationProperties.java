@@ -8,6 +8,7 @@ public record NotificationProperties(
         String smsProvider,
         String fromEmail,
         String fromName,
+        String replyToEmail,
         String sesRegion,
         String sesConfigurationSet,
         boolean logSensitiveInMock,

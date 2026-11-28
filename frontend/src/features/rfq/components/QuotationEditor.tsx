@@ -615,6 +615,7 @@ export function QuotationEditor({
             type="button"
             variant="outline"
             disabled={busy}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => void handleSubmit((values) => save(values, false))()}
           >
             {busy ? <Loader2 className="size-4 animate-spin" /> : 'Save draft'}
@@ -622,6 +623,7 @@ export function QuotationEditor({
           <Button
             type="button"
             disabled={busy}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => void handleSubmit((values) => save(values, true))()}
           >
             <Send className="size-4" />

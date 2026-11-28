@@ -30,6 +30,9 @@ class InAppNotificationServiceTest {
     @Mock
     private InAppNotificationRepository notifications;
 
+    @Mock
+    private RfqWorkflowEmailDispatcher emailDispatcher;
+
     @InjectMocks
     private InAppNotificationService service;
 
@@ -45,6 +48,7 @@ class InAppNotificationServiceTest {
         assertEquals("Assigned RFQ-101", saved.getTitle());
         assertEquals("pub-101", saved.getRfqPublicId());
         assertFalse(saved.isRead());
+        verify(emailDispatcher).dispatch(42L, NotificationType.RFQ_ASSIGNED, "Assigned RFQ-101", "Assigned to you", "pub-101");
     }
 
     @Test

@@ -69,6 +69,12 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
       SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-no-reply@globalrfq.local}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Global RFQ}
+      MAIL_REPLY_TO_ADDRESS: ${MAIL_REPLY_TO_ADDRESS:-}
+      SES_CONFIGURATION_SET: ${SES_CONFIGURATION_SET:-}
+      LOG_SENSITIVE_IN_MOCK: ${LOG_SENSITIVE_IN_MOCK:-true}
       EUREKA_INSTANCE_HOSTNAME: identity-service
       EUREKA_SERVER_URL: http://${EUREKA_USERNAME:-eureka}:${EUREKA_PASSWORD:-local-eureka-password-change-me}@eureka-server:8761/eureka/
     ports:

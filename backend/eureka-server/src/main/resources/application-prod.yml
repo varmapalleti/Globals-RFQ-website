@@ -4,6 +4,12 @@ spring:
       name: ${EUREKA_USERNAME}
       password: ${EUREKA_PASSWORD}
 
+eureka:
+  server:
+    enable-self-preservation: true
+    eviction-interval-timer-in-ms: 60000
+    response-cache-update-interval-ms: 30000
+
 management:
   endpoints:
     web:

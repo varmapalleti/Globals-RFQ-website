@@ -27,9 +27,19 @@ public class MockEmailSender implements EmailSender {
 
     @Override
     public void send(EmailMessage message) {
-        log.info("MOCK EMAIL to={} subject=\"{}\"", MaskingUtil.maskEmail(message.to()), message.subject());
         if (props.logSensitiveInMock()) {
-            log.info("MOCK EMAIL BODY (dev only):\n{}", message.textBody());
+            log.info("""
+                    ================ MOCK EMAIL (DEV / PRE-HOST LOG) ================
+                    From: {}
+                    To: {}
+                    Subject: {}
+                    -----------------------------------------------------------------
+                    {}
+                    =================================================================""",
+                    message.from(), message.to(), message.subject(), message.textBody());
+        } else {
+            log.info("MOCK EMAIL from=\"{}\" to={} subject=\"{}\"",
+                    message.from(), MaskingUtil.maskEmail(message.to()), message.subject());
         }
     }
 }
